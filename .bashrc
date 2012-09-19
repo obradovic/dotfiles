@@ -4,7 +4,7 @@ alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
 alias k='knife'
 alias ks='knife status'
-alias cook='knife cookbook'
+alias ck='knife cookbook'
 alias up='knife cookbook upload'
 alias upr='knife role from file'
 alias urp='upr'
@@ -40,7 +40,7 @@ alias r='rake'
 alias pz='ps -aef | grep'
 
 # OpsCode / Chef
-export OPSCODE_USER=zo
+# export OPSCODE_USER=zo
 
 # RVM
 source ~/.rvm/scripts/rvm
@@ -85,3 +85,12 @@ function title {
   echo "Title set to $1"
 }
 alias tit=title
+
+function dot {
+  cd ~/.dotfiles
+  git add .
+  git commit -m $1
+  git push
+  . ~/.bashrc
+  cd -
+}
