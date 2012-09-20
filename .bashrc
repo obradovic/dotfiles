@@ -37,7 +37,10 @@ alias 4='fg %4'
 alias del='rm'
 alias vig='mvim'
 alias r='rake'
-alias pz='ps -aef | grep'
+
+function pz {
+  ps -aef | grep $1 | grep -v grep
+}
 
 # OpsCode / Chef
 # export OPSCODE_USER=zo
