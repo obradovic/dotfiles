@@ -13,20 +13,18 @@ alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
 alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
 
 # GIT'R DONE!
+alias g='git'
 alias gs='git submodule'
 alias co='git checkout'
 alias gp='git pull --rebase'
-alias g='git'
 alias god='git'
-alias gst='git status'
 alias st='git status'
 alias master='git checkout master'
 alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
 
-alias be='bundle exec'
 alias dir='ls -la'
-alias dor='ls -la'
-alias dri='ls -la'
+alias dor='dir'
+alias dri='dir'
 alias l='ls -al'
 alias h='history 100'
 alias j='jobs'
@@ -36,10 +34,35 @@ alias 3='fg %3'
 alias 4='fg %4'
 alias del='rm'
 alias vig='mvim'
+alias be='bundle exec'
 alias r='rake'
 
 function pz {
   ps -aef | grep $1 | grep -v grep
+}
+
+function title {
+  echo -e "\033];$1\007" 
+  echo "Title set to $1"
+}
+alias tit=title
+
+function dot {
+  cd ~/.dotfiles
+  git add .
+  git commit -m $1
+  git push
+  . ~/.bashrc
+  cd -
+}
+
+function dot-link {
+  cd ~
+  for f in .bashrc .vimrc .gvimrc
+  do 
+    mv -f $f $f.old
+    ln -s .dotfiles/$f $f
+  done
 }
 
 # OpsCode / Chef
@@ -83,17 +106,3 @@ export PS1='\[\e[1;30m\]\T\[\e[0m\]\[\e[0;35m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\
 # export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[1;30m\]`parse_git_branch`\[\e[0m\] \[\e[1;32m\]\W  > \[\e[0m\]'
 # export PS1="\[$BBlack\]\T `parse_git_branch` \[$Color_Off\]\[$BGreen\]\W  > \[$Color_Off\]"
 
-function title {
-  echo -e "\033];$1\007" 
-  echo "Title set to $1"
-}
-alias tit=title
-
-function dot {
-  cd ~/.dotfiles
-  git add .
-  git commit -m $1
-  git push
-  . ~/.bashrc
-  cd -
-}
