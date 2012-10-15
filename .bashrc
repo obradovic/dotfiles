@@ -38,7 +38,7 @@ alias be='bundle exec'
 alias r='rake'
 
 function pz {
-  ps -aef | grep $1 | grep -v grep
+  ps -aef | grep -i $1 | grep -v grep
 }
 
 function title {
@@ -66,7 +66,7 @@ function dot-link {
 }
 
 # OpsCode / Chef
-# export OPSCODE_USER=zo
+export OPSCODE_USER=zo
 
 # RVM
 source ~/.rvm/scripts/rvm
