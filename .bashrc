@@ -16,10 +16,17 @@ alias drepo='ssh zo@dev-repo1.visualsupply.co'
 alias dev1='ssh zo@dev1.visualsupply.co'
 alias staging='ssh zo@50.56.207.198'
 
+function rackspace-create-standalone {
+  knife rackspace server create -I 125 -f 1 --server-name $1 --node-name $1 -r 'role[standalone]' 
+}
+
 # OPS shortcuts
 alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
 alias k='knife'
+alias kr='knife rackspace'
+alias krs='kr '
+alias ke='knife ec2'
 alias ks='knife status'
 alias ck='knife cookbook'
 alias up='knife cookbook upload'
