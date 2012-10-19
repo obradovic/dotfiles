@@ -21,5 +21,5 @@ syntax on
 filetype on
 
 set guioptions-=T
-set guifont=Droid\ Sans\ Mono:h9
+set guifont=Droid\ Sans\ Mono:h10
 set ruler
