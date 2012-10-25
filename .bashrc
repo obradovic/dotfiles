@@ -143,22 +143,40 @@ function rs-create {
   fi
 
   if [ "$3" = "" ]; then
-    runlist="role[standalone]"
+    run_list="role[standalone]"
   else
-    runlist=$3
+    run_list=$3
   fi
 
   fullname=$env-$name
-  echo "Creating $fullname with a run_list of $runlist"
+  echo "Creating $fullname with a run_list of $run_list"
 
-  knife rackspace server create -I 125 -f 1 --server-name $fullname --node-name $fullname -r '$runlist' 
+  image="5cebb13a-f783-4f8c-8058-c4182c724ccd"
+  flavor="2"
+  # endpoint="https://ord.servers.api.rackspacecloud.com/v2"
+  endpoint="https://dfw.servers.api.rackspacecloud.com/v2"
+
+  knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list '$run_list' --rackspace-endpoint $endpoint 
   knife node set_environment $fullname $env
-  knife node run_list add $fullname $runlist
+  knife node run_list add $fullname $run_list
 }
 
 function rs-delete {
   id=`knife rackspace server list | grep $1 | awk '{print $1}'`
   knife rackspace server delete $id
+
+  echo "Deleting Chef Node $1:"
   knife node delete $1
+
+  echo "Deleting Chef Client $1:"
   knife client delete $1
+
+  dns_id=`dnsimple record:list visualsupply.co | grep "$1.visualsupply.co (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
+
+  if [ -z "$dns_id" ]; then
+    echo "DNS record is empty for $1. Not deleting."
+  else
+    echo "ALMOST Deleting DNS record $dns_id"
+    dnsimple record:delete visualsupply.co $dns_id
+  fi
 }
