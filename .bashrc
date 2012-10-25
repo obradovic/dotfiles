@@ -176,7 +176,7 @@ function rs-delete {
   if [ -z "$dns_id" ]; then
     echo "DNS record is empty for $1. Not deleting."
   else
-    echo "ALMOST Deleting DNS record $dns_id"
+    echo "Deleting DNS record $dns_id"
     dnsimple record:delete visualsupply.co $dns_id
   fi
 }
