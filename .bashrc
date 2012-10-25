@@ -127,6 +127,38 @@ alias dev1='ssh zo@dev1.visualsupply.co'
 alias staging='ssh zo@50.56.207.198'
 alias dev1='ssh zo@dev1.visualsupply.co'
 
-function rackspace-create-standalone {
-  knife rackspace server create -I 125 -f 1 --server-name $1 --node-name $1 -r 'role[standalone]' 
+function rs-create {
+  if [ "$1" = "" ]; then
+    echo "Usage: <name> <env> <run_list>"
+    echo "       <env>      defaults to \"dev\""
+    echo "       <run_list> defaults to \"role[standalone]\""
+    return
+  fi
+  name=$1
+
+  if [ "$2" = "" ]; then
+    env="dev"
+  else
+    env=$2
+  fi
+
+  if [ "$3" = "" ]; then
+    runlist="role[standalone]"
+  else
+    runlist=$3
+  fi
+
+  fullname=$env-$name
+  echo "Creating $fullname with a run_list of $runlist"
+
+  knife rackspace server create -I 125 -f 1 --server-name $fullname --node-name $fullname -r '$runlist' 
+  knife node set_environment $fullname $env
+  knife node run_list add $fullname $runlist
+}
+
+function rs-delete {
+  id=`knife rackspace server list | grep $1 | awk '{print $1}'`
+  knife rackspace server delete $id
+  knife node delete $1
+  knife client delete $1
 }
