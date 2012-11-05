@@ -43,6 +43,8 @@ alias vig='mvim'
 alias be='bundle exec'
 alias r='rake'
 alias mroe='more'
+alias c='cd ~/vsco/chef'
+alias s='cd ~/vsco/vsco-cam-store'
 
 function pz {
   ps -aef | grep -i $1 | grep -v grep
