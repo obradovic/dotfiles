@@ -12,6 +12,7 @@ alias ks='knife status'
 alias ck='knife cookbook'
 alias up='knife cookbook upload'
 alias upr='knife role from file'
+alias upu='knife data bag from file users $1'
 alias urp='upr'
 
 alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
@@ -41,6 +42,7 @@ alias del='rm'
 alias vig='mvim'
 alias be='bundle exec'
 alias r='rake'
+alias mroe='more'
 
 function pz {
   ps -aef | grep -i $1 | grep -v grep
@@ -126,6 +128,8 @@ alias drepo='ssh zo@dev-repo1.visualsupply.co'
 alias dev1='ssh zo@dev1.visualsupply.co'
 alias staging='ssh zo@50.56.207.198'
 alias dev1='ssh zo@dev1.visualsupply.co'
+alias uploader='ssh -v -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
+alias mongo3='ssh -v -i ~/.ssh/mwukey.pem ubuntu@107.20.241.49'
 
 function rs-create {
   if [ "$1" = "" ]; then
@@ -155,21 +159,29 @@ function rs-create {
   flavor="2"
   # endpoint="https://ord.servers.api.rackspacecloud.com/v2"
   endpoint="https://dfw.servers.api.rackspacecloud.com/v2"
+  json='{ "attributes": { "env": "dev", "run_list": [ "role[standalone]" ] } }'
 
-  knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list '$run_list' --rackspace-endpoint $endpoint 
-  knife node set_environment $fullname $env
+  cd ~/vsco/chef
+
+  # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list '$run_list' --rackspace-endpoint $endpoint --environment dev --json-attributes '$json'"
+
+  knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-endpoint $endpoint
+  # # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list \"$run_list\" --environment $env --rackspace-endpoint $endpoint"
+  # echo $cmd
+  # $cmd
+  # knife node set_environment $fullname $env
   knife node run_list add $fullname $run_list
+}
+
+function foobar {
+  cmdd='ls -la /tmp'
+  echo $cmdd
+  $cmdd
 }
 
 function rs-delete {
   id=`knife rackspace server list | grep $1 | awk '{print $1}'`
-  knife rackspace server delete $id
-
-  echo "Deleting Chef Node $1:"
-  knife node delete $1
-
-  echo "Deleting Chef Client $1:"
-  knife client delete $1
+  knife rackspace server delete $id -P
 
   dns_id=`dnsimple record:list visualsupply.co | grep "$1.visualsupply.co (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
 
@@ -179,4 +191,6 @@ function rs-delete {
     echo "Deleting DNS record $dns_id"
     dnsimple record:delete visualsupply.co $dns_id
   fi
+
+  cd -
 }
