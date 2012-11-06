@@ -83,12 +83,14 @@ source ~/.rvm/scripts/rvm
 # some default locations
 export NGINX_HOME=/usr/local/Cellar/nginx/current
 export APACHE_HOME=/usr/local/apache2
+export NPM_HOME=/usr/local/share/npm/
 
 # Python
 export PYTHONPATH=~/
 
-export PATH=/usr/local/bin:$PATH
 export PATH=~/bin:$PATH
+export PATH=$PATH:/usr/local/bin
+export PATH=$PATH:$NPM_HOME/bin
 export PATH=$PATH:$HOME/.rvm/bin 
 export PATH=$PATH:.
 
@@ -132,6 +134,7 @@ alias staging='ssh zo@50.56.207.198'
 alias dev1='ssh zo@dev1.visualsupply.co'
 alias uploader='ssh -v -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
 alias mongo3='ssh -v -i ~/.ssh/mwukey.pem ubuntu@107.20.241.49'
+alias dev-store='ssh zo@dev-store.visualsupply.co'
 
 function rs-create {
   if [ "$1" = "" ]; then
@@ -149,7 +152,7 @@ function rs-create {
   fi
 
   if [ "$3" = "" ]; then
-    run_list="role[standalone]"
+    run_list=role[standalone]
   else
     run_list=$3
   fi
@@ -167,7 +170,7 @@ function rs-create {
 
   # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list '$run_list' --rackspace-endpoint $endpoint --environment dev --json-attributes '$json'"
 
-  knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-endpoint $endpoint
+  knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r '$run_list' --environment $env -d ubuntu12.04-ruby1.9.1 --rackspace-endpoint $endpoint
   # # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list \"$run_list\" --environment $env --rackspace-endpoint $endpoint"
   # echo $cmd
   # $cmd
@@ -196,3 +199,8 @@ function rs-delete {
 
   cd -
 }
+
+function boo {
+  knife rackspace server create --image 5cebb13a-f783-4f8c-8058-c4182c724ccd --flavor 2 --server-name dev-zo-$1 --node-name dev-zo-$1 --environment dev -d ubuntu12.04-ruby1.9.1 --run-list 'role[standalone]'
+}
+
