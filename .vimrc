@@ -22,4 +22,3 @@ filetype on
 
 set guioptions-=T
 set guifont=Droid\ Sans\ Mono:h10
-set ruler
