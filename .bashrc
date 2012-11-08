@@ -27,6 +27,8 @@ alias god='git'
 alias st='git status'
 alias add='git add'
 alias com='git commit -m'
+alias coma='git commit -am'
+alias pu='git push'
 alias master='git checkout master'
 alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
 
