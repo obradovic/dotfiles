@@ -25,6 +25,8 @@ alias co='git checkout'
 alias gp='git pull --rebase'
 alias god='git'
 alias st='git status'
+alias add='git add'
+alias com='git commit -m'
 alias master='git checkout master'
 alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
 
@@ -178,12 +180,6 @@ function rs-create {
   knife node run_list add $fullname $run_list
 }
 
-function foobar {
-  cmdd='ls -la /tmp'
-  echo $cmdd
-  $cmdd
-}
-
 function rs-delete {
   id=`knife rackspace server list | grep $1 | awk '{print $1}'`
   knife rackspace server delete $id -P
@@ -198,10 +194,6 @@ function rs-delete {
   fi
 
   cd -
-}
-
-function boo {
-  knife rackspace server create --image 5cebb13a-f783-4f8c-8058-c4182c724ccd --flavor 2 --server-name dev-zo-$1 --node-name dev-zo-$1 --environment dev -d ubuntu12.04-ruby1.9.1 --run-list 'role[standalone]'
 }
 
 function boo {
