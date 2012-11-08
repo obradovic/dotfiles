@@ -204,3 +204,7 @@ function boo {
   knife rackspace server create --image 5cebb13a-f783-4f8c-8058-c4182c724ccd --flavor 2 --server-name dev-zo-$1 --node-name dev-zo-$1 --environment dev -d ubuntu12.04-ruby1.9.1 --run-list 'role[standalone]'
 }
 
+function boo {
+  knife rackspace server create --image 5cebb13a-f783-4f8c-8058-c4182c724ccd --flavor 2 --server-name dev-zo-$1 --node-name dev-zo-$1 --environment dev -d ubuntu12.04-ruby1.9.1 --run-list 'role[standalone]' --rackspace-endpoint 'https://dfw.servers.api.rackspacecloud.com/v2' 
+}
+
