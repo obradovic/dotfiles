@@ -88,6 +88,7 @@ source ~/.rvm/scripts/rvm
 export NGINX_HOME=/usr/local/Cellar/nginx/current
 export APACHE_HOME=/usr/local/apache2
 export NPM_HOME=/usr/local/share/npm/
+export ANDROID_HOME=~/adt-bundle-mac/sdk
 
 # Python
 export PYTHONPATH=~/
@@ -96,6 +97,8 @@ export PATH=~/bin:$PATH
 export PATH=$PATH:/usr/local/bin
 export PATH=$PATH:$NPM_HOME/bin
 export PATH=$PATH:$HOME/.rvm/bin 
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/platform-tools
 export PATH=$PATH:.
 
 # Prompt, and other bash goodies
