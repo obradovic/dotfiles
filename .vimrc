@@ -1,7 +1,7 @@
 set nocompatible
-set expandtab
-set tabstop=2
-set shiftwidth=2
+" set expandtab
+set tabstop=4
+set shiftwidth=4
 set autoindent
 set smartindent
 set paste
