@@ -49,6 +49,9 @@ alias r='rake'
 alias mroe='more'
 alias c='cd ~/vsco/chef'
 alias s='cd ~/vsco/vsco-cam-store'
+alias a='cd ~/vsco/vsco-cam-2/AndroidLucy'
+alias b='cd ~/vsco/zo-mrbilldroid'
+alias o='openssl'
 
 function pz {
   ps -aef | grep -i $1 | grep -v grep
@@ -89,11 +92,13 @@ export NGINX_HOME=/usr/local/Cellar/nginx/current
 export APACHE_HOME=/usr/local/apache2
 export NPM_HOME=/usr/local/share/npm/
 export ANDROID_HOME=~/adt-bundle-mac/sdk
+export OPENSSL_HOME=/usr/local/ssl/
 
 # Python
 export PYTHONPATH=~/
 
 export PATH=~/bin:$PATH
+export PATH=$OPENSSL_HOME/bin:$PATH
 export PATH=$PATH:/usr/local/bin
 export PATH=$PATH:$NPM_HOME/bin
 export PATH=$PATH:$HOME/.rvm/bin 
@@ -205,3 +210,6 @@ function boo {
   knife rackspace server create --image 5cebb13a-f783-4f8c-8058-c4182c724ccd --flavor 2 --server-name dev-zo-$1 --node-name dev-zo-$1 --environment dev -d ubuntu12.04-ruby1.9.1 --run-list 'role[standalone]' --rackspace-endpoint 'https://dfw.servers.api.rackspacecloud.com/v2' 
 }
 
+function rs-create-lb {
+  knife rackspace server create --image 5cebb13a-f783-4f8c-8058-c4182c724ccd --flavor 2 --server-name $1-lb --node-name $1-lb --environment $1 -d ubuntu12.04-ruby1.9.1 --run-list 'role[haproxy]' --rackspace-endpoint 'https://dfw.servers.api.rackspacecloud.com/v2' 
+}
