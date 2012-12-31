@@ -1,9 +1,12 @@
 set nocompatible
 " set expandtab
+set smarttab
 set tabstop=4
 set shiftwidth=4
 set autoindent
-set smartindent
+" set smartindent
+set cindent
+set autoindent
 set paste
 
 set ru

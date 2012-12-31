@@ -47,6 +47,8 @@ alias vig='mvim'
 alias be='bundle exec'
 alias r='rake'
 alias mroe='more'
+alias copy='cp'
+alias move='mv'
 alias c='cd ~/vsco/chef'
 alias s='cd ~/vsco/vsco-cam-store'
 alias a='cd ~/vsco/vsco-cam-2/AndroidLucy'
@@ -92,14 +94,14 @@ export NGINX_HOME=/usr/local/Cellar/nginx/current
 export APACHE_HOME=/usr/local/apache2
 export NPM_HOME=/usr/local/share/npm/
 export ANDROID_HOME=~/adt-bundle-mac/sdk
-export OPENSSL_HOME=/usr/local/ssl/
+# export OPENSSL_HOME=/usr/local/ssl/
 
 # Python
 export PYTHONPATH=~/
 
 export PATH=~/bin:$PATH
-export PATH=$OPENSSL_HOME/bin:$PATH
-export PATH=$PATH:/usr/local/bin
+# export PATH=$OPENSSL_HOME/bin:$PATH
+export PATH=/usr/local/bin:$PATH
 export PATH=$PATH:$NPM_HOME/bin
 export PATH=$PATH:$HOME/.rvm/bin 
 export PATH=$PATH:$ANDROID_HOME/tools
@@ -147,12 +149,20 @@ alias dev1='ssh zo@dev1.visualsupply.co'
 alias uploader='ssh -v -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
 alias mongo3='ssh -v -i ~/.ssh/mwukey.pem ubuntu@107.20.241.49'
 alias dev-store='ssh zo@dev-store.visualsupply.co'
+alias dev2='ssh dev-cheese'
 
 function rs-create {
   if [ "$1" = "" ]; then
-    echo "Usage: <name> <env> <run_list>"
+	echo
+    echo "Usage: <name> <env> <run_list> <size>"
+	echo
+    echo "       <name>     the name of this node"
     echo "       <env>      defaults to \"dev\""
-    echo "       <run_list> defaults to \"role[standalone]\""
+    echo "       <run_list> defaults to \"'role[standalone]'\" (needs single quotes)"
+    echo "       <size>     defaults to \"2\""
+	echo
+    echo "       Example:   rs-create loader dev 'role[lb]'"
+	echo
     return
   fi
   name=$1
@@ -164,52 +174,52 @@ function rs-create {
   fi
 
   if [ "$3" = "" ]; then
-    run_list=role[standalone]
+    run_list=\'role[standalone]\'
   else
     run_list=$3
   fi
 
-  fullname=$env-$name
-  echo "Creating $fullname with a run_list of $run_list"
+  if [ "$4" = "" ]; then
+    flavor="2"
+  else
+    flavor='$4'
+  fi
 
-  image="5cebb13a-f783-4f8c-8058-c4182c724ccd"
-  flavor="2"
+  fullname=$env-$name
+  echo "Creating $fullname with a run_list of $run_list, size $flavor"
+
+  image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd"
   # endpoint="https://ord.servers.api.rackspacecloud.com/v2"
   endpoint="https://dfw.servers.api.rackspacecloud.com/v2"
-  json='{ "attributes": { "env": "dev", "run_list": [ "role[standalone]" ] } }'
+  # json='{ "attributes": { "env": "dev", "run_list": [ "role[standalone]" ] } }'
 
   cd ~/vsco/chef
 
-  # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list '$run_list' --rackspace-endpoint $endpoint --environment dev --json-attributes '$json'"
+  knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d ubuntu12-ruby1.9.1 --rackspace-endpoint $endpoint --run-list $run_list
 
-  knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r '$run_list' --environment $env -d ubuntu12.04-ruby1.9.1 --rackspace-endpoint $endpoint
+  # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --rackspace-endpoint $endpoint --environment dev --json-attributes '$json'"
   # # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list \"$run_list\" --environment $env --rackspace-endpoint $endpoint"
   # echo $cmd
   # $cmd
-  # knife node set_environment $fullname $env
-  knife node run_list add $fullname $run_list
+  knife node set_environment $fullname $env
+  # knife node run_list add $fullname $run_list
 }
 
 function rs-delete {
-  id=`knife rackspace server list | grep $1 | awk '{print $1}'`
-  knife rackspace server delete $id -P
+	c
 
-  dns_id=`dnsimple record:list visualsupply.co | grep "$1.visualsupply.co (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
+  	id=`knife rackspace server list | grep $1 | awk '{print $1}'`
+  	knife rackspace server delete $id -P
 
-  if [ -z "$dns_id" ]; then
-    echo "DNS record is empty for $1. Not deleting."
-  else
-    echo "Deleting DNS record $dns_id"
-    dnsimple record:delete visualsupply.co $dns_id
-  fi
+  	dns_id=`dnsimple record:list visualsupply.co | grep "$1.visualsupply.co (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
 
-  cd -
+  	if [ -z "$dns_id" ]; then
+    	echo "DNS record is empty for $1. Not deleting."
+  	else
+    	echo "Deleting DNS record $dns_id"
+    	dnsimple record:delete visualsupply.co $dns_id
+  	fi
+
+  	cd -
 }
 
-function boo {
-  knife rackspace server create --image 5cebb13a-f783-4f8c-8058-c4182c724ccd --flavor 2 --server-name dev-zo-$1 --node-name dev-zo-$1 --environment dev -d ubuntu12.04-ruby1.9.1 --run-list 'role[standalone]' --rackspace-endpoint 'https://dfw.servers.api.rackspacecloud.com/v2' 
-}
-
-function rs-create-lb {
-  knife rackspace server create --image 5cebb13a-f783-4f8c-8058-c4182c724ccd --flavor 2 --server-name $1-lb --node-name $1-lb --environment $1 -d ubuntu12.04-ruby1.9.1 --run-list 'role[haproxy]' --rackspace-endpoint 'https://dfw.servers.api.rackspacecloud.com/v2' 
-}
