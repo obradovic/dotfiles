@@ -23,5 +23,8 @@ set showcmd
 syntax on
 filetype on
 
+" :hi MatchParen cterm=underline ctermbg=none ctermfg=none
+:hi MatchParen cterm=bold ctermbg=none ctermfg=green
+
 set guioptions-=T
 set guifont=Droid\ Sans\ Mono:h9
