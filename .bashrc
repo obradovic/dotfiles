@@ -53,7 +53,7 @@ alias c='cd ~/vsco/chef'
 alias s='cd ~/vsco/vsco-cam-store'
 alias a='cd ~/vsco/vsco-cam-2/AndroidLucy'
 alias b='cd ~/vsco/zo-mrbilldroid'
-alias o='openssl'
+alias v='cd ~/vsco/chef/cookbooks/vsco/recipes'
 
 function pz {
   ps -aef | grep -i $1 | grep -v grep
@@ -94,6 +94,7 @@ export NGINX_HOME=/usr/local/Cellar/nginx/current
 export APACHE_HOME=/usr/local/apache2
 export NPM_HOME=/usr/local/share/npm/
 export ANDROID_HOME=~/adt-bundle-mac/sdk
+export HEROKU_HOME=/usr/local/heroku
 # export OPENSSL_HOME=/usr/local/ssl/
 
 # Python
@@ -106,6 +107,7 @@ export PATH=$PATH:$NPM_HOME/bin
 export PATH=$PATH:$HOME/.rvm/bin 
 export PATH=$PATH:$ANDROID_HOME/tools
 export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$PATH:$HEROKU_HOME/bin
 export PATH=$PATH:.
 
 # Prompt, and other bash goodies
