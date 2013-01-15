@@ -197,7 +197,7 @@ function rs-create {
 
   cd ~/vsco/chef
 
-  knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d ubuntu12-ruby1.9.1 --rackspace-endpoint $endpoint --run-list $run_list
+  knife rackspace server create -VV --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d ubuntu12-ruby1.9.1 --rackspace-endpoint $endpoint --run-list $run_list
 
   # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --rackspace-endpoint $endpoint --environment dev --json-attributes '$json'"
   # # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list \"$run_list\" --environment $env --rackspace-endpoint $endpoint"
@@ -207,12 +207,8 @@ function rs-create {
   # knife node run_list add $fullname $run_list
 }
 
-function rs-delete {
-	c
 
-  	id=`knife rackspace server list | grep $1 | awk '{print $1}'`
-  	knife rackspace server delete $id -P
-
+function dns-delete {
   	dns_id=`dnsimple record:list visualsupply.co | grep "$1.visualsupply.co (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
 
   	if [ -z "$dns_id" ]; then
@@ -221,6 +217,16 @@ function rs-delete {
     	echo "Deleting DNS record $dns_id"
     	dnsimple record:delete visualsupply.co $dns_id
   	fi
+}
+
+function rs-delete {
+	c
+
+  	id=`knife rackspace server list | grep $1 | awk '{print $1}'`
+  	knife rackspace server delete $id -P
+
+  	dns-delete $1	
+  	dns-delete $1-private
 
   	cd -
 }
