@@ -21,6 +21,7 @@ alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
 # GIT'R DONE!
 alias g='git'
 alias gs='git submodule'
+alias gd='git diff'
 alias co='git checkout'
 alias gp='git pull --rebase'
 alias god='git'
