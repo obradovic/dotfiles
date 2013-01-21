@@ -22,6 +22,7 @@ alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
 alias g='git'
 alias gs='git submodule'
 alias gd='git diff'
+alias ga='git add'
 alias co='git checkout'
 alias gp='git pull --rebase'
 alias god='git'
@@ -127,6 +128,11 @@ export GIT_PS1_SHOWSTASHSTATE=true
 export GIT_PS1_SHOWDIRTYSTATE=true
 export GIT_PS1_SHOWUPSTREAM="auto"
 
+
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+  . $(brew --prefix)/etc/bash_completion
+fi
+
 . ~/.git-prompt.sh
 . ~/.git-completion.sh
 . ~/.colors_bash
@@ -185,11 +191,11 @@ function rs-create {
   if [ "$4" = "" ]; then
     flavor="2"
   else
-    flavor='$4'
+    flavor=$4
   fi
 
   fullname=$env-$name
-  echo "Creating $fullname with a run_list of $run_list, size $flavor"
+  echo "Creating $fullname with a run_list of $run_list, flavor $flavor"
 
   image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd"
   # endpoint="https://ord.servers.api.rackspacecloud.com/v2"
@@ -198,7 +204,7 @@ function rs-create {
 
   cd ~/vsco/chef
 
-  knife rackspace server create -VV --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d ubuntu12-ruby1.9.1 --rackspace-endpoint $endpoint --run-list $run_list
+  time knife rackspace server create -VV --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d ubuntu12-ruby1.9.1 --rackspace-endpoint $endpoint --run-list $run_list
 
   # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --rackspace-endpoint $endpoint --environment dev --json-attributes '$json'"
   # # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list \"$run_list\" --environment $env --rackspace-endpoint $endpoint"
@@ -224,7 +230,7 @@ function rs-delete {
 	c
 
   	id=`knife rackspace server list | grep $1 | awk '{print $1}'`
-  	knife rackspace server delete $id -P
+  	time knife rackspace server delete $id -P
 
   	dns-delete $1	
   	dns-delete $1-private
