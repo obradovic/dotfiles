@@ -13,6 +13,8 @@ alias ck='knife cookbook'
 alias up='knife cookbook upload'
 alias upr='knife role from file'
 alias upu='knife data bag from file users $1'
+alias kshow='knife node show'
+alias kedit='knife node edit'
 alias urp='upr'
 
 alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
