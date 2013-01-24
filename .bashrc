@@ -6,7 +6,8 @@ alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
 alias k='knife'
 alias kr='knife rackspace'
-alias krs='kr '
+alias krs='kr server'
+alias krsl='krs list'
 alias ke='knife ec2'
 alias ks='knife status'
 alias ck='knife cookbook'
@@ -198,8 +199,12 @@ function rs-create {
     flavor=$4
   fi
 
-  location="dfw"
-  #location="ord"
+  if [ "$5" = "" ]; then
+    location="dfw"
+  else
+    location=$5
+  fi
+
   endpoint="https://$location.servers.api.rackspacecloud.com/v2"
 
   fullname=$env-$name
