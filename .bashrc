@@ -12,6 +12,7 @@ alias ks='knife status'
 alias ck='knife cookbook'
 alias up='knife cookbook upload'
 alias upr='knife role from file'
+alias upe='knife environment from file'
 alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
@@ -58,6 +59,7 @@ alias s='cd ~/vsco/vsco-cam-store'
 alias a='cd ~/vsco/vsco-cam-2/AndroidLucy'
 alias b='cd ~/vsco/zo-mrbilldroid'
 alias v='cd ~/vsco/chef/cookbooks/vsco/recipes'
+alias e='cd ~/vsco/chef/environments'
 
 function pz {
   ps -aef | grep -i $1 | grep -v grep
@@ -108,7 +110,7 @@ export PATH=~/bin:$PATH
 # export PATH=$OPENSSL_HOME/bin:$PATH
 export PATH=/usr/local/bin:$PATH
 export PATH=$PATH:$NPM_HOME/bin
-export PATH=$PATH:$HOME/.rvm/bin 
+export PATH=$PATH:$HOME/.rvm/bin
 export PATH=$PATH:$ANDROID_HOME/tools
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 export PATH=$PATH:$HEROKU_HOME/bin
@@ -196,17 +198,22 @@ function rs-create {
     flavor=$4
   fi
 
-  fullname=$env-$name
-  echo "Creating $fullname with a run_list of $run_list, flavor $flavor"
+  location="dfw"
+  #location="ord"
+  endpoint="https://$location.servers.api.rackspacecloud.com/v2"
 
-  image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd"
-  # endpoint="https://ord.servers.api.rackspacecloud.com/v2"
-  endpoint="https://dfw.servers.api.rackspacecloud.com/v2"
+  fullname=$env-$name
+  echo "Creating $fullname with a run_list of $run_list, flavor $flavor, in $location"
+
+  image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd" 
+
+  bootstrap="ubuntu12-ruby1.9.1"
+
   # json='{ "attributes": { "env": "dev", "run_list": [ "role[standalone]" ] } }'
 
   cd ~/vsco/chef
 
-  time knife rackspace server create -VV --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d ubuntu12-ruby1.9.1 --rackspace-endpoint $endpoint --run-list $run_list
+  time knife rackspace server create -VV --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d $bootstrap --rackspace-endpoint $endpoint --run-list $run_list
 
   # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --rackspace-endpoint $endpoint --environment dev --json-attributes '$json'"
   # # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list \"$run_list\" --environment $env --rackspace-endpoint $endpoint"
