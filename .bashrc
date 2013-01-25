@@ -21,6 +21,8 @@ alias urp='upr'
 
 alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
 alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
+alias bas='vi ~/.bashrc && . ~/.bashrc'
+alias mac='vi ~/vsco/machines.txt'
 
 # GIT'R DONE!
 alias g='git'
@@ -146,40 +148,46 @@ export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[0;32m\]`hostname`\[\e[0m\]\[\e[0;35m\]$
 # export PS1="\[$BBlack\]\T `parse_git_branch` \[$Color_Off\]\[$BGreen\]\W  > \[$Color_Off\]"
 
 # Machines
-alias db1='ssh zo@prod-db1.visualsupply.co'
-alias db2='ssh zo@prod-db2.visualsupply.co'
-alias db3='ssh zo@prod-db3.visualsupply.co'
-alias fe1='ssh zo@prod-fe1.visualsupply.co'
-alias fe2='ssh zo@prod-fe2.visualsupply.co'
-alias fe3='ssh zo@prod-fe3.visualsupply.co'
-alias mongo1='ssh zo@prod-mongod1.visualsupply.co'
-alias mongo2='ssh zo@prod-mongod2.visualsupply.co'
-alias cron1='ssh zo@prod-cron1.visualsupply.co'
+alias db1='ssh zo@prod-db1'
+alias db2='ssh zo@prod-db2'
+alias db3='ssh zo@prod-db3'
+alias fe1='ssh zo@prod-fe1'
+alias fe2='ssh zo@prod-fe2'
+alias fe3='ssh zo@prod-fe3'
+alias mongo1='ssh zo@prod-mongod1'
+alias mongo2='ssh zo@prod-mongod2'
+alias cron1='ssh zo@prod-cron1'
 alias dmongo='ssh zo@198.101.240.202'
-alias drepo='ssh zo@dev-repo1.visualsupply.co'
-alias dev1='ssh zo@dev1.visualsupply.co'
+alias drepo='ssh zo@dev-repo1'
+alias dev1='ssh zo@dev1'
 alias staging='ssh zo@50.56.207.198'
-alias dev1='ssh zo@dev1.visualsupply.co'
+alias dev1='ssh zo@dev1'
 alias uploader='ssh -v -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
 alias mongo3='ssh -v -i ~/.ssh/mwukey.pem ubuntu@107.20.241.49'
-alias dev-store='ssh zo@dev-store.visualsupply.co'
+alias dev-store='ssh zo@dev-store'
 alias dev2='ssh dev-cheese'
 
 function rs-create {
   if [ "$1" = "" ]; then
 	echo
-    echo "Usage: <name> <env> <run_list> <size>"
+    echo "Usage: <run_list> <env> <name> <flavor> <location>"
 	echo
-    echo "       <name>     the name of this node"
-    echo "       <env>      defaults to \"dev\""
     echo "       <run_list> defaults to \"'role[standalone]'\" (needs single quotes)"
-    echo "       <size>     defaults to \"2\""
+    echo "       <env>      defaults to \"dev\""
+    echo "       <name>     the name of this node"
+    echo "       <flavor>   defaults to \"2\""
+    echo "       <location> defaults to \"dfw\""
 	echo
-    echo "       Example:   rs-create loader dev 'role[lb]'"
+    echo "       Example:   rs-create 'role[lb]' dev loader 2 dfw"
 	echo
     return
   fi
-  name=$1
+
+  if [ "$1" = "" ]; then
+    run_list=\'role[standalone]\'
+  else
+    run_list=$1
+  fi
 
   if [ "$2" = "" ]; then
     env="dev"
@@ -187,11 +195,7 @@ function rs-create {
     env=$2
   fi
 
-  if [ "$3" = "" ]; then
-    run_list=\'role[standalone]\'
-  else
-    run_list=$3
-  fi
+  name=$3
 
   if [ "$4" = "" ]; then
     flavor="2"
