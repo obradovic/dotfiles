@@ -53,16 +53,25 @@ alias 4='fg %4'
 alias del='rm'
 alias vig='mvim'
 alias be='bundle exec'
-alias r='rake'
 alias mroe='more'
 alias copy='cp'
 alias move='mv'
 alias c='cd ~/vsco/chef'
+alias m='cd ~/vsco/chef/cookbooks/mongodb'
 alias s='cd ~/vsco/vsco-cam-store'
 alias a='cd ~/vsco/vsco-cam-2/AndroidLucy'
 alias b='cd ~/vsco/zo-mrbilldroid'
 alias v='cd ~/vsco/chef/cookbooks/vsco/recipes'
 alias e='cd ~/vsco/chef/environments'
+alias r='cd ~/vsco/chef/roles'
+alias S='ssh'
+
+function p {
+	ssh prod-$1
+}
+function d {
+	ssh dev-$1
+}
 
 function pz {
   ps -aef | grep -i $1 | grep -v grep
@@ -170,32 +179,22 @@ alias dev2='ssh dev-cheese'
 function rs-create {
   if [ "$1" = "" ]; then
 	echo
-    echo "Usage: <run_list> <env> <name> <flavor> <location>"
+    echo "Usage: <env> <run_list> <name> <flavor> <location>"
 	echo
-    echo "       <run_list> defaults to \"'role[standalone]'\" (needs single quotes)"
-    echo "       <env>      defaults to \"dev\""
-    echo "       <name>     the name of this node"
-    echo "       <flavor>   defaults to \"2\""
-    echo "       <location> defaults to \"dfw\""
+    echo "       <env>      "
+    echo "       <run_list> (needs single quotes)"
+    echo "       <name>     "
+    echo "       <flavor>   defaults to \"2\" (512MB small)"
+    echo "       <location> defaults to \"dfw\" (\"ord\" is a valid alternative)"
 	echo
-    echo "       Example:   rs-create 'role[lb]' dev loader 2 dfw"
+    echo "Example: rs-create dev 'role[lb]' loader"
 	echo
     return
   fi
 
-  if [ "$1" = "" ]; then
-    run_list=\'role[standalone]\'
-  else
-    run_list=$1
-  fi
-
-  if [ "$2" = "" ]; then
-    env="dev"
-  else
-    env=$2
-  fi
-
-  name=$3
+  env=$1
+  name=$2
+  run_list=$3
 
   if [ "$4" = "" ]; then
     flavor="2"
@@ -209,38 +208,27 @@ function rs-create {
     location=$5
   fi
 
+  image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd" 
   endpoint="https://$location.servers.api.rackspacecloud.com/v2"
-
   fullname=$env-$name
   echo "Creating $fullname with a run_list of $run_list, flavor $flavor, in $location"
-
-  image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd" 
-
-  bootstrap="ubuntu12-ruby1.9.1"
-
   # json='{ "attributes": { "env": "dev", "run_list": [ "role[standalone]" ] } }'
 
-  cd ~/vsco/chef
-
-  time knife rackspace server create -VV --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d $bootstrap --rackspace-endpoint $endpoint --run-list $run_list
-
-  # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --rackspace-endpoint $endpoint --environment dev --json-attributes '$json'"
-  # # cmd="knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list \"$run_list\" --environment $env --rackspace-endpoint $endpoint"
-  # echo $cmd
-  # $cmd
+  c
+  bootstrap="vsco-ubuntu"
+  time knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d $bootstrap --rackspace-endpoint $endpoint --run-list $run_list
   knife node set_environment $fullname $env
-  # knife node run_list add $fullname $run_list
 }
 
 
 function dns-delete {
-  	dns_id=`dnsimple record:list visualsupply.co | grep "$1.visualsupply.co (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
+  	dns_id=`dnsimple record:list $2 | grep "$1.$2 (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
 
   	if [ -z "$dns_id" ]; then
     	echo "DNS record is empty for $1. Not deleting."
   	else
     	echo "Deleting DNS record $dns_id"
-    	dnsimple record:delete visualsupply.co $dns_id
+    	dnsimple record:delete $2 $dns_id
   	fi
 }
 
@@ -250,8 +238,10 @@ function rs-delete {
   	id=`knife rackspace server list | grep $1 | awk '{print $1}'`
   	time knife rackspace server delete $id -P
 
-  	dns-delete $1	
-  	dns-delete $1-private
+  	dns-delete $1			visualsupply.co
+  	dns-delete $1-private	visualsupply.co
+  	dns-delete $1			vsco.co
+  	dns-delete $1-private	vsco.co
 
   	cd -
 }
