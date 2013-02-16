@@ -25,3 +25,5 @@
 	discover = blame
 	praise = blame
   sub = submodule
+[push]
+	default = matching

@@ -18,6 +18,7 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
+alias ba='. ~/.bashrc'
 
 alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
 alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
@@ -65,12 +66,19 @@ alias v='cd ~/vsco/chef/cookbooks/vsco/recipes'
 alias e='cd ~/vsco/chef/environments'
 alias r='cd ~/vsco/chef/roles'
 alias S='ssh'
+alias vo='vi'
 
 function p {
 	ssh prod-$1
 }
 function d {
 	ssh dev-$1
+}
+function pm {
+	p mysql$1
+}
+function pa {
+	p app$1
 }
 
 function pz {
@@ -113,14 +121,21 @@ export APACHE_HOME=/usr/local/apache2
 export NPM_HOME=/usr/local/share/npm/
 export ANDROID_HOME=~/adt-bundle-mac/sdk
 export HEROKU_HOME=/usr/local/heroku
+export PEAR_HOME=/Users/zo/pear/
+export PHP_HOME=/usr/local/opt/php54
 # export OPENSSL_HOME=/usr/local/ssl/
 
 # Python
 export PYTHONPATH=~/
 
+
+export PATH=$PHP_HOME/bin:$PATH
+export PATH=./node_modules/.bin:$PATH
 export PATH=~/bin:$PATH
+export PATH=$PEAR_HOME/bin:$PATH
 # export PATH=$OPENSSL_HOME/bin:$PATH
 export PATH=/usr/local/bin:$PATH
+export PATH=/usr/local/sbin:$PATH
 export PATH=$PATH:$NPM_HOME/bin
 export PATH=$PATH:$HOME/.rvm/bin
 export PATH=$PATH:$ANDROID_HOME/tools
@@ -157,44 +172,27 @@ export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[0;32m\]`hostname`\[\e[0m\]\[\e[0;35m\]$
 # export PS1="\[$BBlack\]\T `parse_git_branch` \[$Color_Off\]\[$BGreen\]\W  > \[$Color_Off\]"
 
 # Machines
-alias db1='ssh zo@prod-db1'
-alias db2='ssh zo@prod-db2'
-alias db3='ssh zo@prod-db3'
-alias fe1='ssh zo@prod-fe1'
-alias fe2='ssh zo@prod-fe2'
-alias fe3='ssh zo@prod-fe3'
-alias mongo1='ssh zo@prod-mongod1'
-alias mongo2='ssh zo@prod-mongod2'
-alias cron1='ssh zo@prod-cron1'
-alias dmongo='ssh zo@198.101.240.202'
-alias drepo='ssh zo@dev-repo1'
-alias dev1='ssh zo@dev1'
-alias staging='ssh zo@50.56.207.198'
-alias dev1='ssh zo@dev1'
 alias uploader='ssh -v -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
-alias mongo3='ssh -v -i ~/.ssh/mwukey.pem ubuntu@107.20.241.49'
-alias dev-store='ssh zo@dev-store'
-alias dev2='ssh dev-cheese'
 
 function rs-create {
   if [ "$1" = "" ]; then
 	echo
-    echo "Usage: <env> <run_list> <name> <flavor> <location>"
+    echo "rs-create <env> <name> <run_list> <flavor> <location>"
 	echo
     echo "       <env>      "
-    echo "       <run_list> (needs single quotes)"
     echo "       <name>     "
+    echo "       <run_list> (needs single quotes)"
     echo "       <flavor>   defaults to \"2\" (512MB small)"
     echo "       <location> defaults to \"dfw\" (\"ord\" is a valid alternative)"
 	echo
-    echo "Example: rs-create dev 'role[lb]' loader"
+    echo "Ex: rs-create dev loader 'role[lb]'"
 	echo
     return
   fi
 
   env=$1
   name=$2
-  run_list=$3
+  run_list="'$3'"
 
   if [ "$4" = "" ]; then
     flavor="2"
@@ -216,18 +214,41 @@ function rs-create {
 
   c
   bootstrap="vsco-ubuntu"
-  time knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d $bootstrap --rackspace-endpoint $endpoint --run-list $run_list
+  # bootstrap="internet"
+  # time knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d $bootstrap --rackspace-endpoint $endpoint --run-list $run_list
+  time knife rackspace server create -d $bootstrap --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-endpoint $endpoint 
   knife node set_environment $fullname $env
 }
 
+
+function dns-update-ttl {
+  	if [ "$1" = "" ]; then
+		echo
+		echo "dns-update-ttl <domain> <ttl>"
+		echo
+		echo "Example:"
+		echo "dns-update-ttl vsco.co 600"
+		echo "    sets TTL to 600 seconds (10 minutes)"
+		echo
+		return
+	fi
+
+	for record in `dnsimple record:list $1 | grep -v Found` 
+	do
+		if [[ $record == id* ]] ;
+		then
+			dnsimple record:update $1 `echo "${record%?}" | cut -f 2 -d ":"` ttl:$2
+		fi
+	done
+}
 
 function dns-delete {
   	dns_id=`dnsimple record:list $2 | grep "$1.$2 (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
 
   	if [ -z "$dns_id" ]; then
-    	echo "DNS record is empty for $1. Not deleting."
+    	echo "DNS record is empty for $1.$2. Not deleting."
   	else
-    	echo "Deleting DNS record $dns_id"
+    	echo "Deleting DNS record $dns_id for $1.$2"
     	dnsimple record:delete $2 $dns_id
   	fi
 }
