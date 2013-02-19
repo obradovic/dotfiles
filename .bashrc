@@ -19,6 +19,14 @@ alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
 alias ba='. ~/.bashrc'
+alias please='sudo'
+alias cd..='cd ..'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
 
 alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
 alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
@@ -259,8 +267,6 @@ function rs-delete {
   	id=`knife rackspace server list | grep $1 | awk '{print $1}'`
   	time knife rackspace server delete $id -P
 
-  	dns-delete $1			visualsupply.co
-  	dns-delete $1-private	visualsupply.co
   	dns-delete $1			vsco.co
   	dns-delete $1-private	vsco.co
 
