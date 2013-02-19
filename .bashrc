@@ -75,6 +75,7 @@ alias e='cd ~/vsco/chef/environments'
 alias r='cd ~/vsco/chef/roles'
 alias S='ssh'
 alias vo='vi'
+alias vu='vi'
 
 function p {
 	ssh prod-$1
