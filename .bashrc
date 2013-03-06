@@ -1,5 +1,6 @@
 
 set -o vi
+shopt -s extglob
 
 # OPS shortcuts
 alias cc='chef-client -l info'
@@ -18,20 +19,6 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
-alias ba='. ~/.bashrc'
-alias please='sudo'
-alias cd..='cd ..'
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias .3='cd ../../..'
-alias .4='cd ../../../..'
-alias .5='cd ../../../../..'
-
-alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
-alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
-alias bas='vi ~/.bashrc && . ~/.bashrc'
-alias mac='vi ~/vsco/machines.txt'
 
 # GIT'R DONE!
 alias g='git'
@@ -49,10 +36,11 @@ alias pu='git push'
 alias master='git checkout master'
 alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
 
+# generic
 alias dir='ls -la'
 alias dor='dir'
 alias dri='dir'
-alias l='ls -al'
+alias dur='dir'
 alias h='history 100'
 alias j='jobs'
 alias 1='fg %1'
@@ -61,10 +49,28 @@ alias 3='fg %3'
 alias 4='fg %4'
 alias del='rm'
 alias vig='mvim'
-alias be='bundle exec'
+alias vo='vi'
+alias vu='vi'
 alias mroe='more'
 alias copy='cp'
 alias move='mv'
+alias bas='vi ~/.bashrc && . ~/.bashrc'
+alias mac='vi ~/vsco/machines.txt'
+alias please='sudo'
+alias be='bundle exec'
+alias cd..='cd ..'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
+alias S='ssh'
+alias s3='s3cmd'
+alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
+alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
+
+# dirs
 alias c='cd ~/vsco/chef'
 alias m='cd ~/vsco/chef/cookbooks/mongodb'
 alias s='cd ~/vsco/vsco-cam-store'
@@ -73,9 +79,24 @@ alias b='cd ~/vsco/zo-mrbilldroid'
 alias v='cd ~/vsco/chef/cookbooks/vsco/recipes'
 alias e='cd ~/vsco/chef/environments'
 alias r='cd ~/vsco/chef/roles'
-alias S='ssh'
-alias vo='vi'
-alias vu='vi'
+alias ro='cd ~/vsco/rose'
+alias vs='cd ~/vsco/vsco'
+
+
+function l {
+	LOGDIR="/var/log"
+	case "$1" in
+	"aperr")	file="`ls -tr $LOGDIR/apache2/error* | tail -1`" ;;
+	a*)			file="`ls -tr $LOGDIR/apache2/access* | tail -1`" ;;
+	r*)			file="$LOGDIR/resizer.log" ;;
+	g*)			file="$LOGDIR/gearmand.log" ;;
+	m*)			file="$LOGDIR/mongodb/mongodb.log" ;;
+	t*)			file="$LOGDIR/tracelyzer/tracelyzer.log" ;;
+	*) 			echo "default" ;;
+	esac
+
+	tail -50f $file
+}
 
 function p {
 	ssh prod-$1
@@ -133,14 +154,12 @@ export HEROKU_HOME=/usr/local/heroku
 export PEAR_HOME=/Users/zo/pear/
 export PHP_HOME=/usr/local/opt/php54
 # export OPENSSL_HOME=/usr/local/ssl/
+export NPM_RELATIVE="./node_modules/.bin"
 
 # Python
 export PYTHONPATH=~/
 
-
 export PATH=$PHP_HOME/bin:$PATH
-export PATH=./node_modules/.bin:$PATH
-export PATH=~/bin:$PATH
 export PATH=$PEAR_HOME/bin:$PATH
 # export PATH=$OPENSSL_HOME/bin:$PATH
 export PATH=/usr/local/bin:$PATH
@@ -151,6 +170,9 @@ export PATH=$PATH:$ANDROID_HOME/tools
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 export PATH=$PATH:$HEROKU_HOME/bin
 export PATH=$PATH:.
+
+export PATH=~/bin:$PATH
+export PATH=$NPM_RELATIVE:$PATH
 
 # Prompt, and other bash goodies
 export CLICOLOR=1
@@ -226,7 +248,7 @@ function rs-create {
   # bootstrap="internet"
   # time knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d $bootstrap --rackspace-endpoint $endpoint --run-list $run_list
   time knife rackspace server create -d $bootstrap --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-endpoint $endpoint 
-  knife node set_environment $fullname $env
+  # knife node set_environment $fullname $env
 }
 
 
