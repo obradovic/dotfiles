@@ -73,14 +73,18 @@ alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
 # dirs
 alias c='cd ~/vsco/chef'
 alias m='cd ~/vsco/chef/cookbooks/mongodb'
-alias s='cd ~/vsco/vsco-cam-store'
-alias a='cd ~/vsco/vsco-cam-2/AndroidLucy'
+alias s='cd ~/vsco/camstore'
+alias a='cd ~/vsco/android/'
 alias b='cd ~/vsco/zo-mrbilldroid'
 alias v='cd ~/vsco/chef/cookbooks/vsco/recipes'
 alias e='cd ~/vsco/chef/environments'
 alias r='cd ~/vsco/chef/roles'
 alias ro='cd ~/vsco/rose'
 alias vs='cd ~/vsco/vsco'
+alias cu='cd ~/vsco/vsco/bin/curator'
+
+# android
+alias push='(a && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
 
 
 function l {
@@ -179,7 +183,13 @@ export CLICOLOR=1
 export HISTSIZE=5000
 export HISTFILESIZE=5000
 export HISTFILE=~/.history_bash
+export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
 export EDITOR=vi
+
+
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+  . $(brew --prefix)/etc/bash_completion
+fi
 
 # function parse_git_branch {
   # ref=$(git symbolic-ref HEAD 2> /dev/null) || return
@@ -190,10 +200,6 @@ export GIT_PS1_SHOWSTASHSTATE=true
 export GIT_PS1_SHOWDIRTYSTATE=true
 export GIT_PS1_SHOWUPSTREAM="auto"
 
-
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  . $(brew --prefix)/etc/bash_completion
-fi
 
 . ~/.git-prompt.sh
 . ~/.git-completion.sh
