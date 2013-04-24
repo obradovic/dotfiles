@@ -1,6 +1,14 @@
-
 set -o vi
 shopt -s extglob
+
+# android
+alias unpush='adb uninstall com.vsco.cam'
+alias push='(a && echo "                             `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
+alias logcat='adb logcat > /tmp/logcat.txt'
+alias logvsco='tail -f /tmp/logcat.txt | grep VSCO'
+alias logall='tail -f /tmp/logcat.txt'
+alias adb-restart='adb kill-server; adb start-server'
+
 
 # OPS shortcuts
 alias cc='chef-client -l info'
@@ -83,8 +91,6 @@ alias ro='cd ~/vsco/rose'
 alias vs='cd ~/vsco/vsco'
 alias cu='cd ~/vsco/vsco/bin/curator'
 
-# android
-alias push='(a && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
 
 
 function l {
