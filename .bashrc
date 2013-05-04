@@ -1,14 +1,6 @@
 set -o vi
 shopt -s extglob
 
-# android
-alias unpush='adb uninstall com.vsco.cam'
-alias push='(a && echo "                             `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
-alias logcat='adb logcat > /tmp/logcat.txt'
-alias logvsco='tail -f /tmp/logcat.txt | grep VSCO'
-alias logall='tail -f /tmp/logcat.txt'
-alias adb-restart='adb kill-server; adb start-server'
-
 
 # OPS shortcuts
 alias cc='chef-client -l info'
@@ -91,6 +83,18 @@ alias ro='cd ~/vsco/rose'
 alias vs='cd ~/vsco/vsco'
 alias cu='cd ~/vsco/vsco/bin/curator'
 
+# android
+alias unpush='adb uninstall com.vsco.cam'
+alias push='(a && echo "                             `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
+alias logcat='adb logcat > /tmp/logcat.txt &'
+alias logvsco='tail -f /tmp/logcat.txt | grep VSCO'
+alias logall='tail -f /tmp/logcat.txt'
+alias adb-restart='adb kill-server; adb start-server'
+
+
+function ksearch {
+	knife search node "roles:$1"
+}
 
 
 function l {
@@ -220,14 +224,27 @@ alias uploader='ssh -v -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
 function rs-create {
   if [ "$1" = "" ]; then
 	echo
-    echo "rs-create <env> <name> <run_list> <flavor> <location>"
+    echo " Rackspace Pricing: http://www.rackspace.com/cloud/servers/pricing"
 	echo
+    echo " > knife rackspace flavor list"
+    echo "       ID  Name                     VCPUs  RAM    Disk"
+    echo "       2   512MB Standard Instance  1      512    20 GB"
+    echo "       3   1GB Standard Instance    1      1024   40 GB"
+    echo "       4   2GB Standard Instance    2      2048   80 GB"
+    echo "       5   4GB Standard Instance    2      4096   160 GB"
+    echo "       6   8GB Standard Instance    4      8192   320 GB"
+    echo "       7   15GB Standard Instance   6      15360  620 GB"
+    echo "       8   30GB Standard Instance   8      30720  1200 GB"
+    echo
+    echo " rs-create <env> <name> <run_list> <flavor> <location>"
+    echo
     echo "       <env>      "
     echo "       <name>     "
     echo "       <run_list> (needs single quotes)"
     echo "       <flavor>   defaults to \"2\" (512MB small)"
     echo "       <location> defaults to \"dfw\" (\"ord\" is a valid alternative)"
 	echo
+
     echo "Ex: rs-create dev loader 'role[lb]'"
 	echo
     return
@@ -286,6 +303,7 @@ function dns-update-ttl {
 }
 
 function dns-delete {
+	# dns-delete [machine name] [domain name]
   	dns_id=`dnsimple record:list $2 | grep "$1.$2 (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
 
   	if [ -z "$dns_id" ]; then
@@ -299,7 +317,7 @@ function dns-delete {
 function rs-delete {
 	c
 
-  	id=`knife rackspace server list | grep $1 | awk '{print $1}'`
+  	id=`knife rackspace server list | grep "$1 " | awk '{print $1}'`
   	time knife rackspace server delete $id -P
 
   	dns-delete $1			vsco.co
