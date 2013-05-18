@@ -74,7 +74,7 @@ alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
 alias c='cd ~/vsco/chef'
 alias m='cd ~/vsco/chef/cookbooks/mongodb'
 alias s='cd ~/vsco/camstore'
-alias a='cd ~/vsco/android/'
+alias a='cd ~/vsco/android'
 alias b='cd ~/vsco/zo-mrbilldroid'
 alias v='cd ~/vsco/chef/cookbooks/vsco/recipes'
 alias e='cd ~/vsco/chef/environments'
@@ -85,11 +85,13 @@ alias cu='cd ~/vsco/vsco/bin/curator'
 
 # android
 alias unpush='adb uninstall com.vsco.cam'
-alias push='(a && echo "                             `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
+alias push='(a && cd VSCOCam && echo "                             `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
 alias logcat='adb logcat > /tmp/logcat.txt &'
 alias logvsco='tail -f /tmp/logcat.txt | grep VSCO'
 alias logall='tail -f /tmp/logcat.txt'
 alias adb-restart='adb kill-server; adb start-server'
+alias apk='find . -name \*.apk'
+alias rapk='find . -name \*.apk | xargs rm -rf'
 
 
 function ksearch {
@@ -322,6 +324,7 @@ function rs-delete {
 
   	dns-delete $1			vsco.co
   	dns-delete $1-private	vsco.co
+    # knife client delete $1
 
   	cd -
 }
