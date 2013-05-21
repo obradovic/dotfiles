@@ -92,6 +92,7 @@ alias logall='tail -f /tmp/logcat.txt'
 alias adb-restart='adb kill-server; adb start-server'
 alias apk='find . -name \*.apk'
 alias rapk='find . -name \*.apk | xargs rm -rf'
+export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
 
 
 function ksearch {
@@ -168,9 +169,9 @@ export NPM_HOME=/usr/local/share/npm/
 export ANDROID_HOME=~/adt-bundle-mac/sdk
 export HEROKU_HOME=/usr/local/heroku
 export PEAR_HOME=/Users/zo/pear/
-export PHP_HOME=/usr/local/opt/php54
 # export OPENSSL_HOME=/usr/local/ssl/
 export NPM_RELATIVE="./node_modules/.bin"
+export PHP_HOME=$(brew --prefix josegonzalez/php/php54)
 
 # Python
 export PYTHONPATH=~/
