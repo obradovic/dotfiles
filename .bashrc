@@ -62,6 +62,9 @@ alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
+alias ,,='..'
+alias ,,,='...'
+alias ,,,,='....'
 alias .3='cd ../../..'
 alias .4='cd ../../../..'
 alias .5='cd ../../../../..'
@@ -92,7 +95,7 @@ alias logall='tail -f /tmp/logcat.txt'
 alias adb-restart='adb kill-server; adb start-server'
 alias apk='find . -name \*.apk'
 alias rapk='find . -name \*.apk | xargs rm -rf'
-export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
+# export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
 
 
 function ksearch {
