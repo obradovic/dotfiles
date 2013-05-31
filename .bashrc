@@ -2,6 +2,7 @@ set -o vi
 shopt -s extglob
 
 
+
 # OPS shortcuts
 alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
@@ -19,83 +20,6 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
-
-# GIT'R DONE!
-alias g='git'
-alias gs='git submodule'
-alias gd='git diff'
-alias ga='git add'
-alias co='git checkout'
-alias gp='git pull --rebase'
-alias god='git'
-alias st='git status'
-alias add='git add'
-alias com='git commit -m'
-alias coma='git commit -am'
-alias pu='git push'
-alias master='git checkout master'
-alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
-
-# generic
-alias dir='ls -la'
-alias dor='dir'
-alias dri='dir'
-alias dur='dir'
-alias h='history 100'
-alias j='jobs'
-alias 1='fg %1'
-alias 2='fg %2'
-alias 3='fg %3'
-alias 4='fg %4'
-alias del='rm'
-alias vig='mvim'
-alias vo='vi'
-alias vu='vi'
-alias mroe='more'
-alias copy='cp'
-alias move='mv'
-alias bas='vi ~/.bashrc && . ~/.bashrc'
-alias mac='vi ~/vsco/machines.txt'
-alias please='sudo'
-alias be='bundle exec'
-alias cd..='cd ..'
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias ,,='..'
-alias ,,,='...'
-alias ,,,,='....'
-alias .3='cd ../../..'
-alias .4='cd ../../../..'
-alias .5='cd ../../../../..'
-alias S='ssh'
-alias s3='s3cmd'
-alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
-alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
-
-# dirs
-alias c='cd ~/vsco/chef'
-alias m='cd ~/vsco/chef/cookbooks/mongodb'
-alias s='cd ~/vsco/camstore'
-alias a='cd ~/vsco/android'
-alias b='cd ~/vsco/zo-mrbilldroid'
-alias v='cd ~/vsco/chef/cookbooks/vsco/recipes'
-alias e='cd ~/vsco/chef/environments'
-alias r='cd ~/vsco/chef/roles'
-alias ro='cd ~/vsco/rose'
-alias vs='cd ~/vsco/vsco'
-alias cu='cd ~/vsco/vsco/bin/curator'
-
-# android
-alias unpush='adb uninstall com.vsco.cam'
-alias push='(a && cd VSCOCam && echo "                             `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
-alias logcat='adb logcat > /tmp/logcat.txt &'
-alias logvsco='tail -f /tmp/logcat.txt | grep VSCO'
-alias logall='tail -f /tmp/logcat.txt'
-alias adb-restart='adb kill-server; adb start-server'
-alias apk='find . -name \*.apk'
-alias rapk='find . -name \*.apk | xargs rm -rf'
-# export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
 
 
 function ksearch {
@@ -175,57 +99,13 @@ export PEAR_HOME=/Users/zo/pear/
 # export OPENSSL_HOME=/usr/local/ssl/
 export NPM_RELATIVE="./node_modules/.bin"
 export PHP_HOME=$(brew --prefix josegonzalez/php/php54)
+export GROOVY_HOME=/usr/local/opt/groovy/libexec
 
 # Python
 export PYTHONPATH=~/
 
-export PATH=$PHP_HOME/bin:$PATH
-export PATH=$PEAR_HOME/bin:$PATH
-# export PATH=$OPENSSL_HOME/bin:$PATH
-export PATH=/usr/local/bin:$PATH
-export PATH=/usr/local/sbin:$PATH
-export PATH=$PATH:$NPM_HOME/bin
-export PATH=$PATH:$HOME/.rvm/bin
-export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-export PATH=$PATH:$HEROKU_HOME/bin
-export PATH=$PATH:.
-
-export PATH=~/bin:$PATH
-export PATH=$NPM_RELATIVE:$PATH
-
-# Prompt, and other bash goodies
-export CLICOLOR=1
-export HISTSIZE=5000
-export HISTFILESIZE=5000
-export HISTFILE=~/.history_bash
-export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
-export EDITOR=vi
 
 
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  . $(brew --prefix)/etc/bash_completion
-fi
-
-# function parse_git_branch {
-  # ref=$(git symbolic-ref HEAD 2> /dev/null) || return
-  # echo "("${ref#refs/heads/}")"
-# }
-
-export GIT_PS1_SHOWSTASHSTATE=true
-export GIT_PS1_SHOWDIRTYSTATE=true
-export GIT_PS1_SHOWUPSTREAM="auto"
-
-
-. ~/.git-prompt.sh
-. ~/.git-completion.sh
-. ~/.colors_bash
-export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[0;32m\]`hostname`\[\e[0m\]\[\e[0;35m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W  > \[\e[0m\]'
-# export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[1;30m\]`parse_git_branch`\[\e[0m\] \[\e[1;32m\]\W  > \[\e[0m\]'
-# export PS1="\[$BBlack\]\T `parse_git_branch` \[$Color_Off\]\[$BGreen\]\W  > \[$Color_Off\]"
-
-# Machines
-alias uploader='ssh -v -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
 
 function rs-create {
   if [ "$1" = "" ]; then
@@ -236,9 +116,9 @@ function rs-create {
     echo "       ID  Name                     VCPUs  RAM    Disk"
     echo "       2   512MB Standard Instance  1      512    20 GB"
     echo "       3   1GB Standard Instance    1      1024   40 GB"
-    echo "       4   2GB Standard Instance    2      2048   80 GB"
+    echo "       4   2GB Standard Instance    2      2048   80 GB    <- prod app default"
     echo "       5   4GB Standard Instance    2      4096   160 GB"
-    echo "       6   8GB Standard Instance    4      8192   320 GB"
+    echo "       6   8GB Standard Instance    4      8192   320 GB   <- prod lb giga"
     echo "       7   15GB Standard Instance   6      15360  620 GB"
     echo "       8   30GB Standard Instance   8      30720  1200 GB"
     echo
