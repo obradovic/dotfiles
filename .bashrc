@@ -19,6 +19,9 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
+function ksearch { knife search node "roles:$1" }
+function kd { knife node delete -y $1; knife client delete -y $1 }
+
 
 # GIT'R DONE!
 alias g='git'
@@ -38,6 +41,7 @@ alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master
 
 # generic
 alias dir='ls -la'
+alias la='ls -la'
 alias dor='dir'
 alias dri='dir'
 alias dur='dir'
@@ -54,7 +58,7 @@ alias vu='vi'
 alias mroe='more'
 alias copy='cp'
 alias move='mv'
-alias bas='vi ~/.bashrc && . ~/.bashrc'
+alias bas='vi ~/.bashrc; . ~/.bashrc'
 alias mac='vi $SRC_HOME/machines.txt'
 alias please='sudo'
 alias be='bundle exec'
@@ -73,6 +77,7 @@ alias s3='s3cmd'
 alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
 alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
 alias tl='tail -f'
+alias beep='for i in {1..3} ; do tput bel; sleep 1; done'
 
 # dirs
 alias c='cd  $SRC_HOME/chef'
@@ -84,7 +89,7 @@ alias v='cd  $SRC_HOME/chef/cookbooks/vsco/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
 alias ro='cd $SRC_HOME/rose'
-alias vs='cd $SRC_HOME/vsco'
+alias w='cd $SRC_HOME/web'
 alias cu='cd $SRC_HOME/vsco/bin/curator'
 alias t='cd  $SRC_HOME/themes'
 
@@ -99,20 +104,12 @@ alias apk='find . -name \*.apk'
 alias rapk='find . -name \*.apk | xargs rm -rf'
 # export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
 
-alias curlw='curl -w "@$HOME/.curl_format"'
+alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
 
 function b64 {
 	echo
 	echo "$1" | base64 -D
 	echo 
-}
-
-alias rssblogd='curlw -v -s -o /dev/null http://vscodev.com/rss/blog'
-alias rssblog='curlw -v -s -o /dev/null http://vsco.co/rss/blog'
-alias rssblogx='curlw -v -s -o x http://vsco.co/rss/blog'
-
-function ksearch {
-	knife search node "roles:$1"
 }
 
 
@@ -350,16 +347,6 @@ function init-app {
   git pull
   cap fu $env=$name
 
-  # deploy themes
-  echo 
-  echo "DEPLOYING THEMES to $env"
-  echo
-  cd $SRC_HOME/themes
-  git checkout master
-  git pull
-  tag=`git tag | grep prod- | sort -n | tail -1`
-  cap fu $env=$name from_tag="$tag"
-
   # deploy app
   echo 
   echo "DEPLOYING APP to $env"
@@ -392,16 +379,17 @@ function rs-create {
     echo "       7   15GB Standard Instance   6      15360  620 GB   <- tera lb"
     echo "       8   30GB Standard Instance   8      30720  1200 GB  <- peta lb"
     echo
-    echo " rs-create <env> <name> <run_list> <flavor> <location>"
+    echo " rs-create <env> <name> <run_list> <flavor> <image> <location>"
     echo
     echo "       <env>      "
     echo "       <name>     "
     echo "       <run_list> (needs single quotes)"
     echo "       <flavor>   defaults to \"2\" (512MB small)"
+    echo "       <image>    defaults to \"Ubuntu 12.10\". Use prod-app, prod-resizer, prod-store, or dev-app"
     echo "       <location> defaults to \"dfw\" (\"ord\" is a valid alternative)"
 	echo
 
-    echo "Ex: rs-create dev loader 'role[lb]'"
+    echo "Ex: rs-create dev app99 'role[app-all]' dev-app"
 	echo
     return
   fi
@@ -416,26 +404,62 @@ function rs-create {
     flavor=$4
   fi
 
+  # knife rackspace image list --rackspace-version v2
   if [ "$5" = "" ]; then
+    # image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd" 
+    image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
+  elif [ "$5" = "ubuntu" ]; then
+    image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
+  elif [ "$5" = "prod-app" ]; then
+    image="9d17ce76-dce8-488e-8811-0620d495349a"
+  elif [ "$5" = "prod-resizer" ]; then
+    image="f1262e39-9d0c-4d45-b17c-23438b6506ff"
+  elif [ "$5" = "prod-store" ]; then
+    image="be5a693d-890f-4255-9954-9a1a9a84bfdd"
+  elif [ "$5" = "dev-app" ]; then
+    image="1dc261fa-a5b7-4321-b48e-7f1441c88cbe"
+  else
+    image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
+  fi
+
+
+  if [ "$6" = "" ]; then
     location="dfw"
   else
     location=$5
   fi
 
-  image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd" 
   endpoint="https://$location.servers.api.rackspacecloud.com/v2"
   fullname=$env-$name
-  echo "Creating $fullname with a run_list of $run_list, flavor $flavor, in $location"
+  echo "Creating $fullname with a run_list of $run_list, flavor $flavor, image $image, in $location"
   # json='{ "attributes": { "env": "dev", "run_list": [ "role[standalone]" ] } }'
 
   c
   bootstrap="vsco-ubuntu"
-  # bootstrap="internet"
-  # time knife rackspace server create --image $image --flavor $flavor --server-name $fullname --node-name $fullname -r $run_list --environment $env -d $bootstrap --rackspace-endpoint $endpoint --run-list $run_list
   time knife rackspace server create -d $bootstrap --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-endpoint $endpoint 
-  # knife node set_environment $fullname $env
+
+  # objectrocket-create $fullname
 }
 
+
+function objectrocket-create {
+  name=$1
+  ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
+  echo "ObjectRocket Creating ACL $name $ip"
+  curl --data "api_key=$OBJECTROCKET_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" https://api.objectrocket.com/acl/add
+}
+
+function objectrocket-delete {
+  name=$1
+  echo "ObjectRocket Deleting Name $name..."
+  ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
+  echo "ObjectRocket Deleting ACL $ip..."
+  objectrocket-delete-ip $ip
+}
+
+function objectrocket-delete-ip {
+  curl --data "api_key=$OBJECTROCKET_KEY&doc={\"cidr_mask\": \"$1/32\"}" https://api.objectrocket.com/acl/delete
+}
 
 function dns-update-ttl {
   	if [ "$1" = "" ]; then
@@ -482,6 +506,8 @@ function rs-delete {
 
 	c
 
+	objectrocket-delete $1
+
   	id=`knife rackspace server list | grep "$1 " | awk '{print $1}'`
   	time knife rackspace server delete $id -P
 
@@ -493,3 +519,8 @@ function rs-delete {
 }
 
 set -o vi
+. ~/.bashrc_private
+
+
+
+
