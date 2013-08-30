@@ -1,4 +1,32 @@
-set nocompatible
+" git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+
+set nocompatible               " be iMproved
+filetype off                   " required!
+
+set rtp+=~/.vim/bundle/vundle/
+call vundle#rc()
+
+" let Vundle manage Vundle
+" required! 
+Bundle 'gmarik/vundle'
+
+" my bundles here
+Bundle 'tpope/vim-fugitive'
+
+
+filetype plugin indent on     " required!
+"
+" Brief help
+" :BundleList          - list configured bundles
+" :BundleInstall(!)    - install(update) bundles
+" :BundleSearch(!) foo - search(or refresh cache first) for foo
+" :BundleClean(!)      - confirm(or auto-approve) removal of unused bundles
+"
+" see :h vundle for more details or wiki for FAQ
+" NOTE: comments after Bundle command are not allowed..
+
+
+
 " set expandtab
 set smarttab
 set tabstop=4
@@ -21,7 +49,7 @@ set hlsearch
 set ruler
 set showcmd
 syntax on
-filetype on
+" filetype on
 
 " :hi MatchParen cterm=underline ctermbg=none ctermfg=none
 :hi MatchParen cterm=bold ctermbg=none ctermfg=green
