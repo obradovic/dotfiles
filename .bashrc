@@ -19,8 +19,13 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
-function ksearch { knife search node "roles:$1" }
-function kd { knife node delete -y $1; knife client delete -y $1 }
+function ksearch {
+	knife search node "roles:$1" 
+}
+function kd { 
+	knife node delete -y $1
+	knife client delete -y $1 
+}
 
 
 # GIT'R DONE!
