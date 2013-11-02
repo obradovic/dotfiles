@@ -1,6 +1,7 @@
 shopt -s extglob
 
 export SRC_HOME="/Users/zo/vsco"
+umask 0000
 
 # OPS shortcuts
 alias cc='chef-client -l info'
@@ -26,6 +27,16 @@ function kd {
 	knife node delete -y $1
 	knife client delete -y $1 
 }
+
+
+# VAGRANT
+export VAGRANT_CWD=~/vsco/web           # Lets you run vagrant from any directory
+export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
+alias va='vagrant'
+alias vs='vagrant ssh'
+alias vup='va up'
+alias vha='va halt'
+alias vst='va status'
 
 
 # GIT'R DONE!
@@ -63,7 +74,8 @@ alias vu='vi'
 alias mroe='more'
 alias copy='cp'
 alias move='mv'
-alias bas='vi ~/.bashrc; . ~/.bashrc'
+alias bas='vi ~/.bashrc; sleep 0.5; . ~/.bashrc'
+alias bass='vi ~/.bashrc_private; sleep 0.5; . ~/.bashrc'
 alias mac='vi $SRC_HOME/machines.txt'
 alias please='sudo'
 alias be='bundle exec'
@@ -87,7 +99,7 @@ alias beep='for i in {1..3} ; do tput bel; sleep 1; done'
 # dirs
 alias c='cd  $SRC_HOME/chef'
 alias m='cd  $SRC_HOME/chef/cookbooks/mongodb'
-alias s='cd  $SRC_HOME/camstore'
+alias sto='cd  $SRC_HOME/camstore'
 alias a='cd  $SRC_HOME/android'
 alias b='cd  $SRC_HOME/zo-mrbilldroid'
 alias v='cd  $SRC_HOME/chef/cookbooks/vsco/recipes'
@@ -100,16 +112,22 @@ alias t='cd  $SRC_HOME/themes'
 
 # android
 alias unpush='adb uninstall com.vsco.cam'
-alias push='(a && cd VSCOCam && echo "                             `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
+alias pusha='(a && cd VSCOCam && echo "                             `date`" && ls -la build/apk/VSCOCam-debug-unaligned.apk && adb uninstall com.vsco.cam; adb install build/apk/VSCOCam-debug-unaligned.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
+alias push='(a && cd VSCOCam && echo "                              `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
 alias logcat='adb logcat > /tmp/logcat.txt &'
-alias logvsco='tail -f /tmp/logcat.txt | grep VSCO'
+alias logvsco='tail -f /tmp/logcat.txt | grep -i VSCO'
 alias logall='tail -f /tmp/logcat.txt'
 alias adb-restart='adb kill-server; adb start-server'
-alias apk='find . -name \*.apk'
+alias apk='find . -name \*.apk | xargs ls -al'
 alias rapk='find . -name \*.apk | xargs rm -rf'
 # export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
 
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
+alias vl="varnishlog -m rxURL:/rss/blog -c"
+
+function pinger {
+	curl -X POST -d"os_type=Android" -d"os_version=4.0.3" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+}
 
 function b64 {
 	echo
@@ -135,6 +153,9 @@ function l {
 
 function p {
 	ssh prod-$1
+}
+function s {
+	ssh staging-$1
 }
 function d {
 	ssh dev-$1
@@ -272,7 +293,12 @@ export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[0;32m\]`hostname`\[\e[0m\]\[\e[0;35m\]$
 # export PS1="\[$BBlack\]\T `parse_git_branch` \[$Color_Off\]\[$BGreen\]\W  > \[$Color_Off\]"
 
 # Machines
-alias uploader='ssh -v -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
+alias uploader='ssh -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
+
+function wildcard_csr {
+	domain=$1
+	openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=California/L=Emeryville/O=VSCO/CN=*.$domain"
+}
 
 function init-cam {
   if [ "$1" = "" ]; then
@@ -434,14 +460,14 @@ function rs-create {
     location=$5
   fi
 
-  endpoint="https://$location.servers.api.rackspacecloud.com/v2"
+  # endpoint="https://$location.servers.api.rackspacecloud.com/v2"
   fullname=$env-$name
   echo "Creating $fullname with a run_list of $run_list, flavor $flavor, image $image, in $location"
   # json='{ "attributes": { "env": "dev", "run_list": [ "role[standalone]" ] } }'
 
   c
   bootstrap="vsco-ubuntu"
-  time knife rackspace server create -d $bootstrap --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-endpoint $endpoint 
+  time knife rackspace server create -d $bootstrap --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-region $location
 
   # objectrocket-create $fullname
 }
@@ -450,6 +476,14 @@ function rs-create {
 function objectrocket-create {
   name=$1
   ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
+  echo "ObjectRocket Creating ACL $name $ip"
+  curl --data "api_key=$OBJECTROCKET_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" https://api.objectrocket.com/acl/add
+}
+
+
+function objectrocket-create-dev {
+  name=`whoami`-dev
+  ip=`curl -s http://ipecho.net/plain`
   echo "ObjectRocket Creating ACL $name $ip"
   curl --data "api_key=$OBJECTROCKET_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" https://api.objectrocket.com/acl/add
 }
