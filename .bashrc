@@ -497,7 +497,7 @@ function or {
 function or-create {
   name=$1
   ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
-  echo "ObjectRocket Creating ACL $name $ip"
+  echo "OR Creating ACL $name $ip"
   curl --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" $OR_API_HOST/acl/add
 }
 
@@ -505,15 +505,15 @@ function or-create {
 function or-create-dev {
   name=`whoami`-dev
   ip=`curl -s http://ipecho.net/plain`
-  echo "ObjectRocket Creating ACL $name $ip"
+  echo "OR Creating ACL $name $ip"
   curl --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" $OR_API_HOST/acl/add
 }
 
 function or-delete {
   name=$1
-  echo "ObjectRocket Deleting Name $name..."
+  echo "OR Deleting Name $name..."
   ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
-  echo "ObjectRocket Deleting ACL $ip..."
+  echo "OR Deleting ACL $ip..."
   or-delete-ip $ip
 }
 
