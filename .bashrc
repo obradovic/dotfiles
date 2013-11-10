@@ -45,7 +45,7 @@ alias god='git'
 alias gs='git submodule'
 alias gd='git diff'
 alias ad='git add'
-alias co='git commit -m'
+alias com='git commit -m'
 alias gp='git pull --rebase'
 alias st='git status'
 alias add='git add'
@@ -486,7 +486,7 @@ function rs-create {
   bootstrap="vsco-ubuntu"
   time knife rackspace server create -d $bootstrap --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-region $location
 
-  # objectrocket-create $fullname
+  # or-create $fullname
 }
 
 
@@ -494,7 +494,7 @@ function or {
     mongo -u $OR_USER -p $OR_PASS $OR_HOST/$1
 }
 
-function objectrocket-create {
+function or-create {
   name=$1
   ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
   echo "ObjectRocket Creating ACL $name $ip"
@@ -502,22 +502,22 @@ function objectrocket-create {
 }
 
 
-function objectrocket-create-dev {
+function or-create-dev {
   name=`whoami`-dev
   ip=`curl -s http://ipecho.net/plain`
   echo "ObjectRocket Creating ACL $name $ip"
   curl --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" $OR_API_HOST/acl/add
 }
 
-function objectrocket-delete {
+function or-delete {
   name=$1
   echo "ObjectRocket Deleting Name $name..."
   ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
   echo "ObjectRocket Deleting ACL $ip..."
-  objectrocket-delete-ip $ip
+  or-delete-ip $ip
 }
 
-function objectrocket-delete-ip {
+function or-delete-ip {
   curl --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$1/32\"}" $OR_API_HOST/acl/delete
 }
 
@@ -566,7 +566,7 @@ function rs-delete {
 
 	c
 
-	objectrocket-delete $1
+	or-delete $1
 
   	id=`knife rackspace server list | grep "$1 " | awk '{print $1}'`
   	time knife rackspace server delete $id -P
