@@ -41,17 +41,17 @@ alias vst='va status'
 
 # GIT'R DONE!
 alias g='git'
+alias god='git'
 alias gs='git submodule'
 alias gd='git diff'
-alias ga='git add'
-alias co='git checkout'
+alias ad='git add'
+alias co='git commit -m'
 alias gp='git pull --rebase'
-alias god='git'
 alias st='git status'
 alias add='git add'
-alias com='git commit -m'
-alias coma='git commit -am'
-alias pu='git push'
+alias pus='git push'
+alias pul='git pull'
+alias branch='git checkout -b'
 alias master='git checkout master'
 alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
 
@@ -98,7 +98,6 @@ alias beep='for i in {1..3} ; do tput bel; sleep 1; done'
 
 # dirs
 alias c='cd  $SRC_HOME/chef'
-alias m='cd  $SRC_HOME/chef/cookbooks/mongodb'
 alias sto='cd  $SRC_HOME/camstore'
 alias a='cd  $SRC_HOME/android'
 alias v='cd  $SRC_HOME/chef/cookbooks/vsco/recipes'
@@ -107,6 +106,9 @@ alias r='cd  $SRC_HOME/chef/roles'
 alias w='cd $SRC_HOME/web'
 
 # android
+alias pa='adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity'
+alias m='(a; cd VSCOCam; gradlew assembleDebug; if [ $? -eq 0 ]; then pusha; else beep; fi)'
+alias mn='(a; cd VSCOCam; gradlew assembleDebug) '
 alias unpush='adb uninstall com.vsco.cam'
 alias pusha='(a && cd VSCOCam && echo "                             `date`" && ls -la build/apk/VSCOCam-debug-unaligned.apk && adb uninstall com.vsco.cam; adb install build/apk/VSCOCam-debug-unaligned.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
 alias push='(a && cd VSCOCam && echo "                              `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
@@ -175,7 +177,6 @@ export HISTFILE=~/.history_bash
 export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
 export EDITOR=vi
 
-
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
   . $(brew --prefix)/etc/bash_completion
 fi
@@ -189,10 +190,10 @@ export GIT_PS1_SHOWSTASHSTATE=true
 export GIT_PS1_SHOWDIRTYSTATE=true
 export GIT_PS1_SHOWUPSTREAM="auto"
 
-
 . ~/.git-prompt.sh
 . ~/.git-completion.sh
 . ~/.colors_bash
+
 export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[0;32m\]`hostname`\[\e[0m\]\[\e[0;35m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W  > \[\e[0m\]'
 # export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[1;30m\]`parse_git_branch`\[\e[0m\] \[\e[1;32m\]\W  > \[\e[0m\]'
 # export PS1="\[$BBlack\]\T `parse_git_branch` \[$Color_Off\]\[$BGreen\]\W  > \[$Color_Off\]"
@@ -201,19 +202,13 @@ export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[0;32m\]`hostname`\[\e[0m\]\[\e[0;35m\]$
 alias uploader='ssh -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
 
 function p {
-	ssh prod-$1
+	S prod-$1
 }
 function s {
-	ssh staging-$1
+	S staging-$1
 }
 function d {
-	ssh dev-$1
-}
-function pm {
-	p mysql$1
-}
-function pa {
-	p app$1
+	S dev-$1
 }
 function pl {
 	p lb-peta$1
