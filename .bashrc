@@ -101,14 +101,10 @@ alias c='cd  $SRC_HOME/chef'
 alias m='cd  $SRC_HOME/chef/cookbooks/mongodb'
 alias sto='cd  $SRC_HOME/camstore'
 alias a='cd  $SRC_HOME/android'
-alias b='cd  $SRC_HOME/zo-mrbilldroid'
 alias v='cd  $SRC_HOME/chef/cookbooks/vsco/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
-alias ro='cd $SRC_HOME/rose'
 alias w='cd $SRC_HOME/web'
-alias cu='cd $SRC_HOME/vsco/bin/curator'
-alias t='cd  $SRC_HOME/themes'
 
 # android
 alias unpush='adb uninstall com.vsco.cam'
@@ -122,109 +118,18 @@ alias apk='find . -name \*.apk | xargs ls -al'
 alias rapk='find . -name \*.apk | xargs rm -rf'
 # export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
 
-alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
-alias vl="varnishlog -m rxURL:/rss/blog -c"
-
-function pinger {
-	curl -X POST -d"os_type=Android" -d"os_version=4.0.3" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+# varnish
+alias vl='varnishlog -m rxURL:/rss/blog -c'
+function vpurge {
+    curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_PROD$1 2>&1 >/dev/null | grep HTTP
+}
+function vpurges {
+    curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_STAGING$1 2>&1 >/dev/null | grep HTTP
+}
+function vpurged {
+    curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_DEV$1 2>&1 >/dev/null | grep HTTP
 }
 
-function b64 {
-	echo
-	echo "$1" | base64 -D
-	echo 
-}
-
-
-function l {
-	LOGDIR="/var/log"
-	case "$1" in
-	"aperr")	file="`ls -tr $LOGDIR/apache2/error* | tail -1`" ;;
-	a*)			file="`ls -tr $LOGDIR/apache2/access* | tail -1`" ;;
-	r*)			file="$LOGDIR/resizer.log" ;;
-	g*)			file="$LOGDIR/gearmand.log" ;;
-	m*)			file="$LOGDIR/mongodb/mongodb.log" ;;
-	t*)			file="$LOGDIR/tracelyzer/tracelyzer.log" ;;
-	*) 			echo "default" ;;
-	esac
-
-	tail -50f $file
-}
-
-function p {
-	ssh prod-$1
-}
-function s {
-	ssh staging-$1
-}
-function d {
-	ssh dev-$1
-}
-function pm {
-	p mysql$1
-}
-function pa {
-	p app$1
-}
-function pl {
-	p lb-peta$1
-}
-
-function pz {
-  ps -aef | grep -i $1 | grep -v grep
-}
-
-function title {
-  echo -e "\033];$1\007" 
-  echo "Title set to $1"
-}
-alias tit=title
-
-function dot {
-  cd ~/.dotfiles
-  git add .
-  git commit -m $1
-  git push
-  . ~/.bashrc
-  cd -
-}
-
-function dot-link {
-  cd ~
-  for f in .bashrc .vimrc .gvimrc
-  do 
-    mv -f $f $f.old
-    ln -s .dotfiles/$f $f
-  done
-}
-
-function geo {
-    curl -s http://freegeoip.net/json/$1 | python -mjson.tool 
-}
-
-function ha-geo {
-	scp zo@prod-lb-peta0:/tmp/xray_404.log ~/.
-	cat ~/xray_404.log | awk '{print $1}' > xray.ip
-	echo "Non-Unique IPs: `wc -l xray.ip`"
-	cat xray.ip | sort | uniq > xray2
-	mv xray2 xray.ip
-	echo "Unique IPs: `wc -l xray.ip`"
-	rm xray.geo
-	for i in `cat xray.ip`;do geoiplookup $i >> xray.geo; done
-
-	rm xray.analysis
-	array=( "United States" "Canada" "Mexico" "Australia" "Malaysia" "Hong Kong" "Japan" "Address not found" "India" "Taiwan" "Korea" "Vietnam" "China" "Indonesia" "Philippines" "New Zealand" "Fiji" "Lao People" "South Africa" "Morocco" "France" "Romania" "Poland" "Spain" "Italy" "United Kingdom" "Belgium" "Russian Federation" "Slovenia" "Norway" "Greece" "Israel" "Germany" "Sweden" "Ireland" "Brazil" "Qatar" "Denmark" "Iran" "Austria" "Switzerland" "Turkey" "Kuwait" "Thailand" "Singapore" "Guam" "Bahamas" "Saudi Arabia" "Serbia" "Finland" "Ukraine" "Bulgaria" "Albania" "Macau" "Pakistan" "Brunei" "Venezuela" "Colombia" "Estonia" "Hungary" "Dominican Republic" "Guatemala" "Sudan" "United Arab Emirates" "Portugal" "Chile" "Peru" "Argentina" "Azerbaijan" "Bahrain" "Czech Republic" "Cyprus" "Curacao" "Ecuador" "Egypt" "Croatia" "Kenya" "Jordan" "Cambodia" "Kazakhstan" "Lebanon" "Netherlands" "Puerto Rico" "Slovakia" "Uganda" "Mongolia" "Belarus" "Bangladesh" "Gibraltar" "Honduras" "Costa Rica" "Uruguay" "Iceland" "Bolivia" "Lithuania" "Luxembourg" "Latvia" "Jamaica" "Malta" "Nigeria" "Panama" "Paraguay" "Uruguay")
-	for i in "${array[@]}"; do
-		echo "`grep \"$i\" xray.geo | wc -l`: $i" >> xray.analysis
-		grep -v "$i" xray.geo > xray.temp
-		mv xray.temp xray.geo
-	done
-
-	cat xray.analysis | sort -r > xray.analysis.sorted
-	rm xray.analysis
-	cat xray.geo | sort | uniq > xray.geo.missed
-	"Not counting: `cat xray.geo.missed`"
-}
 
 # OpsCode / Chef
 export OPSCODE_USER=zo
@@ -295,10 +200,127 @@ export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[0;32m\]`hostname`\[\e[0m\]\[\e[0;35m\]$
 # Machines
 alias uploader='ssh -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
 
+function p {
+	ssh prod-$1
+}
+function s {
+	ssh staging-$1
+}
+function d {
+	ssh dev-$1
+}
+function pm {
+	p mysql$1
+}
+function pa {
+	p app$1
+}
+function pl {
+	p lb-peta$1
+}
+
+
+# misc
+alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
+alias ip='curl -s http://ipecho.net/plain; echo'
+
+function b64 {
+	echo
+	echo "$1" | base64 -D
+	echo 
+}
+
+function pz {
+  ps -aef | grep -i $1 | grep -v grep
+}
+
+function geo {
+    curl -s http://freegeoip.net/json/$1 | python -mjson.tool 
+}
+
 function wildcard_csr {
 	domain=$1
 	openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=California/L=Emeryville/O=VSCO/CN=*.$domain"
 }
+
+function l {
+	LOGDIR="/var/log"
+	case "$1" in
+	"aperr")	file="`ls -tr $LOGDIR/apache2/error* | tail -1`" ;;
+	a*)			file="`ls -tr $LOGDIR/apache2/access* | tail -1`" ;;
+	r*)			file="$LOGDIR/resizer.log" ;;
+	g*)			file="$LOGDIR/gearmand.log" ;;
+	m*)			file="$LOGDIR/mongodb/mongodb.log" ;;
+	*) 			echo "default" ;;
+	esac
+
+	tail -50f $file
+}
+
+function title {
+  echo -e "\033];$1\007" 
+  echo "Title set to $1"
+}
+
+function dot {
+  cd ~/.dotfiles
+  git add .
+  git commit -m $1
+  git push
+  . ~/.bashrc
+  cd -
+}
+
+function dot-link {
+  cd ~
+  for f in .bashrc .vimrc .gvimrc .curl_format
+  do 
+    mv -f $f $f.old
+    ln -s .dotfiles/$f $f
+  done
+}
+
+function ha-geo {
+	scp zo@prod-lb-peta0:/tmp/xray_404.log ~/.
+	cat ~/xray_404.log | awk '{print $1}' > xray.ip
+	echo "Non-Unique IPs: `wc -l xray.ip`"
+	cat xray.ip | sort | uniq > xray2
+	mv xray2 xray.ip
+	echo "Unique IPs: `wc -l xray.ip`"
+	rm xray.geo
+	for i in `cat xray.ip`;do geoiplookup $i >> xray.geo; done
+
+	rm xray.analysis
+	array=( "United States" "Canada" "Mexico" "Australia" "Malaysia" "Hong Kong" "Japan" "Address not found" "India" "Taiwan" "Korea" "Vietnam" "China" "Indonesia" "Philippines" "New Zealand" "Fiji" "Lao People" "South Africa" "Morocco" "France" "Romania" "Poland" "Spain" "Italy" "United Kingdom" "Belgium" "Russian Federation" "Slovenia" "Norway" "Greece" "Israel" "Germany" "Sweden" "Ireland" "Brazil" "Qatar" "Denmark" "Iran" "Austria" "Switzerland" "Turkey" "Kuwait" "Thailand" "Singapore" "Guam" "Bahamas" "Saudi Arabia" "Serbia" "Finland" "Ukraine" "Bulgaria" "Albania" "Macau" "Pakistan" "Brunei" "Venezuela" "Colombia" "Estonia" "Hungary" "Dominican Republic" "Guatemala" "Sudan" "United Arab Emirates" "Portugal" "Chile" "Peru" "Argentina" "Azerbaijan" "Bahrain" "Czech Republic" "Cyprus" "Curacao" "Ecuador" "Egypt" "Croatia" "Kenya" "Jordan" "Cambodia" "Kazakhstan" "Lebanon" "Netherlands" "Puerto Rico" "Slovakia" "Uganda" "Mongolia" "Belarus" "Bangladesh" "Gibraltar" "Honduras" "Costa Rica" "Uruguay" "Iceland" "Bolivia" "Lithuania" "Luxembourg" "Latvia" "Jamaica" "Malta" "Nigeria" "Panama" "Paraguay" "Uruguay")
+	for i in "${array[@]}"; do
+		echo "`grep \"$i\" xray.geo | wc -l`: $i" >> xray.analysis
+		grep -v "$i" xray.geo > xray.temp
+		mv xray.temp xray.geo
+	done
+
+	cat xray.analysis | sort -r > xray.analysis.sorted
+	rm xray.analysis
+	cat xray.geo | sort | uniq > xray.geo.missed
+	"Not counting: `cat xray.geo.missed`"
+}
+
+function pw {
+    grep "$VSCO_ATTRIBUTE_PATTERN" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | cut -f 2 -d "=" | cut -f 2 -d "\"" | pbcopy
+    grep -A 1 "$VSCO_ATTRIBUTE_PATTERN" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | cut -f 2 -d "=" | cut -f 2 -d "\""
+}
+
+function expose {
+    port=$1
+    echo "You are exposed on http://$VSCO_EXPORTED_HOST:$port"
+    ssh -N -R 0.0.0.0:$port:localhost:80 $VSCO_EXPORTED_USER@$VSCO_EXPORTED_HOST
+}
+
+function pinger {
+    curl -X POST -d"os_type=Android" -d"os_version=4.0.3" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+}
+
+
+
 
 function init-cam {
   if [ "$1" = "" ]; then
@@ -314,16 +336,6 @@ function init-cam {
   env="prod"
   [[ $name = "dev"* ]] && env="dev"
 
-  # deploy camstore
-  echo 
-  echo "DEPLOYING CAMSTORE to $env"
-  echo
-  cd $SRC_HOME/camstore
-  git checkout master
-  git pull
-  tag=`git tag | grep prod- | sort -n | tail -1`
-  cap fu $env=$name from_tag="$tag"
-
   # deploy xrays
   echo 
   echo "DEPLOYING XRAYS to $env"
@@ -333,6 +345,15 @@ function init-cam {
   git pull
   cap fu force=$name
 
+  # deploy camstore
+  echo 
+  echo "DEPLOYING CAMSTORE to $env"
+  echo
+  cd $SRC_HOME/camstore
+  git checkout master
+  git pull
+  tag=`git tag | grep prod- | sort -n | tail -1`
+  cap fu $env=$name from_tag="$tag"
 }
 
 
@@ -349,6 +370,7 @@ function init-app {
   name=$1
   env="prod"
   [[ $name = "dev"* ]] && env="dev"
+  [[ $name = "staging"* ]] && env="staging"
 
   echo
   echo "RUNNING CHEF"
@@ -360,10 +382,10 @@ function init-app {
   echo
   cd $SRC_HOME/vsco
   cas upload_ssh $env=$name
-  cap stop       $env=$name
 
   # first, stop chef
   # cap chef_stop prod=all
+  cap chef_stop  $env=$name
 
   # now, run chef on everything but the load balancers
   # so iptables to mongo/mysql/gearmand/etc is all whitelisted
@@ -473,11 +495,15 @@ function rs-create {
 }
 
 
+function or {
+    mongo -u $OR_USER -p $OR_PASS $OR_HOST/$1
+}
+
 function objectrocket-create {
   name=$1
   ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
   echo "ObjectRocket Creating ACL $name $ip"
-  curl --data "api_key=$OBJECTROCKET_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" https://api.objectrocket.com/acl/add
+  curl --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" $OR_API_HOST/acl/add
 }
 
 
@@ -485,7 +511,7 @@ function objectrocket-create-dev {
   name=`whoami`-dev
   ip=`curl -s http://ipecho.net/plain`
   echo "ObjectRocket Creating ACL $name $ip"
-  curl --data "api_key=$OBJECTROCKET_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" https://api.objectrocket.com/acl/add
+  curl --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" $OR_API_HOST/acl/add
 }
 
 function objectrocket-delete {
@@ -497,7 +523,7 @@ function objectrocket-delete {
 }
 
 function objectrocket-delete-ip {
-  curl --data "api_key=$OBJECTROCKET_KEY&doc={\"cidr_mask\": \"$1/32\"}" https://api.objectrocket.com/acl/delete
+  curl --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$1/32\"}" $OR_API_HOST/acl/delete
 }
 
 function dns-update-ttl {
@@ -559,7 +585,4 @@ function rs-delete {
 
 set -o vi
 . ~/.bashrc_private
-
-
-
 
