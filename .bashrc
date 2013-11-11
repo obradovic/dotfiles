@@ -120,6 +120,11 @@ alias apk='find . -name \*.apk | xargs ls -al'
 alias rapk='find . -name \*.apk | xargs rm -rf'
 # export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
 
+# loader
+function loader {
+	curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | python -mjson.tool
+}
+
 # varnish
 alias vl='varnishlog -m rxURL:/rss/blog -c'
 function vpurge {
