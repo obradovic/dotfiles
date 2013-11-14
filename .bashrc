@@ -33,9 +33,9 @@ function kd {
 export VAGRANT_CWD=~/vsco/web           # Lets you run vagrant from any directory
 export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
 alias va='vagrant'
-alias vs='vagrant ssh'
-alias vup='va up'
-alias vha='va halt'
+alias vs='vagrant ssh vsco-jicama'
+alias vup='va up vsco-jicama'
+alias vha='va halt vsco-jicama'
 alias vst='va status'
 
 
@@ -109,6 +109,7 @@ alias w='cd $SRC_HOME/web'
 alias pa='adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity'
 alias m='(a; cd VSCOCam; gradlew assembleDebug; if [ $? -eq 0 ]; then pusha; else beep; fi)'
 alias mn='(a; cd VSCOCam; gradlew assembleDebug) '
+alias mr='(a; cd VSCOCam; gradlew assembleRelease; if [ $? -eq 0 ]; then pusha; else beep; fi)'
 alias unpush='adb uninstall com.vsco.cam'
 alias pusha='(a && cd VSCOCam && echo "                             `date`" && ls -la build/apk/VSCOCam-debug-unaligned.apk && adb uninstall com.vsco.cam; adb install build/apk/VSCOCam-debug-unaligned.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
 alias push='(a && cd VSCOCam && echo "                              `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
@@ -123,6 +124,10 @@ alias rapk='find . -name \*.apk | xargs rm -rf'
 # loader
 function loader {
 	curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | python -mjson.tool
+}
+
+function gsbucket {
+	gsutil ls $GSUTIL_BUCKET/$1
 }
 
 # varnish
@@ -155,6 +160,7 @@ export PEAR_HOME=/Users/zo/pear/
 export NPM_RELATIVE="./node_modules/.bin"
 export PHP_HOME=$(brew --prefix josegonzalez/php/php54)
 export GROOVY_HOME=/usr/local/opt/groovy/libexec
+export GSUTIL_HOME=~/bin/gsutil
 
 # Python
 export PYTHONPATH=~/
@@ -169,6 +175,7 @@ export PATH=$PATH:$HOME/.rvm/bin
 export PATH=$PATH:$ANDROID_HOME/tools
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 export PATH=$PATH:$HEROKU_HOME/bin
+export PATH=$PATH:$GSUTIL_HOME
 export PATH=$PATH:.
 
 export PATH=~/bin:$PATH
@@ -507,7 +514,7 @@ function or-create {
 }
 
 
-function or-create-dev {
+function or-permit {
   name=`whoami`-dev
   ip=`curl -s http://ipecho.net/plain`
   echo "OR Creating ACL $name $ip"
@@ -523,7 +530,7 @@ function or-delete {
 }
 
 function or-delete-ip {
-  curl --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$1/32\"}" $OR_API_HOST/acl/delete
+  curl -s --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$1/32\"}" $OR_API_HOST/acl/delete
 }
 
 function dns-update-ttl {
