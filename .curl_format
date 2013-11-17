@@ -6,6 +6,7 @@
               time_redirect:  %{time_redirect}\n
          time_starttransfer:  %{time_starttransfer}\n
               size_download:  %{size_download}\n
+               size_headers:  %{size_header}\n
              speed_download:  %{speed_download}\n
                   http_code:  %{http_code}\n
                             ----------\n
