@@ -46,11 +46,10 @@ alias gs='git submodule'
 alias gd='git diff'
 alias ad='git add'
 alias com='git commit -m'
-alias gp='git pull --rebase'
 alias st='git status'
 alias add='git add'
 alias pus='git push'
-alias pul='git pull'
+alias pug='git pull'
 alias branch='git checkout -b'
 alias master='git checkout master'
 alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
@@ -323,7 +322,10 @@ function expose {
 }
 
 function pinger {
-    curl -X POST -d"os_type=Android" -d"os_version=4.0.3" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=4.0.3" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+}
+function pinger2 {
+    curl -X POST -d"timestamp=2372799220" -d"os_type=Android" -d"os_version=4.0.3" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
 }
 
 
