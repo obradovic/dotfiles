@@ -20,6 +20,7 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
+alias tb='tugboat'
 function ksearch {
 	knife search node "roles:$1" 
 }
@@ -40,7 +41,6 @@ alias vst='va status'
 
 
 # GIT'R DONE!
-alias g='git'
 alias god='git'
 alias gs='git submodule'
 alias gd='git diff'
@@ -220,6 +220,9 @@ function s {
 }
 function d {
 	S dev-$1
+}
+function g {
+	S green-$1
 }
 function pl {
 	p lb-peta$1
@@ -501,6 +504,128 @@ function rs-create {
   time knife rackspace server create -d $bootstrap --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-region $location
 
   # or-create $fullname
+}
+
+
+function do-list() {
+    curl -s "https://api.digitalocean.com/droplets/?client_id=$DO_CLIENT_ID&api_key=$DO_API_KEY" | python -mjson.tool
+}
+
+function do-keys() {
+    curl -s "https://api.digitalocean.com/ssh_keys/?client_id=$DO_CLIENT_ID&api_key=$DO_API_KEY" | python -mjson.tool
+}
+
+function do-create {
+  if [ "$1" = "" ]; then
+	echo
+    echo " DigitalOcean Pricing: https://www.digitalocean.com/pricing"
+	echo
+    echo "   ID   Mem    VCPUs  Net    Disk  Cost"
+    echo "   66   512MB  1      1TB    20GB  \$5/mo"
+    echo "   63   1GB    1      2TB    30GB  \$10/mo"
+    echo "   62   2GB    2      3TB    40GB  \$20/mo  <- app/cam prod"
+    echo "   64   4GB    2      4TB    60GB  \$40/mo"
+    echo "   65   8GB    4      5TB    80GB  \$80/mo  <- giga lb"
+    echo "   61   16GB   8      6TB    160GB \$160/mo <- tera lb"
+    echo "   60   32GB   12     7TB    320GB \$320/mo <- peta lb"
+    echo "   70   48GB   16     8TB    480GB \$480/mo"
+    echo "   69   64GB   20     9TB    640GB \$640/mo"
+    echo "   68   96GB   24     10TB   960GB \$960/mo"
+    echo
+    echo " do-create <env> <name> <run_list> <flavor> <image> <location>"
+    echo
+    echo "       <env>      "
+    echo "       <name>     "
+    echo "       <run_list> (needs single quotes)"
+    echo "       <flavor>   defaults to \"2\" (512MB small)"
+    echo "       <image>    defaults to \"Ubuntu 12.10\". Use prod-app, prod-resizer, prod-store, or dev-app"
+    echo "       <location> defaults to \"dfw\" (\"ord\" is a valid alternative)"
+	echo
+
+    echo "Ex: do-create dev app99 'role[app-all]' dev-app"
+	echo
+    return
+  fi
+
+
+  env=$1
+  name=$2
+  run_list="'$3'"
+
+  if [ "$4" = "" ]; then
+    flavor="66"
+  else
+    flavor=$4
+  fi
+
+  # knife rackspace image list --rackspace-version v2
+  if [ "$5" = "" ]; then
+    image="473123"
+  elif [ "$5" = "ubuntu.12.10" ]; then
+    image="473123"
+  elif [ "$5" = "ubuntu.13.04" ]; then
+    image="350076"
+  elif [ "$5" = "ubuntu.13.10" ]; then
+    image="284203"
+
+  # PRIVATE IMAGES
+  elif [ "$5" = "prod-app" ]; then
+    image="9d17ce76-dce8-488e-8811-0620d495349a"
+  elif [ "$5" = "prod-resizer" ]; then
+    image="f1262e39-9d0c-4d45-b17c-23438b6506ff"
+  elif [ "$5" = "prod-store" ]; then
+    image="be5a693d-890f-4255-9954-9a1a9a84bfdd"
+  elif [ "$5" = "dev-app" ]; then
+    image="1dc261fa-a5b7-4321-b48e-7f1441c88cbe"
+  else
+    image="473123"
+  fi
+
+
+  if [ "$6" = "" ]; then
+    location="4"
+  else
+    location=$5
+  fi
+
+  bootstrap="vsco-ubuntu"
+  ssh_key_id=54102
+  fullname=$env-$name
+  echo "Creating $fullname with a run_list of $run_list, flavor $flavor, image $image, in $location"
+
+
+  curl "https://api.digitalocean.com/droplets/new?client_id=$DO_CLIENT_ID&api_key=$DO_API_KEY&name=$fullname&size_id=$flavor&image_id=$image&region_id=$location&ssh_key_ids=$ssh_key_id&private_networking=true"
+  cd ~/tugboat
+  # tugboat create $fullname -s $flavor -i $image -r $location -k $ssh_key_id -p
+  tugboat wait $fullname
+
+  c
+  ip=`tb info $fullname | grep IP | tr -s ' ' | cut -d ' ' -f 2`
+  knife bootstrap $ip -E $env -d $bootstrap -r $run_list -N $fullname -i ~/.ssh/do_rsa -x root -V
+
+  # knife bootstrap 162.243.101.134 -E 'green' -d vsco-ubuntu -r 'role[lb]' -N green-fu -V -x root -i ~/.ssh/do_rsa
+  # or-create $fullname
+}
+
+function do-delete {
+    if [ "$1" = "" ]; then
+        echo
+        echo " do-delete <name>"
+        echo
+        echo "Ex: do-delete dev-xray9"
+        echo
+        return
+    fi
+
+    c
+
+    tb destroy $1 
+
+    or-delete $1
+    dns-delete $1           vsco.co
+    dns-delete $1-private   vsco.co
+
+    cd -
 }
 
 
