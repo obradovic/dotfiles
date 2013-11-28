@@ -52,6 +52,7 @@ alias co='git checkout'
 alias gpl='git pull'
 alias gps='git push'
 alias branch='co -b'
+alias branchd='git branch -d'
 alias dev='co dev'
 alias dev2='co dev2'
 alias master='co master'
@@ -328,11 +329,27 @@ function expose {
     ssh -N -R 0.0.0.0:$port:localhost:80 $VSCO_EXPORTED_USER@$VSCO_EXPORTED_HOST
 }
 
+
 function pinger {
-    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.17 (42) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (47) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
 }
-function pinger2 {
-    curl -X POST -d"timestamp=2372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+function pingerp {
+    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (47) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vsco.co/api/ping/pong"
+}
+function pingerp-old {
+    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vsco.co/api/ping/pong"
+}
+function pingers {
+    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (47) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscostaging.com/api/ping/pong"
+}
+function pingers-old {
+    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscostaging.com/api/ping/pong"
+}
+function pingerd {
+    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (47) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscodev.com/api/ping/pong"
+}
+function pingerd-old {
+    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.23 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscodev.com/api/ping/pong"
 }
 
 
