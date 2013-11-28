@@ -235,6 +235,7 @@ function pl {
 # misc
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
+alias loadspeed='phantomjs /Users/zo/performance/loadspeed.js'
 
 function b64 {
 	echo
@@ -328,10 +329,10 @@ function expose {
 }
 
 function pinger {
-    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=4.0.3" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.17 (42) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
 }
 function pinger2 {
-    curl -X POST -d"timestamp=2372799220" -d"os_type=Android" -d"os_version=4.0.3" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+    curl -X POST -d"timestamp=2372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=18" -d"app_id=fooasdfasdf" -d"device_id=adsfasdfasdfadsfad" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
 }
 
 
@@ -438,14 +439,23 @@ function rs-create {
     echo " Rackspace Pricing: http://www.rackspace.com/cloud/servers/pricing"
 	echo
     echo " > knife rackspace flavor list"
-    echo "       ID  Name                     VCPUs  RAM    Disk"
-    echo "       2   512MB Standard Instance  1      512    20 GB"
-    echo "       3   1GB Standard Instance    1      1024   40 GB"
-    echo "       4   2GB Standard Instance    2      2048   80 GB    <- app/cam prod"
-    echo "       5   4GB Standard Instance    2      4096   160 GB"
-    echo "       6   8GB Standard Instance    4      8192   320 GB   <- giga lb"
-    echo "       7   15GB Standard Instance   6      15360  620 GB   <- tera lb"
-    echo "       8   30GB Standard Instance   8      30720  1200 GB  <- peta lb"
+    echo "              ID   Name                     VCPUs  RAM     Disk"
+    echo "              2    512MB Standard Instance  1      512     20 GB"
+    echo "              3    1GB Standard Instance    1      1024    40 GB"
+    echo "              4    2GB Standard Instance    2      2048    80 GB    <- app/cam prod"
+    echo "              5    4GB Standard Instance    2      4096    160 GB"
+    echo "              6    8GB Standard Instance    4      8192    320 GB   <- giga lb"
+    echo "              7    15GB Standard Instance   6      15360   620 GB   <- tera lb"
+    echo "              8    30GB Standard Instance   8      30720   1200 GB  <- peta lb"
+    echo " performance1-1    1 GB Performance         1      1024    20 GB"
+    echo " performance1-2    2 GB Performance         2      2048    40 GB    <- app/cam prod NEW"
+    echo " performance1-4    4 GB Performance         4      4096    40 GB"
+    echo " performance1-8    8 GB Performance         8      8192    40 GB"
+    echo " performance2-15   15 GB Performance        4      15360   40 GB"
+    echo " performance2-30   30 GB Performance        8      30720   40 GB    <- peta lb NEW"
+    echo " performance2-60   60 GB Performance        16     61440   40 GB    <- exa lb"
+    echo " performance2-90   90 GB Performance        24     92160   40 GB"
+    echo " performance2-120  120 GB Performance       32     122880  40 GB"
     echo
     echo " rs-create <env> <name> <run_list> <flavor> <image> <location>"
     echo
@@ -708,7 +718,6 @@ function rs-delete {
 
 	c
 
-	or-delete $1
 
   	id=`knife rackspace server list | grep "$1 " | awk '{print $1}'`
   	time knife rackspace server delete $id -P
@@ -716,6 +725,8 @@ function rs-delete {
   	dns-delete $1			vsco.co
   	dns-delete $1-private	vsco.co
     # knife client delete $1
+
+	or-delete $1
 
   	cd -
 }
