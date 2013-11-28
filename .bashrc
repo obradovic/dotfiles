@@ -41,17 +41,20 @@ alias vst='va status'
 
 
 # GIT'R DONE!
+alias gi='git'
 alias god='git'
 alias gs='git submodule'
 alias gd='git diff'
 alias ad='git add'
 alias com='git commit -m'
 alias st='git status'
-alias add='git add'
-alias pus='git push'
-alias pug='git pull'
-alias branch='git checkout -b'
-alias master='git checkout master'
+alias co='git checkout'
+alias gpl='git pull'
+alias gps='git push'
+alias branch='co -b'
+alias dev='co dev'
+alias dev2='co dev2'
+alias master='co master'
 alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
 
 # generic
