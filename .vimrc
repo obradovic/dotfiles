@@ -1,7 +1,7 @@
 " git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
 
 set nocompatible               " be iMproved
-filetype off                   " required!
+" filetype off                   " required!
 
 " set rtp+=~/.vim/bundle/vundle/
 " call vundle#rc()
