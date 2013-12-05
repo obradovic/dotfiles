@@ -53,6 +53,9 @@ alias gpl='git pull'
 alias gps='git push'
 alias branch='co -b'
 alias branchd='git branch -d'
+alias stash='git stash'
+alias stahs='stash'
+alias sta='stash'
 alias dev='co dev'
 alias dev2='co dev2'
 alias master='co master'
@@ -98,6 +101,11 @@ alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
 alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
 alias tl='tail -f'
 alias beep='for i in {1..3} ; do tput bel; sleep 1; done'
+
+function mcd {
+	mkdir $1
+	cd $1
+}
 
 # dirs
 alias c='cd  $SRC_HOME/chef'
@@ -230,6 +238,9 @@ function g {
 }
 function pl {
 	p lb-peta$1
+}
+function sl {
+	s lb-peta$1
 }
 
 
