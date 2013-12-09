@@ -61,6 +61,11 @@ alias dev2='co dev2'
 alias master='co master'
 alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
 
+# ELASTICSEARCH
+function curles {
+    curl -s "localhost:9200/$1" | python -m json.tool
+}
+
 # generic
 alias dir='ls -la'
 alias la='ls -la'
