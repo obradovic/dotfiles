@@ -157,9 +157,6 @@ function vpurged {
 # OpsCode / Chef
 export OPSCODE_USER=zo
 
-# RVM
-source ~/.rvm/scripts/rvm
-
 # some default locations
 export NGINX_HOME=/usr/local/Cellar/nginx/current
 export APACHE_HOME=/usr/local/apache2
@@ -176,13 +173,13 @@ export GSUTIL_HOME=~/bin/gsutil
 # Python
 export PYTHONPATH=~/
 
+export PATH=$HOME/.rvm/bin:$PATH
 export PATH=$PHP_HOME/bin:$PATH
 export PATH=$PEAR_HOME/bin:$PATH
 # export PATH=$OPENSSL_HOME/bin:$PATH
 export PATH=/usr/local/bin:$PATH
 export PATH=/usr/local/sbin:$PATH
 export PATH=$PATH:$NPM_HOME/bin
-export PATH=$PATH:$HOME/.rvm/bin
 export PATH=$PATH:$ANDROID_HOME/tools
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 export PATH=$PATH:$HEROKU_HOME/bin
@@ -191,6 +188,10 @@ export PATH=$PATH:.
 
 export PATH=~/bin:$PATH
 export PATH=$NPM_RELATIVE:$PATH
+
+# RVM
+source ~/.rvm/scripts/rvm
+
 
 # Prompt, and other bash goodies
 export CLICOLOR=1
