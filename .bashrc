@@ -21,6 +21,7 @@ alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
 alias tb='tugboat'
+alias gms='ssh prod-gearmand "echo \"status\" | nc private 4730"'
 function ksearch {
 	knife search node "roles:$1" 
 }
@@ -120,6 +121,7 @@ alias a='cd  $SRC_HOME/android'
 alias v='cd  $SRC_HOME/chef/cookbooks/vsco/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
+alias i='cd  $SRC_HOME/responsive-images'
 alias w='cd $SRC_HOME/web'
 
 # android
@@ -255,6 +257,7 @@ function sl {
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
 alias loadspeed='phantomjs /Users/zo/performance/loadspeed.js'
+alias photo='ssh $PHOTO_USER@photo.obradovic.com'
 
 function b64 {
 	echo
@@ -529,8 +532,10 @@ function rs-create {
     image="f1262e39-9d0c-4d45-b17c-23438b6506ff"
   elif [ "$5" = "prod-store" ]; then
     image="be5a693d-890f-4255-9954-9a1a9a84bfdd"
-  elif [ "$5" = "dev-app" ]; then
-    image="1dc261fa-a5b7-4321-b48e-7f1441c88cbe"
+  elif [ "$5" = "dev-blank-app" ]; then
+	image="96f429fe-c4d3-494a-b225-97f57363ab32"
+  elif [ "$5" = "dev-blank-cam" ]; then
+	image="fc177284-d31f-4674-a579-e497b14b50d8"
   else
     image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
   fi
@@ -678,7 +683,7 @@ function do-delete {
 
 
 function or {
-    mongo -u $OR_USER -p $OR_PASS $OR_HOST/$1
+    mongo -u $OR_USER -p $OR_PASS $OR_HOST/$1 $2 $3 $4
 }
 
 function or-create {
