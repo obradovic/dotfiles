@@ -22,7 +22,7 @@ alias kedit='knife node edit'
 alias urp='upr'
 alias tb='tugboat'
 alias tbd='tugboat destroy'
-alias tbl='tugboat images'
+alias tbl='tugboat droplets'
 alias gms='ssh prod-gearmand "echo \"status\" | nc private 4730"'
 function ksearch {
 	knife search node "roles:$1" 
