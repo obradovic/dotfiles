@@ -121,7 +121,7 @@ alias a='cd  $SRC_HOME/android'
 alias v='cd  $SRC_HOME/chef/cookbooks/vsco/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
-alias i='cd  $SRC_HOME/responsive-images'
+alias i='cd  $SRC_HOME/image'
 alias w='cd $SRC_HOME/web'
 
 # android
