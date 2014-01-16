@@ -546,7 +546,7 @@ function rs-create {
   if [ "$6" = "" ]; then
     location="dfw"
   else
-    location=$5
+    location=$6
   fi
 
   # endpoint="https://$location.servers.api.rackspacecloud.com/v2"
