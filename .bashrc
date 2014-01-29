@@ -631,7 +631,10 @@ function rs-create {
 		
 	rs-default-image $rs_location
 
-  	fullname=$env-$name
+  	fullname=$env-$rs_location-$name
+  	if [ "$rs_location" = "dfw" ]; then
+  		fullname=$env-$name
+	fi
   	echo "Creating $fullname with a run_list of $run_list, flavor $rs_flavor, image $rs_image, in $rs_location"
 
 	# Authorize ourselves
@@ -734,37 +737,24 @@ function rs-args-one {
     fi
 }
 
-function rs-getlocation {
-	case "$1" in
-		dev)
-			rs_location='dfw'
-			;;
-		staging)
-			rs_location='dfw'
-			;;
-		prod)
-			rs_location='dfw'
-			;;
-		hkg)
-			rs_location='hkg'
-			;;
-		syd)
-			rs_location='syd'
-			;;
-		lon)
-			rs_location='lon'
-			;;
-	esac
-}
 
 function rs-getid {
 	rs-serverinfo $* | underscore pluck 'id' --outfmt text
 }
 
+function rs-parsename {
+	IFS=- read env rs_location name <<< "$1"
+
+    # if its in the "old" naming format, default the location
+    if [ "$name" = "" ]; then
+		name=$rs_location
+		rs_location="dfw"
+	fi
+}
+
 function rs-serverinfo {
 	fullname=$1
-	IFS=- read env name rest <<< "$fullname"
- 	rs-getlocation $env
+	rs-parse-servername	$fullname
 	rs-list $rs_location | underscore select ":has(:root > .name:val(\"$fullname\"))" | js
 }
 
@@ -779,8 +769,7 @@ function rs-delete {
     fi
 
 	fullname=$1
-	IFS=- read env name rest <<< "$fullname"
- 	rs-getlocation $env
+	rs-parse-servername	$fullname
 
 	echo -n "Authorizing ..."
 	rs-auth
