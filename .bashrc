@@ -706,6 +706,14 @@ function rs-default-image {
 
 function rs-auth {
     export RS_TOKEN=`curl -s -H "Content-Type: application/json" https://auth.api.rackspacecloud.com/v2.0/tokens  -XPOST -d"{ \"auth\": { \"RAX-KSKEY:apiKeyCredentials\": { \"username\": \"$RS_USERNAME\", \"apiKey\": \"$RS_APIKEY\" } } }" | underscore extract 'access.token.id' --outfmt text`
+
+	if [ -z "$RS_TOKEN" ]; then
+		echo
+    	echo "Unable to get RS_TOKEN!"
+		echo "RS_USERNAME: $RS_USERNAME"
+		echo "RS_APIKEY:   $RS_APIKEY"
+		echo
+	fi 
 }
 
 function rs-args-two {
@@ -774,13 +782,20 @@ function rs-delete {
 	IFS=- read env name rest <<< "$fullname"
  	rs-getlocation $env
 
-	rs_server=`rs-getid $fullname`
-
-	echo "Authorizing"
+	echo -n "Authorizing ..."
 	rs-auth
 
-	echo "Deleting Server $rs_server"
-	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -X DELETE -H "X-Auth-Token: $RS_TOKEN" 
+	rs_server=`rs-getid $fullname`
+
+	echo "Deleting Server $rs_server ..."
+	output=`curl -s -v https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -X DELETE -H "X-Auth-Token: $RS_TOKEN"`
+	if echo $output | grep " 204 No Content"
+	then
+		echo "Deleted"
+	else
+		echo "Server NOT Deleted:"
+		echo $output
+	fi
 
 	echo
 	echo "Deleting DNS entries"
