@@ -281,6 +281,15 @@ function wildcard_csr {
 	openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=California/L=Emeryville/O=VSCO/CN=*.$domain"
 }
 
+function timestamp {
+    date +"%s"
+}
+
+function timestamp-diff {
+    cur=`timestamp`
+    expr $cur - $1
+}
+
 function l {
 	LOGDIR="/var/log"
 	case "$1" in
@@ -475,7 +484,7 @@ function init-app {
 
 
 
-function rs-create {
+function rs-create-old {
   if [ "$1" = "" ]; then
 	echo
     echo " Rackspace Pricing: http://www.rackspace.com/cloud/servers/pricing"
@@ -565,7 +574,7 @@ function rs-create {
 
 
 
-function rs-create-curl {
+function rs-create {
   	if [ "$1" = "" ]; then
     	echo
     	echo " Rackspace Pricing: http://www.rackspace.com/cloud/servers/pricing"
@@ -658,11 +667,9 @@ function rs-create-curl {
 	
 	# Chef Bootstrap
 	echo "Bootstrapping $ip with $rs_pw"
+	a=`timestamp`
 	knife bootstrap $ip -E $env -d vsco-ubuntu -r $run_list -N $fullname -x root -P $rs_pw -V
-}
-
-function timestamp {
-	date +"%s"
+	echo "Bootstrapping Server $fullname took `timestamp-diff $a `seconds"
 }
 
 function rs-wait {
@@ -677,10 +684,8 @@ function rs-wait {
 		status=`rs-status $rs_location $rs_id`
 		if [ $status == "ACTIVE" ]
 		then 
-			b=`timestamp`
-			seconds=`expr $b - $a`
 			echo ""
-			echo "Creating Server took $seconds seconds"
+			echo "Creating Server took `timestamp-diff $a`seconds"
 			break
 		fi
 	done
@@ -696,7 +701,7 @@ function rs-default-image {
 			rs_image="d45ed9c5-d6fc-4c9d-89ea-1b3ae1c83999"
 			;;
 	esac
-	echo "IMAGE for $rs_location is $rs_image"
+	# echo "IMAGE for $rs_location is $rs_image"
 }
 
 function rs-auth {
@@ -721,6 +726,84 @@ function rs-args-one {
     fi
 }
 
+function rs-getlocation {
+	case "$1" in
+		dev)
+			rs_location='dfw'
+			;;
+		staging)
+			rs_location='dfw'
+			;;
+		prod)
+			rs_location='dfw'
+			;;
+		hkg)
+			rs_location='hkg'
+			;;
+		syd)
+			rs_location='syd'
+			;;
+		lon)
+			rs_location='lon'
+			;;
+	esac
+}
+
+function rs-getid {
+	rs-serverinfo $* | underscore pluck 'id' --outfmt text
+}
+
+function rs-serverinfo {
+	fullname=$1
+	IFS=- read env name rest <<< "$fullname"
+ 	rs-getlocation $env
+	rs-list $rs_location | underscore select ":has(:root > .name:val(\"$fullname\"))" | js
+}
+
+function rs-delete {
+    if [ "$1" = "" ]; then
+        echo
+        echo " rs-delete <name>"
+        echo
+        echo "Ex: rs-delete dev-xray9"
+        echo
+        return
+    fi
+
+	fullname=$1
+	IFS=- read env name rest <<< "$fullname"
+ 	rs-getlocation $env
+
+	rs_server=`rs-getid $fullname`
+
+	echo "Authorizing"
+	rs-auth
+
+	echo "Deleting Server $rs_server"
+	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -X DELETE -H "X-Auth-Token: $RS_TOKEN" 
+
+	echo
+	echo "Deleting DNS entries"
+    dns-delete $fullname           vsco.co
+    dns-delete $fullname-private   vsco.co
+
+	echo
+	echo "Deleting Opscode entries"
+    knife client delete -y $fullname
+    knife node   delete -y $fullname
+
+	echo
+	echo "Deleting ObjectRocket entries"
+    or-delete $fullname
+	echo "done"
+}
+
+function rs-list {
+	rs-args-one $*
+	rs-auth
+	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/detail -H "X-Auth-Token: $RS_TOKEN" | js
+}
+
 function rs-info {
 	rs-args-two $*
 	rs-auth
@@ -731,13 +814,6 @@ function rs-ip {
 	rs-args-two $*
 	rs-auth
 	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | underscore extract 'server.accessIPv4' --outfmt text
-}
-
-function rs-pw {
-	rs-args-two $*
-	rs-auth
-	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" 
-	# curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | underscore extract 'server.adminPass' --outfmt text
 }
 
 function rs-status {
@@ -945,7 +1021,7 @@ function dns-delete {
   	fi
 }
 
-function rs-delete {
+function rs-delete-old {
   	if [ "$1" = "" ]; then
     	echo
     	echo " rs-delete <name>"
