@@ -110,6 +110,7 @@ alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
 alias tl='tail -f'
 alias beep='for i in {1..3} ; do tput bel; sleep 1; done'
 alias js='python -m json.tool'
+alias us='underscore'
 
 function mcd {
 	mkdir $1
@@ -344,6 +345,7 @@ function ha-geo {
 function pw {
     grep "$VSCO_ATTRIBUTE_PATTERN" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | cut -f 2 -d "=" | cut -f 2 -d "\"" | pbcopy
     grep -A 1 "$VSCO_ATTRIBUTE_PATTERN" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | cut -f 2 -d "=" | cut -f 2 -d "\""
+	grep "$VSCO_ATTRIBUTE_REDIS_1" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | grep "$VSCO_ATTRIBUTE_REDIS_2"
 }
 
 function expose {
@@ -559,6 +561,201 @@ function rs-create {
   time knife rackspace server create -d $bootstrap --image $image --flavor $flavor --server-name $fullname --node-name $fullname --run-list $run_list --environment $env --rackspace-region $location
 
   # or-create $fullname
+}
+
+
+
+function rs-create-curl {
+  	if [ "$1" = "" ]; then
+    	echo
+    	echo " Rackspace Pricing: http://www.rackspace.com/cloud/servers/pricing"
+    	echo
+    	echo " > knife rackspace flavor list"
+    	echo "              ID   Name                 VCPUs  RAM    Disk      Cost"
+    	echo "              2    512MB Standard       1      512    20GB      \$16"
+    	echo "              3    1GB Standard         1      1GB    40GB      \$44"
+    	echo "              4    2GB Standard         2      2GB    80GB      \$88   <- app/cam prod"
+    	echo "              5    4GB Standard         2      4GB    160GB     \$175"
+    	echo "              6    8GB Standard         4      8GB    320GB     \$350  <- giga lb"
+    	echo "              7    15GB Standard        6      15GB   620GB     \$657  <- tera lb"
+    	echo "              8    30GB Standard        8      30GB   1200GB    \$876  <- peta lb"
+    	echo " performance1-1    1 GB Performance     1      1GB    20GB      \$29"
+    	echo " performance1-2    2 GB Performance     2      2GB    40/20GB   \$58   <- app/cam prod NEW"
+    	echo " performance1-4    4 GB Performance     4      4GB    40/40GB   \$117"
+    	echo " performance1-8    8 GB Performance     8      8GB    40/80GB   \$234"
+    	echo " performance2-15   15 GB Performance    4      15GB   40/150GB  \$496"
+    	echo " performance2-30   30 GB Performance    8      30GB   40/300GB  \$993  <- peta lb NEW"
+    	echo " performance2-60   60 GB Performance    16     61GB   40/600GB  \$1986 <- exa lb"
+    	echo " performance2-90   90 GB Performance    24     92GB   40/900GB  \$2978"
+    	echo " performance2-120  120 GB Performance   32     122GB  40/1200GB \$3971"
+    	echo
+    	echo " rs-create <env> <name> <run_list> <location> <flavor> <image>"
+    	echo
+    	echo "       <env>      "
+    	echo "       <name>     "
+    	echo "       <run_list> (needs single quotes)"
+    	echo "       <location> defaults to \"dfw\" (\"hkg\" is a valid alternative)"
+    	echo "       <flavor>   defaults to \"2\" (512MB small)"
+    	echo "       <image>    defaults to \"Ubuntu 12.10\""
+    	echo
+	
+    	echo "Ex: rs-create green app99 'role[app-all]' hkg performance1-2"
+    	echo
+    	return
+  	fi
+
+  	env=$1
+  	name=$2
+  	run_list="'$3'"
+
+  	if [ "$4" = "" ]; then
+    	rs_location=$RS_DEFAULT_LOCATION
+  	else
+    	rs_location=$4
+  	fi
+
+  	if [ "$5" = "" ]; then
+    	rs_flavor="performance1-1"
+  	else
+    	rs_flavor=$5
+  	fi
+		
+	rs-default-image $rs_location
+
+  	fullname=$env-$name
+  	echo "Creating $fullname with a run_list of $run_list, flavor $rs_flavor, image $rs_image, in $rs_location"
+
+	# Authorize ourselves
+	rs-auth
+
+	# Create the server
+	rs_response=`curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers \
+		-X POST \
+		-H "Content-Type: application/json" \
+		-H "X-Auth-Token: $RS_TOKEN" \
+		-H "X-Auth-Project-Id: vsco" \
+		-d"{
+            \"server\" : {
+                    \"name\" : \"$fullname\",
+                    \"imageRef\" : \"$rs_image\",
+                    \"flavorRef\" : \"$rs_flavor\",
+                    \"metadata\" : {
+                        \"My Server Name\" : \"$fullname\"
+                    }
+                }
+            }" `
+
+	# parse the server_id and pw out of the response
+	echo $rs_response | js
+	rs_server_id=`echo $rs_response | underscore extract "server.id" --outfmt text`
+	rs_pw=`echo $rs_response | underscore extract "server.adminPass" --outfmt text`
+
+	# wait for the server to get created
+	rs-wait $rs_location $rs_server_id
+
+	# get the IP address
+	ip=`rs-ip $rs_location $rs_server_id`
+	
+	# Chef Bootstrap
+	echo "Bootstrapping $ip with $rs_pw"
+	knife bootstrap $ip -E $env -d vsco-ubuntu -r $run_list -N $fullname -x root -P $rs_pw -V
+}
+
+function timestamp {
+	date +"%s"
+}
+
+function rs-wait {
+	rs_location=$1
+	rs_id=$2
+
+	a=`timestamp`
+	while true
+	do 
+		sleep 1
+		echo -n "."
+		status=`rs-status $rs_location $rs_id`
+		if [ $status == "ACTIVE" ]
+		then 
+			b=`timestamp`
+			seconds=`expr $b - $a`
+			echo ""
+			echo "Creating Server took $seconds seconds"
+			break
+		fi
+	done
+}
+
+function rs-default-image {
+	rs-args-one $*
+	case "$rs_location" in
+		dfw)
+ 	    	rs_image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
+			;;
+		hkg)
+			rs_image="d45ed9c5-d6fc-4c9d-89ea-1b3ae1c83999"
+			;;
+	esac
+	echo "IMAGE for $rs_location is $rs_image"
+}
+
+function rs-auth {
+    export RS_TOKEN=`curl -s -H "Content-Type: application/json" https://auth.api.rackspacecloud.com/v2.0/tokens  -XPOST -d"{ \"auth\": { \"RAX-KSKEY:apiKeyCredentials\": { \"username\": \"$RS_USERNAME\", \"apiKey\": \"$RS_APIKEY\" } } }" | underscore extract 'access.token.id' --outfmt text`
+}
+
+function rs-args-two {
+    if [ "$#" == "1" ]; then
+        rs_location=$RS_DEFAULT_LOCATION
+        rs_server=$1
+    else
+        rs_location=$1
+        rs_server=$2
+    fi
+}
+
+function rs-args-one {
+    if [ "$#" == "0" ]; then
+        rs_location=$RS_DEFAULT_LOCATION
+    else
+        rs_location=$1
+    fi
+}
+
+function rs-info {
+	rs-args-two $*
+	rs-auth
+	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | js
+}
+
+function rs-ip {
+	rs-args-two $*
+	rs-auth
+	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | underscore extract 'server.accessIPv4' --outfmt text
+}
+
+function rs-pw {
+	rs-args-two $*
+	rs-auth
+	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" 
+	# curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | underscore extract 'server.adminPass' --outfmt text
+}
+
+function rs-status {
+	rs-args-two $*
+	rs-auth
+	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | underscore extract 'server.status' --outfmt text
+}
+
+function rs-images {
+	rs-args-one $*
+	rs-auth
+	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/images/detail -H "X-Auth-Token: $RS_TOKEN" | js
+}
+
+function rs-flavors {
+	rs-args-one $*
+	rs-auth
+	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/flavors -H "X-Auth-Token: $RS_TOKEN" | js
 }
 
 
