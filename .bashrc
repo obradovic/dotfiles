@@ -685,7 +685,7 @@ function rs-wait {
 		if [ $status == "ACTIVE" ]
 		then 
 			echo ""
-			echo "Creating Server took `timestamp-diff $a`seconds"
+			echo "Creating Server took `timestamp-diff $a `seconds"
 			break
 		fi
 	done
