@@ -78,7 +78,7 @@ alias la='ls -la'
 alias dor='dir'
 alias dri='dir'
 alias dur='dir'
-alias h='history 100'
+# alias h='history 100'
 alias j='jobs'
 alias 1='fg %1'
 alias 2='fg %2'
@@ -250,6 +250,9 @@ function d {
 }
 function g {
 	S green-$1
+}
+function h {
+	S staging-hkg-$1
 }
 function pl {
 	p lb-peta$1
@@ -674,7 +677,9 @@ function rs-create {
 	# Chef Bootstrap
 	echo "Bootstrapping $ip with $rs_pw"
 	a=`timestamp`
+	c
 	knife bootstrap $ip -E $env -d vsco-ubuntu -r $run_list -N $fullname -x root -P $rs_pw -V
+	cd -
 	echo "Bootstrapping Server $fullname took `timestamp-diff $a `seconds"
 }
 
@@ -951,8 +956,6 @@ function do-delete {
         echo
         return
     fi
-
-    c
 
     tb destroy $1 
 
