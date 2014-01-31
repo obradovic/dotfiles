@@ -23,6 +23,9 @@ alias urp='upr'
 alias tb='tugboat'
 alias tbd='tugboat destroy'
 alias tbl='tugboat droplets'
+alias du1='du -h -d 1'
+alias du2='du -h -d 2'
+alias dfk='df -h -k'
 alias gms='ssh prod-gearmand "echo \"status\" | nc private 4730"'
 function ksearch {
 	knife search node "roles:$1" 
