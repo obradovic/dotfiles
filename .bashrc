@@ -296,6 +296,17 @@ function timestamp-diff {
     expr $cur - $1
 }
 
+function sshquiet {
+    if [ "$#" == "0" ]; then
+		echo
+		echo "Sorry. I need a string to remove from ~/.ssh/known_hosts"
+		echo
+	else
+		echo "Removing $1"
+		grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
+	fi
+}
+
 function l {
 	LOGDIR="/var/log"
 	case "$1" in
@@ -762,7 +773,7 @@ function rs-parsename {
 
 function rs-serverinfo {
 	fullname=$1
-	rs-parse-servername	$fullname
+	rs-parsename	$fullname
 	rs-list $rs_location | underscore select ":has(:root > .name:val(\"$fullname\"))" | js
 }
 
@@ -777,7 +788,7 @@ function rs-delete {
     fi
 
 	fullname=$1
-	rs-parse-servername	$fullname
+	rs-parsename	$fullname
 
 	echo -n "Authorizing ..."
 	rs-auth
