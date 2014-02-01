@@ -796,7 +796,7 @@ function rs-delete {
 	rs_server=`rs-getid $fullname`
 
 	echo "Deleting Server $rs_server ..."
-	output=`curl -s -v https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -X DELETE -H "X-Auth-Token: $RS_TOKEN"`
+	output=`curl -s -v https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -X DELETE -H "X-Auth-Token: $RS_TOKEN" 2>&1`
 	if echo $output | grep " 204 No Content"
 	then
 		echo "Deleted"
