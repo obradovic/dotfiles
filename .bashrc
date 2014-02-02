@@ -266,7 +266,11 @@ function sl {
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
 alias loadspeed='phantomjs /Users/zo/performance/loadspeed.js'
-alias photo='ssh $PHOTO_USER@photo.obradovic.com'
+alias photo='ssh $PHOTO_USER@$PHOTO_HOST'
+alias photo_mount='sshfs $PHOTO_USER@$PHOTO_HOST: $PHOTO_DIR_LOCAL_MOUNT'
+alias photo_umount='umount $PHOTO_DIR_LOCAL_MOUNT'
+alias photo_cpr='photo_umount; photo_mount; cp -R -v $PHOTO_DIR_LOCAL_MOUNT/* $PHOTO_DIR_REMOTE/.'
+alias photo_rsync='rsync -vr $PHOTO_DIR_LOCAL_PHONE/* $PHOTO_USER@$PHOTO_HOST:$PHOTO_DIR_REMOTE/.'
 
 function b64 {
 	echo
@@ -796,7 +800,7 @@ function rs-delete {
 	rs_server=`rs-getid $fullname`
 
 	echo "Deleting Server $rs_server ..."
-	output=`curl -s -v https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -X DELETE -H "X-Auth-Token: $RS_TOKEN" 2>&1`
+	output=`curl -s -v https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -X DELETE -H "X-Auth-Token: $RS_TOKEN"`
 	if echo $output | grep " 204 No Content"
 	then
 		echo "Deleted"
