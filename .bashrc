@@ -386,25 +386,25 @@ function expose {
 
 
 function pinger {
-    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (47) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong"
+    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (49) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong" | js
 }
 function pingerp {
-    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (47) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vsco.co/api/ping/pong"
+    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (49) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vsco.co/api/ping/pong" | js
 }
 function pingerp-old {
-    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vsco.co/api/ping/pong"
+    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vsco.co/api/ping/pong" | js
 }
 function pingers {
-    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (47) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscostaging.com/api/ping/pong"
+    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (49) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscostaging.com/api/ping/pong" | js
 }
 function pingers-old {
-    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscostaging.com/api/ping/pong"
+    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscostaging.com/api/ping/pong" | js
 }
 function pingerd {
-    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (47) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscodev.com/api/ping/pong"
+    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (49) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscodev.com/api/ping/pong" | js
 }
 function pingerd-old {
-    curl -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.23 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscodev.com/api/ping/pong"
+    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.23 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscodev.com/api/ping/pong" | js
 }
 
 
