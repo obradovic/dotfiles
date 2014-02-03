@@ -270,7 +270,7 @@ alias photo='ssh $PHOTO_USER@$PHOTO_HOST'
 alias photo_mount='sshfs $PHOTO_USER@$PHOTO_HOST: $PHOTO_DIR_LOCAL_MOUNT'
 alias photo_umount='umount $PHOTO_DIR_LOCAL_MOUNT'
 alias photo_cpr='photo_umount; photo_mount; cp -R -v $PHOTO_DIR_LOCAL_MOUNT/* $PHOTO_DIR_REMOTE/.'
-alias photo_rsync='rsync -vr $PHOTO_DIR_LOCAL_PHONE/* $PHOTO_USER@$PHOTO_HOST:$PHOTO_DIR_REMOTE/.'
+alias photo_rsync='rsync -vrt --progress $PHOTO_DIR_LOCAL_PHONE/* $PHOTO_USER@$PHOTO_HOST:$PHOTO_DIR_REMOTE/.'
 
 function b64 {
 	echo
