@@ -26,7 +26,8 @@ alias tbl='tugboat droplets'
 alias du1='du -h -d 1'
 alias du2='du -h -d 2'
 alias dfk='df -h -k'
-alias gms='ssh prod-gearmand "echo \"status\" | nc private 4730"'
+alias gms='ssh prod-gearmand "(echo \"status\"; sleep 0.5 ) | nc private 4730"'
+alias gmss='ssh staging-gearmand "(echo \"status\"; sleep 0.5 ) | nc private 4730"'
 function ksearch {
 	knife search node "roles:$1" 
 }
@@ -56,6 +57,7 @@ alias com='git commit -m'
 alias st='git status'
 alias co='git checkout'
 alias gpl='git pull'
+alias gpo='git pull origin'
 alias gps='git push'
 alias branch='co -b'
 alias branchd='git branch -d'
