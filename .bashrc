@@ -826,6 +826,11 @@ function rs-delete {
 	echo "Deleting ObjectRocket entries"
     or-delete $fullname
 	echo "done"
+
+	echo
+	echo "Deleting SSH cache"
+	sshquiet $fullname
+	echo "done"
 }
 
 function rs-list {
