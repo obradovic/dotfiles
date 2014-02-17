@@ -52,7 +52,7 @@ alias gi='git'
 alias god='git'
 alias gs='git submodule'
 alias gd='git diff'
-alias ad='git add'
+alias gad='git add'
 alias com='git commit -m'
 alias st='git status'
 alias co='git checkout'
@@ -895,14 +895,14 @@ function do-create {
     echo "   69   64GB   20     9TB    640GB \$640/mo"
     echo "   68   96GB   24     10TB   960GB \$960/mo"
     echo
-    echo " do-create <env> <name> <run_list> <flavor> <image> <location>"
+    echo " do-create <env> <name> <run_list> <id> <image> <location>"
     echo
     echo "       <env>      "
     echo "       <name>     "
     echo "       <run_list> (needs single quotes)"
     echo "       <flavor>   defaults to \"2\" (512MB small)"
-    echo "       <image>    defaults to \"Ubuntu 12.10\". Use prod-app, prod-resizer, prod-store, or dev-app"
-    echo "       <location> defaults to \"dfw\" (\"ord\" is a valid alternative)"
+    echo "       <image>    defaults to \"473123\""
+    echo "       <location> defaults to \"4\" (google nyc)"
 	echo
 
     echo "Ex: do-create dev app99 'role[app-all]' dev-app"
