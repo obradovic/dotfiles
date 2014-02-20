@@ -117,6 +117,7 @@ alias tl='tail -f'
 alias beep='for i in {1..3} ; do tput bel; sleep 1; done'
 alias js='python -m json.tool'
 alias us='underscore'
+alias pt='papertrail'
 
 function mcd {
 	mkdir $1
