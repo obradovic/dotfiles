@@ -141,6 +141,7 @@ alias mn='(a; cd VSCOCam; gradlew assembleDebug) '
 alias mr='(a; cd VSCOCam; gradlew assembleRelease; if [ $? -eq 0 ]; then pusha; else beep; fi)'
 alias unpush='adb uninstall com.vsco.cam'
 alias pusha='(a && cd VSCOCam && echo "                             `date`" && ls -la build/apk/VSCOCam-debug-unaligned.apk && adb uninstall com.vsco.cam; adb install build/apk/VSCOCam-debug-unaligned.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
+alias pushs='(a && cd VSCOCam && echo "                             `date`" && ls -la build/apk/VSCOCam-debug-unaligned.apk && adb uninstall com.vsco.cam; adb install build/apk/VSCOCam-debug-unaligned.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.billing.NativeStoreActivity)'
 alias push='(a && cd VSCOCam && echo "                              `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
 alias logcat='adb logcat > /tmp/logcat.txt &'
 alias logvsco='tail -f /tmp/logcat.txt | grep -i VSCO'
@@ -170,6 +171,9 @@ function vpurges {
 function vpurged {
     curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_DEV$1 2>&1 >/dev/null | grep HTTP
 }
+
+# Java
+export CLASSPATH=~/bin:$CLASSPATH
 
 
 # OpsCode / Chef
@@ -270,11 +274,74 @@ function sl {
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
 alias loadspeed='phantomjs /Users/zo/performance/loadspeed.js'
+
+# photo
+alias ph='cd ~/Photos'
 alias photo='ssh $PHOTO_USER@$PHOTO_HOST'
 alias photo_mount='sshfs $PHOTO_USER@$PHOTO_HOST: $PHOTO_DIR_LOCAL_MOUNT'
 alias photo_umount='umount $PHOTO_DIR_LOCAL_MOUNT'
 alias photo_cpr='photo_umount; photo_mount; cp -R -v $PHOTO_DIR_LOCAL_MOUNT/* $PHOTO_DIR_REMOTE/.'
-alias photo_rsync='rsync -vrt --progress $PHOTO_DIR_LOCAL_PHONE/* $PHOTO_USER@$PHOTO_HOST:$PHOTO_DIR_REMOTE/.'
+
+function photo_ls {
+	remote_dir="$PHOTO_REMOTE_BASE/$1"
+	photo "ls -la $remote_dir"
+}
+
+function photo_push {
+	local_dir=$1
+	remote_dir=$2
+	files=$3
+	remote_path="$PHOTO_REMOTE_BASE/$remote_dir"
+	echo "Syncing photos in $local_dir to $remote_path"
+
+	echo "Creating remote directory"
+	photo "cd $PHOTO_REMOTE_BASE; mkdir $remote_dir"
+	echo "created."
+
+	rsync -Prtv --progress $local_dir/* $PHOTO_USER@$PHOTO_HOST:$PHOTO_REMOTE_HOME/$remote_path/.
+}
+
+function photo_pull {
+	local_dir=$1
+	remote_dir=$2
+	remote_path="$PHOTO_REMOTE_BASE/$remote_dir"
+	echo "Pulling photos from $remote_path to $local_dir"
+
+	echo "Creating remote directory"
+	photo "cd $PHOTO_REMOTE_BASE; cd $remote_dir; ls -al"
+	echo "created."
+
+	rsync -Prtv --progress $PHOTO_USER@$PHOTO_HOST:$PHOTO_REMOTE_HOME/$remote_path/* $local_dir/. 
+}
+
+function photo_pull_jacq {
+	local_mount=$PHOTO_MOUNT_JACQ
+	local_dir=$PHOTO_LOCAL_HOME/JacqsPhone
+	mkdir $local_dir
+	find "$local_mount" -name \*JPG -exec cp -pvn {} $local_dir/. \;
+	find "$local_mount" -name \*MOV -exec cp -pvn {} $local_dir/. \;
+}
+
+function photo_pull_samsung {
+    local_dir=$PHOTO_LOCAL_HOME/SamsungCamera
+	camera_dir=/sdcard/DCIM/Camera/
+	cd $local_dir
+	adb pull $camera_dir
+}
+
+function photo_clear_samsung {
+	camera_dir=/sdcard/DCIM/Camera
+	echo "`adb shell \"ls -la $camera_dir\" | wc -l` files on Camera: $camera_dir"
+	echo "Clearing"
+	adb shell "rm $camera_dir/*"
+	adb shell "ls -la $camera_dir"
+	echo "Cleared $camera_dir"
+}
+
+function tolower {
+	for f in *; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
+}
+
 
 function b64 {
 	echo
