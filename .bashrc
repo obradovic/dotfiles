@@ -351,7 +351,7 @@ function photo_clear_samsung {
 }
 
 function tolower {
-	for f in *; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
+	for f in `find . -type f -maxdepth 1`; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
 }
 
 
