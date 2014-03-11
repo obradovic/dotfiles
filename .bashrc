@@ -76,6 +76,7 @@ function curles {
 
 # generic
 alias dir='ls -la'
+alias dirw='ls -al | grep drw'
 alias la='ls -la'
 alias dor='dir'
 alias dri='dir'
@@ -290,7 +291,17 @@ function photo_ls {
 function photo_push {
 	local_dir=$1
 	remote_dir=$2
-	files=$3
+
+  	if [ "$local_dir" = "" ]; then
+    	local_dir="."
+  	fi
+
+  	if [ "$remote_dir" = "" ]; then
+		dir=`pwd`
+		# http://stackoverflow.com/questions/16623835/bash-remove-a-fixed-prefix-suffix-from-a-string
+		remote_dir=${dir#$PHOTO_LOCAL_HOME/}
+  	fi
+
 	remote_path="$PHOTO_REMOTE_BASE/$remote_dir"
 	echo "Syncing photos in $local_dir to $remote_path"
 
@@ -302,14 +313,15 @@ function photo_push {
 }
 
 function photo_pull {
-	local_dir=$1
-	remote_dir=$2
+	remote_dir=$1
+	local_dir=$2
+
+	if [ "$local_dir" = "" ]; then
+		local_dir="."
+	fi
+
 	remote_path="$PHOTO_REMOTE_BASE/$remote_dir"
 	echo "Pulling photos from $remote_path to $local_dir"
-
-	echo "Creating remote directory"
-	photo "cd $PHOTO_REMOTE_BASE; cd $remote_dir; ls -al"
-	echo "created."
 
 	rsync -Prtv --progress $PHOTO_USER@$PHOTO_HOST:$PHOTO_REMOTE_HOME/$remote_path/* $local_dir/. 
 }
