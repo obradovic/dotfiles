@@ -283,6 +283,77 @@ alias photo_mount='sshfs $PHOTO_USER@$PHOTO_HOST: $PHOTO_DIR_LOCAL_MOUNT'
 alias photo_umount='umount $PHOTO_DIR_LOCAL_MOUNT'
 alias photo_cpr='photo_umount; photo_mount; cp -R -v $PHOTO_DIR_LOCAL_MOUNT/* $PHOTO_DIR_REMOTE/.'
 
+function jalbum_all {
+	for d in `find . -type d | grep -v 'thumbs\|slides\|res\|jalbum\|\.$'`
+	do
+		(cd $d && jalbum)
+	done
+	photo_push
+}
+
+function jalbum_convert_all {
+	for d in `find . -type d | grep -v 'thumbs\|slides\|res\|jalbum\|\.$'`
+	do
+		(cd $d && jalbum_convert)
+	done
+	photo_push
+}
+
+function jalbum_convert {
+	photo_convert
+	jalbum
+}
+
+function jalbum {
+	tolower
+
+	JALBUM_HOME=/Users/zo/Photos
+	JALBUM_SETTINGS=$JALBUM_HOME/jalbum-settings.jap
+
+	JALBUM_JAR="/Applications/jAlbum.app/Contents/Resources/Java/JAlbum.jar"
+	JALBUM_SKIN=Turtle
+
+	time java -Xmx1024M -jar $JALBUM_JAR -directory "`pwd`" -outputDirectory "`pwd`" -skin $JALBUM_SKIN -projectFile $JALBUM_SETTINGS -customImageOrdering
+	rm humans.txt
+}
+
+
+function photo_convert {
+	if [ ! -f meta.properties.original ]
+	then
+		dos2unix meta.properties
+		dos2unix albumfiles.txt
+
+		cp meta.properties meta.properties.original
+		cp albumfiles.txt albumfiles.txt.original
+
+		cp meta.properties comments.properties
+		sed '/title=/d'    comments.properties > foo; mv foo comments.properties
+		sed '/subtitle=/d' comments.properties > foo; mv foo comments.properties
+		sed '/date=/d'     comments.properties > foo; mv foo comments.properties
+		sed 's/=/.jpg=/'   comments.properties > foo; mv foo comments.properties
+		sed '/^$/d'        comments.properties > foo; mv foo comments.properties
+		sort comments.properties > foo; mv foo comments.properties
+
+		grep 'title=\|date=\|description=\|ordering=' meta.properties > foo; mv foo meta.properties
+		sed 's/subtitle=/description=/' meta.properties > foo; mv foo meta.properties
+
+		if ! grep ordering meta.properties; then
+			echo 'ordering=custom' >> meta.properties
+		fi
+
+		if ! grep folderimage albumfiles.txt; then
+    		echo '-folderimage.jpg' >> albumfiles.txt
+    		echo '-folderthumb.jpg' >> albumfiles.txt
+		fi
+
+		description=`grep description= meta.properties`
+		date=`grep date meta.properties | cut -d= -f2`
+		sed '/description=/d' meta.properties > foo; mv foo meta.properties
+		echo "description=$description<br/>$date" >> meta.properties
+	fi
+}
+
 function photo_ls {
 	remote_dir="$PHOTO_REMOTE_BASE/$1"
 	photo "ls -la $remote_dir"
@@ -351,7 +422,7 @@ function photo_clear_samsung {
 }
 
 function tolower {
-	for f in `find . -type f -maxdepth 1`; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
+	time for f in `find . -type f -maxdepth 1`; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
 }
 
 
@@ -1158,6 +1229,23 @@ function rs-delete-old {
 
   	cd -
 }
+
+# EOL conversions
+function dos2unix {
+	cat $1 | tr -d '\r' > foo.tmp
+	mv foo.tmp $1
+}
+
+function unix2mac {
+	cat $1 | tr '\n' '\r' > foo.tmp
+	mv foo.tmp $1
+}
+
+function mac2unix {
+	cat $1 | tr '\r' '\n' > foo.tmp
+	mv foo.tmp $1
+}
+
 
 set -o vi
 . ~/.bashrc_private
