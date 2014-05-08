@@ -41,9 +41,9 @@ function kd {
 export VAGRANT_CWD=~/vsco/web           # Lets you run vagrant from any directory
 export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
 alias va='vagrant'
-alias vs='vagrant ssh vsco-jicama'
-alias vup='va up vsco-jicama'
-alias vha='va halt vsco-jicama'
+alias vs='vagrant ssh vsco-kiwi'
+alias vup='va up vsco-kiwi'
+alias vha='va halt vsco-kiwi'
 alias vst='va status'
 
 
@@ -530,6 +530,8 @@ function pw {
     grep "$VSCO_ATTRIBUTE_PATTERN" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | cut -f 2 -d "=" | cut -f 2 -d "\"" | pbcopy
     grep -A 1 "$VSCO_ATTRIBUTE_PATTERN" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | cut -f 2 -d "=" | cut -f 2 -d "\""
 	grep "$VSCO_ATTRIBUTE_REDIS_1" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | grep "$VSCO_ATTRIBUTE_REDIS_2"
+	grep "th\]\[:pa" ~/vsco/chef/cookbooks/vsco/attributes/default.rb
+    echo "cama: $CAMA_PW"
 }
 
 function expose {
@@ -1031,9 +1033,9 @@ function do-keys() {
 
 function do-create {
   if [ "$1" = "" ]; then
-	echo
+    echo
     echo " DigitalOcean Pricing: https://www.digitalocean.com/pricing"
-	echo
+    echo
     echo "   ID   Mem    VCPUs  Net    Disk  Cost"
     echo "   66   512MB  1      1TB    20GB  \$5/mo"
     echo "   63   1GB    1      2TB    30GB  \$10/mo"
@@ -1052,12 +1054,15 @@ function do-create {
     echo "       <name>     "
     echo "       <run_list> (needs single quotes)"
     echo "       <flavor>   defaults to \"2\" (512MB small)"
-    echo "       <image>    defaults to \"473123\""
+    echo "       <image>    defaults to \"3101891\""
     echo "       <location> defaults to \"4\" (google nyc)"
-	echo
+    echo
 
-    echo "Ex: do-create dev app99 'role[app-all]' dev-app"
-	echo
+    echo "Ex: do-create green app99 'role[app-all]' 62"
+    echo
+    echo "To see list of available images:"
+    echo 'curl "https://api.digitalocean.com/images/?client_id=$DO_CLIENT_ID&api_key=$DO_API_KEY"  | js'
+    echo
     return
   fi
 
@@ -1074,13 +1079,11 @@ function do-create {
 
   # knife rackspace image list --rackspace-version v2
   if [ "$5" = "" ]; then
-    image="473123"
+    image="3447912"
   elif [ "$5" = "ubuntu.12.10" ]; then
-    image="473123"
-  elif [ "$5" = "ubuntu.13.04" ]; then
-    image="350076"
-  elif [ "$5" = "ubuntu.13.10" ]; then
-    image="284203"
+    image="3447912"
+  elif [ "$5" = "ubuntu.14.04" ]; then
+    image="3240036"
 
   # PRIVATE IMAGES
   elif [ "$5" = "prod-app" ]; then
@@ -1092,7 +1095,7 @@ function do-create {
   elif [ "$5" = "dev-app" ]; then
     image="1dc261fa-a5b7-4321-b48e-7f1441c88cbe"
   else
-    image="473123"
+    image="3447912"
   fi
 
 
