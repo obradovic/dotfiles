@@ -41,9 +41,9 @@ function kd {
 export VAGRANT_CWD=~/vsco/web           # Lets you run vagrant from any directory
 export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
 alias va='vagrant'
-alias vs='vagrant ssh vsco-kiwi'
-alias vup='va up vsco-kiwi'
-alias vha='va halt vsco-kiwi'
+alias vs='vagrant ssh vsco-lime'
+alias vup='va up vsco-lime'
+alias vha='va halt vsco-lime'
 alias vst='va status'
 
 
@@ -189,7 +189,7 @@ export HEROKU_HOME=/usr/local/heroku
 export PEAR_HOME=/Users/zo/pear/
 # export OPENSSL_HOME=/usr/local/ssl/
 export NPM_RELATIVE="./node_modules/.bin"
-export PHP_HOME=$(brew --prefix josegonzalez/php/php54)
+# export PHP_HOME=$(brew --prefix josegonzalez/php/php54)
 export GROOVY_HOME=/usr/local/opt/groovy/libexec
 export GSUTIL_HOME=~/bin/gsutil
 
@@ -197,7 +197,7 @@ export GSUTIL_HOME=~/bin/gsutil
 export PYTHONPATH=~/
 
 export PATH=$HOME/.rvm/bin:$PATH
-export PATH=$PHP_HOME/bin:$PATH
+# export PATH=$PHP_HOME/bin:$PATH
 export PATH=$PEAR_HOME/bin:$PATH
 # export PATH=$OPENSSL_HOME/bin:$PATH
 export PATH=/usr/local/bin:$PATH
@@ -260,14 +260,14 @@ function d {
 function g {
 	S green-$1
 }
-function h {
-	S staging-hkg-$1
+function b {
+	S blue-$1
+}
+function bs {
+	S blue-sgp-$1
 }
 function pl {
 	p lb-peta$1
-}
-function sl {
-	s lb-peta$1
 }
 
 
@@ -404,6 +404,15 @@ function photo_pull_jacq {
 	find "$local_mount" -name \*JPG -exec cp -pvn {} $local_dir/. \;
 	find "$local_mount" -name \*MOV -exec cp -pvn {} $local_dir/. \;
 }
+
+function photo_pull_zo {
+	local_mount=$PHOTO_MOUNT_ZO
+	local_dir=$PHOTO_LOCAL_HOME/ZoPhone
+	mkdir $local_dir
+	find "$local_mount" -name \*JPG -exec cp -pvn {} $local_dir/. \;
+	find "$local_mount" -name \*MOV -exec cp -pvn {} $local_dir/. \;
+}
+
 
 function photo_pull_samsung {
     local_dir=$PHOTO_LOCAL_HOME/SamsungCamera
@@ -1231,6 +1240,11 @@ function rs-delete-old {
 	or-delete $1
 
   	cd -
+}
+
+function aws-bootstrap {
+	env="blue"
+	knife bootstrap $1 -N $env-$2 -r 'role[redis]' -E $env -d vsco-amazon -V -x ubuntu -i ~/.ssh/$AWS_KEY_NAME.pem --hint '{"ec2":true}' --bootstrap-version="11.12.4"
 }
 
 # EOL conversions
