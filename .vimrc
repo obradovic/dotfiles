@@ -58,7 +58,7 @@ set guioptions-=T
 set guifont=Droid\ Sans\ Mono:h9
 
 " Lets you scroll with a mouse (but must use iTerm2...)
-set mouse=a
-map <ScrollWheelUp> <C-Y>
-map <ScrollWheelDown> <C-E>
+" set mouse=a
+" map <ScrollWheelUp> <C-Y>
+" map <ScrollWheelDown> <C-E>
 
