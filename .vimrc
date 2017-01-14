@@ -48,7 +48,9 @@ set incsearch
 set hlsearch
 set ruler
 set showcmd
-syntax on
+syntax enable
+set background=dark
+colorscheme solarized
 " filetype on
 
 " :hi MatchParen cterm=underline ctermbg=none ctermfg=none
