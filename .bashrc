@@ -3,6 +3,9 @@ shopt -s extglob
 export SRC_HOME="/Users/zo/vsco"
 umask 0000
 
+# GCLOUD
+alias sshg='gcloud compute ssh'
+
 # OPS shortcuts
 alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
@@ -196,7 +199,7 @@ export GSUTIL_HOME=~/bin/gsutil
 # Python
 export PYTHONPATH=~/
 
-export PATH=$HOME/.rvm/bin:$PATH
+# export PATH=$HOME/.rvm/bin:$PATH
 # export PATH=$PHP_HOME/bin:$PATH
 export PATH=$PEAR_HOME/bin:$PATH
 # export PATH=$OPENSSL_HOME/bin:$PATH
@@ -213,7 +216,7 @@ export PATH=~/bin:$PATH
 export PATH=$NPM_RELATIVE:$PATH
 
 # RVM
-source ~/.rvm/scripts/rvm
+# source ~/.rvm/scripts/rvm
 
 
 # Prompt, and other bash goodies
@@ -241,7 +244,7 @@ export GIT_PS1_SHOWUPSTREAM="auto"
 . ~/.git-completion.sh
 . ~/.colors_bash
 
-export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[0;32m\]`hostname`\[\e[0m\]\[\e[0;35m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W  > \[\e[0m\]'
+export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 # export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[1;30m\]`parse_git_branch`\[\e[0m\] \[\e[1;32m\]\W  > \[\e[0m\]'
 # export PS1="\[$BBlack\]\T `parse_git_branch` \[$Color_Off\]\[$BGreen\]\W  > \[$Color_Off\]"
 
@@ -1264,6 +1267,18 @@ function mac2unix {
 }
 
 
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f /Users/zo/Downloads/google-cloud-sdk/path.bash.inc ]; then
+  source '/Users/zo/Downloads/google-cloud-sdk/path.bash.inc'
+fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f /Users/zo/Downloads/google-cloud-sdk/completion.bash.inc ]; then
+  source '/Users/zo/Downloads/google-cloud-sdk/completion.bash.inc'
+fi
+
+
 set -o vi
 . ~/.bashrc_private
+
 
