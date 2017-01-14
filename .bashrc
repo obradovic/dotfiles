@@ -1,6 +1,6 @@
 shopt -s extglob
 
-export SRC_HOME="/Users/zo/vsco"
+export SRC_HOME="/Users/zo/src"
 umask 0000
 
 # GCLOUD
@@ -41,7 +41,7 @@ function kd {
 
 
 # VAGRANT
-export VAGRANT_CWD=~/vsco/web           # Lets you run vagrant from any directory
+export VAGRANT_CWD=$SRC_HOME/web           # Lets you run vagrant from any directory
 export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
 alias va='vagrant'
 alias vs='vagrant ssh vsco-lime'
