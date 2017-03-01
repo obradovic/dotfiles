@@ -2,6 +2,7 @@
 # brew bundle
 # fantastical 2
 # solarized: curl -o http://ethanschoonover.com/solarized/files/solarized.zip
+# aerial: https://github.com/JohnCoates/Aerial
 
 tap 'caskroom/cask'
 tap 'homebrew/core'
