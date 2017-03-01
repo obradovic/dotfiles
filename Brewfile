@@ -6,11 +6,9 @@
 
 tap 'caskroom/cask'
 tap 'homebrew/core'
-tap 'homebrew/dupes'
 
 # cask 'google-chrome' # already installed
 # cask 'google-drive'  # already installed
-# cask 'wunderlist'    # does not exist
 cask '1password'
 cask 'adobe-acrobat'
 cask 'alfred'
@@ -56,3 +54,9 @@ brew 'tmux'
 brew 'vim'
 
 brew 'curl', args:['with-nghttp2']
+
+mas 'Skitch', id: 425955336
+mas 'Slack', id: 803453959
+mas 'Xcode', id: 497799835
+mas 'Docs for Xcode', id: 688199928
+mas 'Wunderlist', id: 410628904
