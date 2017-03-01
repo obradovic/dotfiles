@@ -1,36 +1,136 @@
 shopt -s extglob
+set -o vi
 
-export SRC_HOME="/Users/zo/src"
-umask 0000
+export SRC_HOME="/Users/zo/phillies"
+umask 0022
+
+# PHIL
+function phil-db {
+	echo Password copied
+	echo $PHIL_GCLOUD_DB_PW | pbcopy
+	# gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
+	mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p
+}
+function phil-db-root {
+	echo Password copied
+	echo $PHIL_GCLOUD_DB_PW | pbcopy
+	mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p
+}
+function admin {
+	gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE admin
+}
+function g-create {
+	knife google server create $1 \
+	--gce-machine-type n1-standard-1 \
+	--gce-image ubuntu-1604-lts \
+	--ssh-user $CHEF_USERNAME \
+	--identity-file ~/.ssh/id_rsa \
+	--environment prod \
+	--run-list 'role[base]'
+}
+function g-create-api {
+	knife google server create $1 \
+	--gce-machine-type n1-standard-1 \
+	--gce-image ubuntu-1604-lts \
+	--ssh-user $CHEF_USERNAME \
+	--identity-file ~/.ssh/id_rsa \
+	--environment prod \
+	--run-list 'role[api]'
+}
+function g-create-lb {
+	knife google server create $1 \
+	--gce-machine-type n1-standard-1 \
+	--gce-image ubuntu-1604-lts \
+	--ssh-user $CHEF_USERNAME \
+	--identity-file ~/.ssh/id_rsa \
+	--environment prod \
+	--run-list 'role[lb]'
+}
+function g-create-admin {
+	# https://github.com/chef/knife-google
+	knife google server create $1 \
+		--gce-machine-type n1-standard-1 \
+		--gce-boot-disk-size 500 \
+		--gce-boot-disk-ssd true \
+		--gce-image ubuntu-1604-lts \
+		--gce-project $PHIL_GCLOUD_PROJECT \
+		--gce-zone $PHIL_GCLOUD_ZONE \
+		--ssh-user $CHEF_USERNAME \
+		--identity-file ~/.ssh/id_rsa \
+		--environment prod \
+		--request-timeout 6000 \
+		--auth-timeout 300 \
+		--run-list 'role[admin]' 
+}
+function g-delete {
+	knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE $1
+	kd $1
+}
+function g-ssh {
+	gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
+}
+function g-list {
+	knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE
+}
+function s {
+	. ~/.bashrc
+	pushd .
+	c
+	local ip=`knife google server list  | grep $1 | tr -s ' ' | cut -d ' ' -f5`
+	ssh $ip
+	popd
+}
+function lsg {
+	gsutil ls -lh gs://phil-backups/
+}
+function ls-backups {
+	gsutil ls -lh gs://phil-backups/daily/phil_data/
+}
+function restore-latest-backup {
+
+	gsutil cp `gsutil ls -lh gs://phil-backups/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
+	gzip -d fullschema.sql.gz
+	mysql -uroot -e "DROP DATABASE phil_backup"
+	mysql -uroot -e "CREATE DATABASE phil_backup"
+	mysql -uroot -e "RESET MASTER"
+	mysql -uroot < fullschema.sql
+
+	gsutil cp `gsutil ls -lh gs://phil-backups/daily/phil_data/ | grep -v TOTAL | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
+	gzip -d backup.sql.gz
+	pv backup.sql | mysql -uroot phil_backup
+	rm backup.sql
+}
+
+export FLASK_APP=main.py
+export FLASK_DEBUG=1
 
 # GCLOUD
+alias g='gcloud'
 alias sshg='gcloud compute ssh'
+alias gql='gcloud beta sql'
+export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
 
-# OPS shortcuts
+# GO
+export GOPATH=~/go
+
+# CHEF shortcuts
 alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
 alias k='knife'
-alias kr='knife rackspace'
-alias krs='kr server'
-alias krsl='krs list'
+alias kg='knife google'
 alias ke='knife ec2'
+alias kinst='knife cookbook site install'
+alias kservers='knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE'
 alias ks='knife status'
 alias ck='knife cookbook'
 alias up='knife cookbook upload'
+alias upp='up phillies'
 alias upr='knife role from file'
 alias upe='knife environment from file'
 alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
-alias tb='tugboat'
-alias tbd='tugboat destroy'
-alias tbl='tugboat droplets'
-alias du1='du -h -d 1'
-alias du2='du -h -d 2'
-alias dfk='df -h -k'
-alias gms='ssh prod-gearmand "(echo \"status\"; sleep 0.5 ) | nc private 4730"'
-alias gmss='ssh staging-gearmand "(echo \"status\"; sleep 0.5 ) | nc private 4730"'
 function ksearch {
 	knife search node "roles:$1" 
 }
@@ -41,12 +141,12 @@ function kd {
 
 
 # VAGRANT
-export VAGRANT_CWD=$SRC_HOME/web           # Lets you run vagrant from any directory
+export VAGRANT_CWD=~/phillies/web           # Lets you run vagrant from any directory
 export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
 alias va='vagrant'
-alias vs='vagrant ssh vsco-lime'
-alias vup='va up vsco-lime'
-alias vha='va halt vsco-lime'
+alias vs='vagrant ssh phillies-asparagus'
+alias vup='va up phillies-asparagus'
+alias vha='va halt phillies-asparagus'
 alias vst='va status'
 
 
@@ -99,10 +199,11 @@ alias copy='cp'
 alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.5; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.5; . ~/.bashrc'
-alias mac='vi $SRC_HOME/machines.txt'
 alias please='sudo'
 alias yolo='sudo !!'
 alias be='bundle exec'
+alias bcap='bundle exec cap'
+alias dep='bundle exec cap prod deploy'
 alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -113,6 +214,9 @@ alias ,,,,='....'
 alias .3='cd ../../..'
 alias .4='cd ../../../..'
 alias .5='cd ../../../../..'
+alias du1='du -h -d 1'
+alias du2='du -h -d 2'
+alias dfk='df -h -k'
 alias S='ssh'
 alias s3='aws s3'
 alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
@@ -128,15 +232,35 @@ function mcd {
 	cd $1
 }
 
+function api {
+	curl -s "$2" "https://api.phils.io/$1" | jq
+}
+function api-dev {
+	curl -s "$2" "http://104.196.134.140/$1" | jq
+}
+function api-local {
+	curl -s "$2" "http://localhost:5000/$1" | jq
+}
+function _api {
+	curl -s $2 "$3/$1" 
+}
+function api-devo {
+	curl -s $2 "104.196.134.140/$1"
+}
+function apio {
+	curl -s $2 "api.phils.io/$1"
+}
+function api-localo {
+	curl -s $2 "localhost:5000/$1" 
+}
+
 # dirs
+alias p='cd  $SRC_HOME'
+alias a='cd  $SRC_HOME/api/'
 alias c='cd  $SRC_HOME/chef'
-alias sto='cd  $SRC_HOME/camstore'
-alias a='cd  $SRC_HOME/android'
-alias v='cd  $SRC_HOME/chef/cookbooks/vsco/recipes'
+alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
-alias i='cd  $SRC_HOME/image'
-alias w='cd $SRC_HOME/web'
 
 # android
 alias pa='adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity'
@@ -154,6 +278,7 @@ alias adb-restart='adb kill-server; adb start-server'
 alias apk='find . -name \*.apk | xargs ls -al'
 alias rapk='find . -name \*.apk | xargs rm -rf'
 # export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
+
 
 # loader
 function loader {
@@ -179,7 +304,6 @@ function vpurged {
 # Java
 export CLASSPATH=~/bin:$CLASSPATH
 
-
 # OpsCode / Chef
 export OPSCODE_USER=zo
 
@@ -189,20 +313,16 @@ export APACHE_HOME=/usr/local/apache2
 export NPM_HOME=/usr/local/share/npm/
 export ANDROID_HOME=~/adt-bundle-mac/sdk
 export HEROKU_HOME=/usr/local/heroku
-export PEAR_HOME=/Users/zo/pear/
-# export OPENSSL_HOME=/usr/local/ssl/
 export NPM_RELATIVE="./node_modules/.bin"
-# export PHP_HOME=$(brew --prefix josegonzalez/php/php54)
 export GROOVY_HOME=/usr/local/opt/groovy/libexec
 export GSUTIL_HOME=~/bin/gsutil
 
 # Python
 export PYTHONPATH=~/
+source $(brew --prefix autoenv)/activate.sh
+alias e='source .env/bin/activate.sh'
 
 # export PATH=$HOME/.rvm/bin:$PATH
-# export PATH=$PHP_HOME/bin:$PATH
-export PATH=$PEAR_HOME/bin:$PATH
-# export PATH=$OPENSSL_HOME/bin:$PATH
 export PATH=/usr/local/bin:$PATH
 export PATH=/usr/local/sbin:$PATH
 export PATH=$PATH:$NPM_HOME/bin
@@ -215,9 +335,14 @@ export PATH=$PATH:.
 export PATH=~/bin:$PATH
 export PATH=$NPM_RELATIVE:$PATH
 
+# LUNCHY
+LUNCHY_DIR=$(dirname `gem which lunchy`)/../extras
+  if [ -f $LUNCHY_DIR/lunchy-completion.bash ]; then
+    . $LUNCHY_DIR/lunchy-completion.bash
+fi
+
 # RVM
 # source ~/.rvm/scripts/rvm
-
 
 # Prompt, and other bash goodies
 export CLICOLOR=1
@@ -231,11 +356,6 @@ if [ -f $(brew --prefix)/etc/bash_completion ]; then
   . $(brew --prefix)/etc/bash_completion
 fi
 
-# function parse_git_branch {
-  # ref=$(git symbolic-ref HEAD 2> /dev/null) || return
-  # echo "("${ref#refs/heads/}")"
-# }
-
 export GIT_PS1_SHOWSTASHSTATE=true
 export GIT_PS1_SHOWDIRTYSTATE=true
 export GIT_PS1_SHOWUPSTREAM="auto"
@@ -245,34 +365,6 @@ export GIT_PS1_SHOWUPSTREAM="auto"
 . ~/.colors_bash
 
 export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
-# export PS1='\[\e[1;30m\]\T\[\e[0m\] \[\e[1;30m\]`parse_git_branch`\[\e[0m\] \[\e[1;32m\]\W  > \[\e[0m\]'
-# export PS1="\[$BBlack\]\T `parse_git_branch` \[$Color_Off\]\[$BGreen\]\W  > \[$Color_Off\]"
-
-# Machines
-alias uploader='ssh -i ~/.ssh/mwukey.pem ec2-user@107.20.197.62'
-
-function p {
-	S prod-$1
-}
-function s {
-	S staging-$1
-}
-function d {
-	S dev-$1
-}
-function g {
-	S green-$1
-}
-function b {
-	S blue-$1
-}
-function bs {
-	S blue-sgp-$1
-}
-function pl {
-	p lb-peta$1
-}
-
 
 # misc
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
@@ -454,7 +546,7 @@ function geo {
 
 function wildcard_csr {
 	domain=$1
-	openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=California/L=Emeryville/O=VSCO/CN=*.$domain"
+	openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
 }
 
 function timestamp {
@@ -477,106 +569,10 @@ function sshquiet {
 	fi
 }
 
-function l {
-	LOGDIR="/var/log"
-	case "$1" in
-	"aperr")	file="`ls -tr $LOGDIR/apache2/error* | tail -1`" ;;
-	a*)			file="`ls -tr $LOGDIR/apache2/access* | tail -1`" ;;
-	r*)			file="$LOGDIR/resizer.log" ;;
-	g*)			file="$LOGDIR/gearmand.log" ;;
-	m*)			file="$LOGDIR/mongodb/mongodb.log" ;;
-	*) 			echo "default" ;;
-	esac
-
-	tail -50f $file
-}
-
 function title {
   echo -e "\033];$1\007" 
   echo "Title set to $1"
 }
-
-function dot {
-  cd ~/.dotfiles
-  git add .
-  git commit -m $1
-  git push
-  . ~/.bashrc
-  cd -
-}
-
-function dot-link {
-  cd ~
-  for f in .bashrc .vimrc .gvimrc .curl_format
-  do 
-    mv -f $f $f.old
-    ln -s .dotfiles/$f $f
-  done
-}
-
-function ha-geo {
-	scp zo@prod-lb-peta0:/tmp/xray_404.log ~/.
-	cat ~/xray_404.log | awk '{print $1}' > xray.ip
-	echo "Non-Unique IPs: `wc -l xray.ip`"
-	cat xray.ip | sort | uniq > xray2
-	mv xray2 xray.ip
-	echo "Unique IPs: `wc -l xray.ip`"
-	rm xray.geo
-	for i in `cat xray.ip`;do geoiplookup $i >> xray.geo; done
-
-	rm xray.analysis
-	array=( "United States" "Canada" "Mexico" "Australia" "Malaysia" "Hong Kong" "Japan" "Address not found" "India" "Taiwan" "Korea" "Vietnam" "China" "Indonesia" "Philippines" "New Zealand" "Fiji" "Lao People" "South Africa" "Morocco" "France" "Romania" "Poland" "Spain" "Italy" "United Kingdom" "Belgium" "Russian Federation" "Slovenia" "Norway" "Greece" "Israel" "Germany" "Sweden" "Ireland" "Brazil" "Qatar" "Denmark" "Iran" "Austria" "Switzerland" "Turkey" "Kuwait" "Thailand" "Singapore" "Guam" "Bahamas" "Saudi Arabia" "Serbia" "Finland" "Ukraine" "Bulgaria" "Albania" "Macau" "Pakistan" "Brunei" "Venezuela" "Colombia" "Estonia" "Hungary" "Dominican Republic" "Guatemala" "Sudan" "United Arab Emirates" "Portugal" "Chile" "Peru" "Argentina" "Azerbaijan" "Bahrain" "Czech Republic" "Cyprus" "Curacao" "Ecuador" "Egypt" "Croatia" "Kenya" "Jordan" "Cambodia" "Kazakhstan" "Lebanon" "Netherlands" "Puerto Rico" "Slovakia" "Uganda" "Mongolia" "Belarus" "Bangladesh" "Gibraltar" "Honduras" "Costa Rica" "Uruguay" "Iceland" "Bolivia" "Lithuania" "Luxembourg" "Latvia" "Jamaica" "Malta" "Nigeria" "Panama" "Paraguay" "Uruguay")
-	for i in "${array[@]}"; do
-		echo "`grep \"$i\" xray.geo | wc -l`: $i" >> xray.analysis
-		grep -v "$i" xray.geo > xray.temp
-		mv xray.temp xray.geo
-	done
-
-	cat xray.analysis | sort -r > xray.analysis.sorted
-	rm xray.analysis
-	cat xray.geo | sort | uniq > xray.geo.missed
-	"Not counting: `cat xray.geo.missed`"
-}
-
-function pw {
-    grep "$VSCO_ATTRIBUTE_PATTERN" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | cut -f 2 -d "=" | cut -f 2 -d "\"" | pbcopy
-    grep -A 1 "$VSCO_ATTRIBUTE_PATTERN" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | cut -f 2 -d "=" | cut -f 2 -d "\""
-	grep "$VSCO_ATTRIBUTE_REDIS_1" ~/vsco/chef/cookbooks/vsco/attributes/default.rb | grep "$VSCO_ATTRIBUTE_REDIS_2"
-	grep "th\]\[:pa" ~/vsco/chef/cookbooks/vsco/attributes/default.rb
-    echo "cama: $CAMA_PW"
-}
-
-function expose {
-    port=$1
-    echo "You are exposed on http://$VSCO_EXPORTED_HOST:$port"
-    ssh -N -R 0.0.0.0:$port:localhost:80 $VSCO_EXPORTED_USER@$VSCO_EXPORTED_HOST
-}
-
-
-function pinger {
-    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (49) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://localhost.vscodev.com/api/ping/pong" | js
-}
-function pingerp {
-    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (49) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vsco.co/api/ping/pong" | js
-}
-function pingerp-old {
-    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vsco.co/api/ping/pong" | js
-}
-function pingers {
-    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (49) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscostaging.com/api/ping/pong" | js
-}
-function pingers-old {
-    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscostaging.com/api/ping/pong" | js
-}
-function pingerd {
-    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.24 (49) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscodev.com/api/ping/pong" | js
-}
-function pingerd-old {
-    curl -s -X POST -d"timestamp=1372799220" -d"os_type=Android" -d"os_version=18" -d"app_version=v1.9.23 (46) DEV" -d"app_id=CAMANDROIDffffffff-ffff-ffff-ffff-ffffffffffff" -d"device_model=Nexus 4" "https://vscodev.com/api/ping/pong" | js
-}
-
-
-
 
 function init-cam {
   if [ "$1" = "" ]; then
@@ -1278,7 +1274,8 @@ if [ -f /Users/zo/Downloads/google-cloud-sdk/completion.bash.inc ]; then
 fi
 
 
-set -o vi
+. ~/.z.sh
 . ~/.bashrc_private
 
-
+# added by travis gem
+[ -f /Users/zo/.travis/travis.sh ] && source /Users/zo/.travis/travis.sh
