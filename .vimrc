@@ -26,13 +26,12 @@ filetype plugin indent on     " required!
 " NOTE: comments after Bundle command are not allowed..
 
 
-
-" set expandtab
+set expandtab
 set smarttab
 set tabstop=4
 set shiftwidth=4
 set autoindent
-" set smartindent
+set smartindent
 set cindent
 set autoindent
 set paste
@@ -63,4 +62,11 @@ set guifont=Droid\ Sans\ Mono:h9
 " set mouse=a
 " map <ScrollWheelUp> <C-Y>
 " map <ScrollWheelDown> <C-E>
+
+" highlight Cursor guifg=green guibg=green
+" highlight iCursor guifg=green guibg=green
+" set guicursor=n-v-c:block-Cursor
+" set guicursor+=i:ver100-iCursor
+" set guicursor+=n-v-c:blinkon0
+" set guicursor+=i:blinkwait10
 
