@@ -1218,13 +1218,13 @@ function mac2unix {
 
 
 # The next line updates PATH for the Google Cloud SDK.
-if [ -f /Users/zo/Downloads/google-cloud-sdk/path.bash.inc ]; then
-  source '/Users/zo/Downloads/google-cloud-sdk/path.bash.inc'
+if [ -f /Users/zo/src/google-cloud-sdk/path.bash.inc ]; then
+  source '/Users/zo/src/google-cloud-sdk/path.bash.inc'
 fi
 
 # The next line enables shell command completion for gcloud.
-if [ -f /Users/zo/Downloads/google-cloud-sdk/completion.bash.inc ]; then
-  source '/Users/zo/Downloads/google-cloud-sdk/completion.bash.inc'
+if [ -f /Users/zo/src/google-cloud-sdk/completion.bash.inc ]; then
+  source '/Users/zo/src/google-cloud-sdk/completion.bash.inc'
 fi
 
 
