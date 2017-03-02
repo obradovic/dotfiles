@@ -336,10 +336,10 @@ export PATH=~/bin:$PATH
 export PATH=$NPM_RELATIVE:$PATH
 
 # LUNCHY
-LUNCHY_DIR=$(dirname `gem which lunchy`)/../extras
-  if [ -f $LUNCHY_DIR/lunchy-completion.bash ]; then
-    . $LUNCHY_DIR/lunchy-completion.bash
-fi
+# LUNCHY_DIR=$(dirname `gem which lunchy`)/../extras
+  # if [ -f $LUNCHY_DIR/lunchy-completion.bash ]; then
+    # . $LUNCHY_DIR/lunchy-completion.bash
+# fi
 
 # RVM
 # source ~/.rvm/scripts/rvm
