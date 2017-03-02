@@ -74,11 +74,8 @@ function g-list {
 }
 function s {
 	. ~/.bashrc
-	pushd .
-	c
 	local ip=`knife google server list  | grep $1 | tr -s ' ' | cut -d ' ' -f5`
 	ssh $ip
-	popd
 }
 function ls-backups {
 	gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/phil_data/
