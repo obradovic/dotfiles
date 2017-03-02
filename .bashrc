@@ -80,22 +80,19 @@ function s {
 	ssh $ip
 	popd
 }
-function lsg {
-	gsutil ls -lh gs://phil-backups/
-}
 function ls-backups {
-	gsutil ls -lh gs://phil-backups/daily/phil_data/
+	gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/phil_data/
 }
 function restore-latest-backup {
 
-	gsutil cp `gsutil ls -lh gs://phil-backups/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
+	gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
 	gzip -d fullschema.sql.gz
 	mysql -uroot -e "DROP DATABASE phil_backup"
 	mysql -uroot -e "CREATE DATABASE phil_backup"
 	mysql -uroot -e "RESET MASTER"
 	mysql -uroot < fullschema.sql
 
-	gsutil cp `gsutil ls -lh gs://phil-backups/daily/phil_data/ | grep -v TOTAL | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
+	gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/phil_data/ | grep -v TOTAL | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
 	gzip -d backup.sql.gz
 	pv backup.sql | mysql -uroot phil_backup
 	rm backup.sql
@@ -143,11 +140,7 @@ function kd {
 # VAGRANT
 export VAGRANT_CWD=~/phillies/web           # Lets you run vagrant from any directory
 export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
-alias va='vagrant'
-alias vs='vagrant ssh phillies-asparagus'
-alias vup='va up phillies-asparagus'
-alias vha='va halt phillies-asparagus'
-alias vst='va status'
+alias vst='vagrant status'
 
 
 # GIT'R DONE!
@@ -167,10 +160,7 @@ alias branchd='git branch -d'
 alias stash='git stash'
 alias stahs='stash'
 alias sta='stash'
-alias dev='co dev'
-alias dev2='co dev2'
 alias master='co master'
-alias masterc='for i in `ls -p cookbooks | grep "/"`; do cd cookbooks/$i; master; cd ../..; done'
 
 # ELASTICSEARCH
 function curles {
@@ -217,15 +207,10 @@ alias .5='cd ../../../../..'
 alias du1='du -h -d 1'
 alias du2='du -h -d 2'
 alias dfk='df -h -k'
-alias S='ssh'
-alias s3='aws s3'
-alias downd='cp ~/Dropbox/dotfiles/.bashrc ~/.'
-alias upd='cp ~/.bashrc ~/Dropbox/dotfiles/.; . ~/.bashrc'
 alias tl='tail -f'
-alias beep='for i in {1..3} ; do tput bel; sleep 1; done'
+alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
 alias js='python -m json.tool'
 alias us='underscore'
-alias pt='papertrail'
 
 function mcd {
 	mkdir $1
@@ -235,17 +220,8 @@ function mcd {
 function api {
 	curl -s "$2" "https://api.phils.io/$1" | jq
 }
-function api-dev {
-	curl -s "$2" "http://104.196.134.140/$1" | jq
-}
 function api-local {
 	curl -s "$2" "http://localhost:5000/$1" | jq
-}
-function _api {
-	curl -s $2 "$3/$1" 
-}
-function api-devo {
-	curl -s $2 "104.196.134.140/$1"
 }
 function apio {
 	curl -s $2 "api.phils.io/$1"
@@ -263,42 +239,20 @@ alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
 
 # android
-alias pa='adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity'
-alias m='(a; cd VSCOCam; gradlew assembleDebug; if [ $? -eq 0 ]; then pusha; else beep; fi)'
-alias mn='(a; cd VSCOCam; gradlew assembleDebug) '
-alias mr='(a; cd VSCOCam; gradlew assembleRelease; if [ $? -eq 0 ]; then pusha; else beep; fi)'
-alias unpush='adb uninstall com.vsco.cam'
-alias pusha='(a && cd VSCOCam && echo "                             `date`" && ls -la build/apk/VSCOCam-debug-unaligned.apk && adb uninstall com.vsco.cam; adb install build/apk/VSCOCam-debug-unaligned.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
-alias pushs='(a && cd VSCOCam && echo "                             `date`" && ls -la build/apk/VSCOCam-debug-unaligned.apk && adb uninstall com.vsco.cam; adb install build/apk/VSCOCam-debug-unaligned.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.billing.NativeStoreActivity)'
-alias push='(a && cd VSCOCam && echo "                              `date`" && ls -al *apk && adb uninstall com.vsco.cam; adb install VSCOCam.apk; adb shell am start -a android.intent.action.MAIN -n com.vsco.cam/.SplashActivity)'
 alias logcat='adb logcat > /tmp/logcat.txt &'
-alias logvsco='tail -f /tmp/logcat.txt | grep -i VSCO'
 alias logall='tail -f /tmp/logcat.txt'
 alias adb-restart='adb kill-server; adb start-server'
-alias apk='find . -name \*.apk | xargs ls -al'
-alias rapk='find . -name \*.apk | xargs rm -rf'
 # export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
-
 
 # loader
 function loader {
 	curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | python -mjson.tool
 }
 
-function gsbucket {
-	gsutil ls $GSUTIL_BUCKET/$1
-}
-
 # varnish
 alias vl='varnishlog -m rxURL:/rss/blog -c'
 function vpurge {
     curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_PROD$1 2>&1 >/dev/null | grep HTTP
-}
-function vpurges {
-    curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_STAGING$1 2>&1 >/dev/null | grep HTTP
-}
-function vpurged {
-    curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_DEV$1 2>&1 >/dev/null | grep HTTP
 }
 
 # Java
