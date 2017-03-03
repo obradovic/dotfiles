@@ -221,10 +221,10 @@ function api-local {
 	curl -s "$2" "http://localhost:5000/$1" | jq
 }
 function apio {
-	curl -s $2 "api.phils.io/$1"
+	curl -s "$2" "https://api.phils.io/$1"
 }
 function api-localo {
-	curl -s $2 "localhost:5000/$1" 
+	curl -s "$2" "http://localhost:5000/$1" 
 }
 
 # dirs
@@ -270,8 +270,27 @@ export GSUTIL_HOME=~/bin/gsutil
 
 # Python
 export PYTHONPATH=~/
-source $(brew --prefix autoenv)/activate.sh
+export PYTHONPATH=$PYTHONPATH:$SRC_HOME/api
+# source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate.sh'
+alias rmp='find . -name \*.pyc | xargs rm'
+
+_virtualenv_auto_activate() {
+    if [ -e ".env" ]; then
+        # Check to see if already activated to avoid redundant activating
+        if [ "$VIRTUAL_ENV" != "$(pwd -P)/.env" ]; then
+            _VENV_NAME=$(basename `pwd`)
+            echo Activating virtualenv \"$_VENV_NAME\"...
+            VIRTUAL_ENV_DISABLE_PROMPT=1
+            source .env/bin/activate
+            _OLD_VIRTUAL_PS1="$PS1"
+            PS1="($_VENV_NAME)$PS1"
+            export PS1
+        fi
+    fi
+}
+export PROMPT_COMMAND=_virtualenv_auto_activate
+
 
 # export PATH=$HOME/.rvm/bin:$PATH
 export PATH=/usr/local/bin:$PATH
