@@ -7,6 +7,7 @@
 
 tap 'caskroom/cask'
 tap 'homebrew/core'
+tap 'homebrew/science'
 #tap 'homebrew/fonts'
 
 # FONTS
@@ -83,6 +84,7 @@ brew 'nghttp2'
 brew 'node'
 brew 'phantomjs'
 brew 'pv'
+brew 'r'
 brew 'ruby'
 brew 'sloccount'
 brew 'tmux'
