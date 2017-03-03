@@ -62,6 +62,7 @@ cask 'tunnelbear'
 cask 'virtualbox'
 cask 'vagrant'
 cask 'wireshark'
+cask 'xquartz'
 cask 'yakyak'
 
 brew 'autoenv'
