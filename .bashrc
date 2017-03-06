@@ -215,16 +215,16 @@ function mcd {
 }
 
 function api {
-	curl -s "$2" "https://api.phils.io/$1" | jq
+    curl -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq
 }
 function api-local {
-	curl -s "$2" "http://localhost:5000/$1" | jq
+    curl -s $2 -H "Authorization: Bearer $TOKEN" "localhost:5000/$1" | jq
 }
 function apio {
-	curl -s "$2" "https://api.phils.io/$1"
+	curly -s $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function api-localo {
-	curl -s "$2" "http://localhost:5000/$1" 
+	curl -s $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
 }
 
 # dirs
@@ -274,6 +274,7 @@ export PYTHONPATH=$PYTHONPATH:$SRC_HOME/api
 # source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate.sh'
 alias rmp='find . -name \*.pyc | xargs rm'
+alias py='ipython'
 
 _virtualenv_auto_activate() {
     if [ -e ".env" ]; then
