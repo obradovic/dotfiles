@@ -1,72 +1,63 @@
-" git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+" Specify a directory for plugins (for Neovim: ~/.local/share/nvim/plugged)
+call plug#begin('~/.vim/plugged')
 
-set nocompatible               " be iMproved
-" filetype off                   " required!
+" Colors
+Plug 'tomasr/molokai'
+Plug 'AlessandroYorba/Monrovia'
+Plug 'jnurmine/Zenburn'
+Plug 'altercation/vim-colors-solarized', { 'set': 'all' }
 
-" set rtp+=~/.vim/bundle/vundle/
-" call vundle#rc()
+" Editing
+Plug 'junegunn/vim-easy-align'
+Plug 'tpope/vim-surround'
+" Plug 'tmhedberg/SimpylFold'
 
-" let Vundle manage Vundle
-" required! 
-" Bundle 'gmarik/vundle'
+" Lang
+Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
+Plug 'rust-lang/rust.vim'
+Plug 'octol/vim-cpp-enhanced-highlight'
 
-" my bundles here
-" Bundle 'tpope/vim-fugitive'
+" Lint
+Plug 'scrooloose/syntastic', { 'on': 'SyntasticCheck' }
+Plug 'nvie/vim-flake8'
 
+" Close the plugin system
+call plug#end()
 
-filetype plugin indent on     " required!
-"
-" Brief help
-" :BundleList          - list configured bundles
-" :BundleInstall(!)    - install(update) bundles
-" :BundleSearch(!) foo - search(or refresh cache first) for foo
-" :BundleClean(!)      - confirm(or auto-approve) removal of unused bundles
-"
-" see :h vundle for more details or wiki for FAQ
-" NOTE: comments after Bundle command are not allowed..
+" Colors
+" colorscheme solarized
+colorscheme monrovia
+" colorscheme molokai
+" colorscheme zenburn
 
+set ruler
+set incsearch	" incremental search
+set hlsearch 	" search highlighting
+set visualbell  " no beeping
+set encoding=utf-8
+let python_highlight_all=1
+syntax on
 
+" Whitespace
 set expandtab
-set smarttab
 set tabstop=4
 set shiftwidth=4
-set autoindent
-set smartindent
-set cindent
-set autoindent
-set paste
+set softtabstop=4
 
-set ru
-set sc
-set wmnu
+" Enable folding
+set foldmethod=indent
+set foldlevel=99
 
-set backupdir=/tmp
-set dir=/tmp
+" Enable folding with the spacebar
+nnoremap <space> za
 
-set incsearch
-set hlsearch
-set ruler
-set showcmd
-syntax enable
-set background=dark
-colorscheme solarized
-" filetype on
+" Lets us share buffers outside vim
+set clipboard=unnamed
 
-" :hi MatchParen cterm=underline ctermbg=none ctermfg=none
-:hi MatchParen cterm=bold ctermbg=none ctermfg=green
+" set guioptions-=T
+" set guifont=Droid\ Sans\ Mono:h9
 
-set guioptions-=T
-set guifont=Droid\ Sans\ Mono:h9
-
-" Lets you scroll with a mouse (but must use iTerm2...)
-" set mouse=a
-" map <ScrollWheelUp> <C-Y>
-" map <ScrollWheelDown> <C-E>
-
-" highlight Cursor guifg=green guibg=green
-" highlight iCursor guifg=green guibg=green
-" set guicursor=n-v-c:block-Cursor
-" set guicursor+=i:ver100-iCursor
-" set guicursor+=n-v-c:blinkon0
-" set guicursor+=i:blinkwait10
-
+" Lets you scroll with a mouse 
+set mouse=a
+map <ScrollWheelUp> <C-Y>
+map <ScrollWheelDown> <C-E>
