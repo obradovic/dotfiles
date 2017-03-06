@@ -26,8 +26,8 @@ call plug#end()
 
 " Colors
 " colorscheme solarized
-colorscheme monrovia
-" colorscheme molokai
+" colorscheme monrovia
+colorscheme molokai
 " colorscheme zenburn
 
 set ruler
@@ -61,3 +61,7 @@ set clipboard=unnamed
 set mouse=a
 map <ScrollWheelUp> <C-Y>
 map <ScrollWheelDown> <C-E>
+
+" Annoying temporary files
+set backupdir=/tmp//,.
+set directory=/tmp//,.
