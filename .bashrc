@@ -217,14 +217,20 @@ function mcd {
 function api {
     curl -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq
 }
-function api-local {
-    curl -s $2 -H "Authorization: Bearer $TOKEN" "localhost:5000/$1" | jq
-}
 function apio {
-	curly -s $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+	curl -s $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+}
+function apic {
+	curl -s $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+}
+function api-local {
+    curl -s $2 -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq
 }
 function api-localo {
 	curl -s $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
+}
+function api-localo {
+	curly -s $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
 }
 
 # dirs
@@ -1250,3 +1256,5 @@ fi
 
 # added by travis gem
 [ -f /Users/zo/.travis/travis.sh ] && source /Users/zo/.travis/travis.sh
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
