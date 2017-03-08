@@ -82,14 +82,14 @@ function ls-backups {
 }
 function restore-latest-backup {
 
-	gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
-	gzip -d fullschema.sql.gz
-	mysql -uroot -e "DROP DATABASE phil_backup"
-	mysql -uroot -e "CREATE DATABASE phil_backup"
-	mysql -uroot -e "RESET MASTER"
-	mysql -uroot < fullschema.sql
+	# gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
+	# gzip -d fullschema.sql.gz
+	# mysql -uroot -e "DROP DATABASE phil_backup"
+	# mysql -uroot -e "CREATE DATABASE phil_backup"
+	# mysql -uroot -e "RESET MASTER"
+	# mysql -uroot < fullschema.sql
 
-	gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/phil_data/ | grep -v TOTAL | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
+	gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
 	gzip -d backup.sql.gz
 	pv backup.sql | mysql -uroot phil_backup
 	rm backup.sql
@@ -281,6 +281,14 @@ export PYTHONPATH=$PYTHONPATH:$SRC_HOME/api
 alias e='source .env/bin/activate.sh'
 alias rmp='find . -name \*.pyc | xargs rm'
 alias py='ipython'
+
+function update() {
+    pushd .
+    cd ~/.dotfiles
+    brew update
+    brew bundle
+    popd
+}
 
 _virtualenv_auto_activate() {
     if [ -e ".env" ]; then
