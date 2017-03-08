@@ -72,6 +72,7 @@ brew 'bazel'
 brew 'figlet'
 brew 'fzf'
 brew 'git'
+brew 'git-extras'
 brew 'go'
 brew 'gnupg2'
 brew 'gpg'
@@ -81,7 +82,7 @@ brew 'jq'
 brew 'libev'
 brew 'openssl'
 brew 'mas'
-brew 'mysql'
+brew 'mysql', restart_service: true
 brew 'nghttp2'
 brew 'node'
 brew 'phantomjs'
@@ -90,7 +91,9 @@ brew 'r'
 brew 'ruby'
 brew 'sloccount'
 brew 'tmux'
+brew 'tree'
 brew 'vim'
+brew 'wget'
 
 brew 'curl', args:['with-nghttp2']
 
@@ -99,3 +102,4 @@ mas 'Slack', id: 803453959
 mas 'Xcode', id: 497799835
 mas 'Docs for Xcode', id: 688199928
 mas 'Wunderlist', id: 410628904
+
