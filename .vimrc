@@ -34,7 +34,10 @@ set ruler
 set incsearch	" incremental search
 set hlsearch 	" search highlighting
 set visualbell  " no beeping
+set paste
 set encoding=utf-8
+set cursorline
+set lazyredraw
 let python_highlight_all=1
 syntax on
 
