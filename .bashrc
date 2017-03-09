@@ -220,8 +220,11 @@ function api {
 function apio {
 	curl -s $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
-function apic {
-	curl -s $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+function apiy {
+	curly -s $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+}
+function apiyz {
+	curly -s $2 -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function api-local {
     curl -s $2 -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq
@@ -229,8 +232,11 @@ function api-local {
 function api-localo {
 	curl -s $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
 }
-function api-localo {
+function api-localy {
 	curly -s $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
+}
+function api-localyz {
+	curly -s $2 -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
 }
 
 # dirs
