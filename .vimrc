@@ -11,10 +11,11 @@ Plug 'altercation/vim-colors-solarized', { 'set': 'all' }
 Plug 'junegunn/vim-easy-align'
 Plug 'tpope/vim-surround'
 " Plug 'tmhedberg/SimpylFold'
+Plug 'bronson/vim-trailing-whitespace'
+
 
 " Lang
 Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
-Plug 'rust-lang/rust.vim'
 Plug 'octol/vim-cpp-enhanced-highlight'
 
 " Lint
@@ -30,14 +31,12 @@ call plug#end()
 colorscheme molokai
 " colorscheme zenburn
 
-set ruler
 set incsearch	" incremental search
 set hlsearch 	" search highlighting
 set visualbell  " no beeping
-set paste
 set encoding=utf-8
 set cursorline
-set lazyredraw
+" set lazyredraw
 let python_highlight_all=1
 syntax on
 
@@ -68,3 +67,6 @@ set clipboard=unnamed
 " Annoying temporary files
 set backupdir=/tmp//,.
 set directory=/tmp//,.
+
+set paste
+set ruler
