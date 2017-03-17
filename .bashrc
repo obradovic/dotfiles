@@ -78,9 +78,16 @@ function s {
 	ssh $ip
 }
 function ls-backups {
+	gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/
+}
+function ls-backups2 {
 	gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/phil_data/
 }
 function restore-latest-backup {
+    pushd .
+    cd $SRC_HOME
+    mkdir -p backups
+    cd backups
 
 	# gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
 	# gzip -d fullschema.sql.gz
@@ -92,7 +99,8 @@ function restore-latest-backup {
 	gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
 	gzip -d backup.sql.gz
 	pv backup.sql | mysql -uroot phil_backup
-	rm backup.sql
+	# rm backup.sql
+    popd
 }
 
 export FLASK_APP=main.py
@@ -215,28 +223,28 @@ function mcd {
 }
 
 function api {
-    curl -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq
+    curl -s ${@:2} -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq
 }
 function apio {
-	curl -s $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+	curl -s ${@:2} -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function apiy {
-	curly -s $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+	curly -s -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function apiyz {
-	curly -s $2 -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+	curly -s ${@:2} -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function api-local {
-    curl -s $2 -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq
+    curl -s ${@:2} -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq
 }
 function api-localo {
-	curl -s $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
+	curl -s ${@:2} -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
 }
 function api-localy {
-	curly -s $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
+	curly -s ${@:2} -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
 }
 function api-localyz {
-	curly -s $2 -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
+	curly -s ${@:2} -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
 }
 
 # dirs
@@ -283,6 +291,7 @@ export GSUTIL_HOME=~/bin/gsutil
 # Python
 export PYTHONPATH=~/
 export PYTHONPATH=$PYTHONPATH:$SRC_HOME/api
+export PYTHONDONTWRITEBYTECODE=true
 # source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate.sh'
 alias rmp='find . -name \*.pyc | xargs rm'
