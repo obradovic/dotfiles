@@ -12,7 +12,7 @@ Plug 'junegunn/vim-easy-align'
 Plug 'tpope/vim-surround'
 " Plug 'tmhedberg/SimpylFold'
 Plug 'bronson/vim-trailing-whitespace'
-
+Plug 'ConradIrwin/vim-bracketed-paste'
 
 " Lang
 Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
@@ -68,5 +68,7 @@ set clipboard=unnamed
 set backupdir=/tmp//,.
 set directory=/tmp//,.
 
-set paste
+" now handled by vim-bracketed-paste plugin
+" set paste
+
 set ruler
