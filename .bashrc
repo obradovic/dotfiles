@@ -91,15 +91,16 @@ function restore-latest-backup {
 
 	# gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
 	# gzip -d fullschema.sql.gz
-	# mysql -uroot -e "DROP DATABASE phil_backup"
-	# mysql -uroot -e "CREATE DATABASE phil_backup"
-	# mysql -uroot -e "RESET MASTER"
-	# mysql -uroot < fullschema.sql
 
 	gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
+    rm -f backup.sql
 	gzip -d backup.sql.gz
-	pv backup.sql | mysql -uroot phil_backup
-	# rm backup.sql
+
+	mysql -uroot -e "DROP DATABASE phil_data"
+	mysql -uroot -e "CREATE DATABASE phil_data"
+	mysql -uroot -e "RESET MASTER"
+
+	pv backup.sql | mysql -uroot phil_data
     popd
 }
 
@@ -223,28 +224,28 @@ function mcd {
 }
 
 function api {
-    curl -s ${@:2} -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq
 }
 function apio {
-	curl -s ${@:2} -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+	curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function apiy {
-	curly -s -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+	curly -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function apiyz {
-	curly -s ${@:2} -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+	curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function api-local {
-    curl -s ${@:2} -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq
 }
 function api-localo {
-	curl -s ${@:2} -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
+	curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
 }
 function api-localy {
-	curly -s ${@:2} -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
+	curly ${@:2} -s -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
 }
 function api-localyz {
-	curly -s ${@:2} -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
+	curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
 }
 
 # dirs
