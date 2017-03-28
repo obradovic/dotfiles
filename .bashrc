@@ -20,13 +20,32 @@ function admin {
 	gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE admin
 }
 function g-create {
+    # g-create draft draft_1
+	knife google server create $2 \
+	--gce-machine-type n1-standard-1 \
+	--gce-image ubuntu-1604-lts \
+	--ssh-user $CHEF_USERNAME \
+	--identity-file ~/.ssh/id_rsa \
+	--environment prod \
+	--run-list 'role[$1]'
+}
+function g-create-advanced {
 	knife google server create $1 \
 	--gce-machine-type n1-standard-1 \
 	--gce-image ubuntu-1604-lts \
 	--ssh-user $CHEF_USERNAME \
 	--identity-file ~/.ssh/id_rsa \
 	--environment prod \
-	--run-list 'role[base]'
+	--run-list 'role[advanced]'
+}
+function g-create-draft {
+	knife google server create $1 \
+	--gce-machine-type n1-standard-1 \
+	--gce-image ubuntu-1604-lts \
+	--ssh-user $CHEF_USERNAME \
+	--identity-file ~/.ssh/id_rsa \
+	--environment prod \
+	--run-list 'role[draft]'
 }
 function g-create-api {
 	knife google server create $1 \
@@ -196,7 +215,7 @@ alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.5; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.5; . ~/.bashrc'
 alias please='sudo'
-alias yolo='sudo !!'
+alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f3-)"
 alias be='bundle exec'
 alias bcap='bundle exec cap'
 alias dep='bundle exec cap prod deploy'
@@ -251,6 +270,8 @@ function api-localyz {
 # dirs
 alias p='cd  $SRC_HOME'
 alias a='cd  $SRC_HOME/api/'
+alias ad='cd  $SRC_HOME/AdvancedScoutingAutomation/'
+alias d='cd  $SRC_HOME/PhilDataUpload/'
 alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
