@@ -82,8 +82,8 @@ function g-create-admin {
 		--run-list 'role[admin]' 
 }
 function g-delete {
-	knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE $1
 	kd $1
+	knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE $1
 }
 function g-ssh {
 	gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
@@ -115,9 +115,9 @@ function restore-latest-backup {
     rm -f backup.sql
 	gzip -d backup.sql.gz
 
-	mysql -uroot -e "DROP DATABASE phil_data"
-	mysql -uroot -e "CREATE DATABASE phil_data"
-	mysql -uroot -e "RESET MASTER"
+	mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "DROP DATABASE phil_data"
+	mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "CREATE DATABASE phil_data"
+	mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "RESET MASTER"
 
 	pv backup.sql | mysql -uroot phil_data
     popd
@@ -163,8 +163,8 @@ function kd {
 
 
 # VAGRANT
-export VAGRANT_CWD=~/phillies/web           # Lets you run vagrant from any directory
-export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
+#export VAGRANT_CWD=~/phillies/chef           # Lets you run vagrant from any directory
+#export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
 alias vst='vagrant status'
 
 
@@ -242,6 +242,10 @@ function mcd {
 	cd $1
 }
 
+function fin {
+    find . -name \*$1\* ${@:2} 
+}
+
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq
 }
@@ -269,7 +273,8 @@ function api-localyz {
 
 # dirs
 alias p='cd  $SRC_HOME'
-alias a='cd  $SRC_HOME/api/'
+alias a='cd  $SRC_HOME/api'
+alias u='cd  $SRC_HOME/util'
 alias ad='cd  $SRC_HOME/AdvancedScoutingAutomation/'
 alias d='cd  $SRC_HOME/PhilDataUpload/'
 alias c='cd  $SRC_HOME/chef'
