@@ -31,7 +31,9 @@ function g-create {
 }
 function g-create-advanced {
 	knife google server create $1 \
-	--gce-machine-type n1-standard-1 \
+	--gce-machine-type n1-standard-2 \
+	--gce-boot-disk-size 200 \
+	--gce-boot-disk-ssd true \
 	--gce-image ubuntu-1604-lts \
 	--ssh-user $CHEF_USERNAME \
 	--identity-file ~/.ssh/id_rsa \
@@ -82,8 +84,7 @@ function g-create-admin {
 		--run-list 'role[admin]' 
 }
 function g-delete {
-	kd $1
-	knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE $1
+	knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
 }
 function g-ssh {
 	gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
@@ -249,8 +250,14 @@ function fin {
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq
 }
+function apih {
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1" | jq
+}
 function apio {
 	curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+}
+function apioh {
+	curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1"
 }
 function apiy {
 	curly -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
@@ -341,26 +348,42 @@ _virtualenv_auto_activate() {
             VIRTUAL_ENV_DISABLE_PROMPT=1
             source .env/bin/activate
             _OLD_VIRTUAL_PS1="$PS1"
-            PS1="($_VENV_NAME)$PS1"
+            PS1="($_VENV_NAME) $PS1"
             export PS1
         fi
     fi
 }
 export PROMPT_COMMAND=_virtualenv_auto_activate
 
+add_to_PATH () {
+  for d; do
+    # d=$(cd -- "$d" && { pwd -P || pwd; }) 2>/dev/null  # canonicalize symbolic links
+    # if [ -z "$d" ]; then continue; fi  # skip nonexistent directory
+    case ":$PATH:" in
+      *":$d:"*) :;;
+      *) PATH=$PATH:$d;;
+    esac
+  done
+}
+
+add_to_PATH /usr/local/bin
+add_to_PATH /usr/local/sbin
+# add_to_PATH $NPM_HOME/bin
+# add_to_PATH ~/bin
+add_to_PATH .
+add_to_PATH $NPM_RELATIVE
 
 # export PATH=$HOME/.rvm/bin:$PATH
-export PATH=/usr/local/bin:$PATH
-export PATH=/usr/local/sbin:$PATH
-export PATH=$PATH:$NPM_HOME/bin
-export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-export PATH=$PATH:$HEROKU_HOME/bin
-export PATH=$PATH:$GSUTIL_HOME
-export PATH=$PATH:.
-
-export PATH=~/bin:$PATH
-export PATH=$NPM_RELATIVE:$PATH
+# export PATH=/usr/local/bin:$PATH
+# export PATH=/usr/local/sbin:$PATH
+# export PATH=$PATH:$NPM_HOME/bin
+# export PATH=$PATH:$ANDROID_HOME/tools
+# export PATH=$PATH:$ANDROID_HOME/platform-tools
+# export PATH=$PATH:$HEROKU_HOME/bin
+# export PATH=$PATH:$GSUTIL_HOME
+# export PATH=$PATH:.
+# export PATH=~/bin:$PATH
+# export PATH=$NPM_RELATIVE:$PATH
 
 # LUNCHY
 # LUNCHY_DIR=$(dirname `gem which lunchy`)/../extras
@@ -391,7 +414,8 @@ export GIT_PS1_SHOWUPSTREAM="auto"
 . ~/.git-completion.sh
 . ~/.colors_bash
 
-export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
+export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
+# export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 
 # misc
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
