@@ -120,7 +120,7 @@ function restore-latest-backup {
 	mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "CREATE DATABASE phil_data"
 	mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "RESET MASTER"
 
-	pv backup.sql | mysql -uroot phil_data
+	pv backup.sql | mysql -uroot -p$PHIL_GCLOUD_DB_PW phil_data
     popd
 }
 
@@ -248,10 +248,10 @@ function fin {
 }
 
 function api {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq .
 }
 function apih {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1" | jq
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1" | jq .
 }
 function apio {
 	curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
@@ -266,7 +266,7 @@ function apiyz {
 	curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function api-local {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq .
 }
 function api-localo {
 	curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
@@ -327,7 +327,7 @@ export PYTHONPATH=~/
 export PYTHONPATH=$PYTHONPATH:$SRC_HOME/api
 export PYTHONDONTWRITEBYTECODE=true
 # source $(brew --prefix autoenv)/activate.sh
-alias e='source .env/bin/activate.sh'
+alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
 alias py='ipython'
 
