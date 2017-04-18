@@ -102,6 +102,7 @@ brew 'tmate'
 brew 'tmux'
 brew 'tpp'
 brew 'tree'
+brew 'unrar'
 brew 'vim'
 brew 'wget'
 
