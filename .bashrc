@@ -6,102 +6,102 @@ umask 0022
 
 # PHIL
 function phil-db {
-	echo Password copied
-	echo $PHIL_GCLOUD_DB_PW | pbcopy
-	# gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
-	mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p
+    echo Password copied
+    echo $PHIL_GCLOUD_DB_PW | pbcopy
+    # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
+    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p
 }
 function phil-db-root {
-	echo Password copied
-	echo $PHIL_GCLOUD_DB_PW | pbcopy
-	mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p
+    echo Password copied
+    echo $PHIL_GCLOUD_DB_PW | pbcopy
+    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p
 }
 function admin {
-	gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE admin
+    gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE admin
 }
 function g-create {
     # g-create draft draft_1
-	knife google server create $2 \
-	--gce-machine-type n1-standard-1 \
-	--gce-image ubuntu-1604-lts \
-	--ssh-user $CHEF_USERNAME \
-	--identity-file ~/.ssh/id_rsa \
-	--environment prod \
-	--run-list 'role[$1]'
+    knife google server create $2 \
+    --gce-machine-type n1-standard-1 \
+    --gce-image ubuntu-1604-lts \
+    --ssh-user $CHEF_USERNAME \
+    --identity-file ~/.ssh/id_rsa \
+    --environment prod \
+    --run-list 'role[$1]'
 }
 function g-create-advanced {
-	knife google server create $1 \
-	--gce-machine-type n1-standard-2 \
-	--gce-boot-disk-size 200 \
-	--gce-boot-disk-ssd true \
-	--gce-image ubuntu-1604-lts \
-	--ssh-user $CHEF_USERNAME \
-	--identity-file ~/.ssh/id_rsa \
-	--environment prod \
-	--run-list 'role[advanced]'
+    knife google server create $1 \
+    --gce-machine-type n1-standard-2 \
+    --gce-boot-disk-size 200 \
+    --gce-boot-disk-ssd true \
+    --gce-image ubuntu-1604-lts \
+    --ssh-user $CHEF_USERNAME \
+    --identity-file ~/.ssh/id_rsa \
+    --environment prod \
+    --run-list 'role[advanced]'
 }
 function g-create-draft {
-	knife google server create $1 \
-	--gce-machine-type n1-standard-1 \
-	--gce-image ubuntu-1604-lts \
-	--ssh-user $CHEF_USERNAME \
-	--identity-file ~/.ssh/id_rsa \
-	--environment prod \
-	--run-list 'role[draft]'
+    knife google server create $1 \
+    --gce-machine-type n1-standard-1 \
+    --gce-image ubuntu-1604-lts \
+    --ssh-user $CHEF_USERNAME \
+    --identity-file ~/.ssh/id_rsa \
+    --environment prod \
+    --run-list 'role[draft]'
 }
 function g-create-api {
-	knife google server create $1 \
-	--gce-machine-type n1-standard-1 \
-	--gce-image ubuntu-1604-lts \
-	--ssh-user $CHEF_USERNAME \
-	--identity-file ~/.ssh/id_rsa \
-	--environment prod \
-	--run-list 'role[api]'
+    knife google server create $1 \
+    --gce-machine-type n1-standard-1 \
+    --gce-image ubuntu-1604-lts \
+    --ssh-user $CHEF_USERNAME \
+    --identity-file ~/.ssh/id_rsa \
+    --environment prod \
+    --run-list 'role[api]'
 }
 function g-create-lb {
-	knife google server create $1 \
-	--gce-machine-type n1-standard-1 \
-	--gce-image ubuntu-1604-lts \
-	--ssh-user $CHEF_USERNAME \
-	--identity-file ~/.ssh/id_rsa \
-	--environment prod \
-	--run-list 'role[lb]'
+    knife google server create $1 \
+    --gce-machine-type n1-standard-1 \
+    --gce-image ubuntu-1604-lts \
+    --ssh-user $CHEF_USERNAME \
+    --identity-file ~/.ssh/id_rsa \
+    --environment prod \
+    --run-list 'role[lb]'
 }
 function g-create-admin {
-	# https://github.com/chef/knife-google
-	knife google server create $1 \
-		--gce-machine-type n1-standard-1 \
-		--gce-boot-disk-size 500 \
-		--gce-boot-disk-ssd true \
-		--gce-image ubuntu-1604-lts \
-		--gce-project $PHIL_GCLOUD_PROJECT \
-		--gce-zone $PHIL_GCLOUD_ZONE \
-		--ssh-user $CHEF_USERNAME \
-		--identity-file ~/.ssh/id_rsa \
-		--environment prod \
-		--request-timeout 6000 \
-		--auth-timeout 300 \
-		--run-list 'role[admin]' 
+    # https://github.com/chef/knife-google
+    knife google server create $1 \
+        --gce-machine-type n1-standard-1 \
+        --gce-boot-disk-size 500 \
+        --gce-boot-disk-ssd true \
+        --gce-image ubuntu-1604-lts \
+        --gce-project $PHIL_GCLOUD_PROJECT \
+        --gce-zone $PHIL_GCLOUD_ZONE \
+        --ssh-user $CHEF_USERNAME \
+        --identity-file ~/.ssh/id_rsa \
+        --environment prod \
+        --request-timeout 6000 \
+        --auth-timeout 300 \
+        --run-list 'role[admin]' 
 }
 function g-delete {
-	knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
+    knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
 }
 function g-ssh {
-	gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
+    gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
 }
 function g-list {
-	knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE
+    knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE
 }
 function s {
-	. ~/.bashrc
-	local ip=`knife google server list  | grep $1 | tr -s ' ' | cut -d ' ' -f5`
-	ssh $ip
+    . ~/.bashrc
+    local ip=`knife google server list  | grep $1 | tr -s ' ' | cut -d ' ' -f5`
+    ssh $ip
 }
 function ls-backups {
-	gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/
+    gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/
 }
 function ls-backups2 {
-	gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/phil_data/
+    gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/phil_data/
 }
 function restore-latest-backup {
     pushd .
@@ -109,18 +109,22 @@ function restore-latest-backup {
     mkdir -p backups
     cd backups
 
-	# gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
-	# gzip -d fullschema.sql.gz
+    # gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
+    # gzip -d fullschema.sql.gz
 
-	gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
+    gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
     rm -f backup.sql
-	gzip -d backup.sql.gz
+    echo "Decompressing..."
+    gzip -d backup.sql.gz
 
-	mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "DROP DATABASE phil_data"
-	mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "CREATE DATABASE phil_data"
-	mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "RESET MASTER"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "DROP DATABASE phil_data"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "CREATE DATABASE phil_data"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "RESET MASTER"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "UPDATE mysql.user SET Super_Priv='Y' WHERE user='root' AND host='%'"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "FLUSH PRIVILEGES"
 
-	pv backup.sql | mysql -uroot -p$PHIL_GCLOUD_DB_PW phil_data
+
+    pv backup.sql | mysql -uroot -p$PHIL_GCLOUD_DB_PW phil_data
     popd
 }
 
@@ -155,11 +159,11 @@ alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
 function ksearch {
-	knife search node "roles:$1" 
+    knife search node "roles:$1" 
 }
 function kd { 
-	knife node delete -y $1
-	knife client delete -y $1 
+    knife node delete -y $1
+    knife client delete -y $1 
 }
 
 
@@ -239,8 +243,8 @@ alias js='python -m json.tool'
 alias us='underscore'
 
 function mcd {
-	mkdir $1
-	cd $1
+    mkdir $1
+    cd $1
 }
 
 function fin {
@@ -254,28 +258,28 @@ function apih {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1" | jq .
 }
 function apio {
-	curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function apioh {
-	curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1"
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1"
 }
 function apiy {
-	curly -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+    curly -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function apiyz {
-	curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+    curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
 }
 function api-local {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq .
 }
 function api-localo {
-	curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
 }
 function api-localy {
-	curly ${@:2} -s -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
+    curly ${@:2} -s -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
 }
 function api-localyz {
-	curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
+    curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
 }
 
 # dirs
@@ -297,7 +301,7 @@ alias adb-restart='adb kill-server; adb start-server'
 
 # loader
 function loader {
-	curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | python -mjson.tool
+    curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | python -mjson.tool
 }
 
 # varnish
@@ -430,161 +434,161 @@ alias photo_umount='umount $PHOTO_DIR_LOCAL_MOUNT'
 alias photo_cpr='photo_umount; photo_mount; cp -R -v $PHOTO_DIR_LOCAL_MOUNT/* $PHOTO_DIR_REMOTE/.'
 
 function jalbum_all {
-	for d in `find . -type d | grep -v 'thumbs\|slides\|res\|jalbum\|\.$'`
-	do
-		(cd $d && jalbum)
-	done
-	photo_push
+    for d in `find . -type d | grep -v 'thumbs\|slides\|res\|jalbum\|\.$'`
+    do
+        (cd $d && jalbum)
+    done
+    photo_push
 }
 
 function jalbum_convert_all {
-	for d in `find . -type d | grep -v 'thumbs\|slides\|res\|jalbum\|\.$'`
-	do
-		(cd $d && jalbum_convert)
-	done
-	photo_push
+    for d in `find . -type d | grep -v 'thumbs\|slides\|res\|jalbum\|\.$'`
+    do
+        (cd $d && jalbum_convert)
+    done
+    photo_push
 }
 
 function jalbum_convert {
-	photo_convert
-	jalbum
+    photo_convert
+    jalbum
 }
 
 function jalbum {
-	tolower
+    tolower
 
-	JALBUM_HOME=/Users/zo/Photos
-	JALBUM_SETTINGS=$JALBUM_HOME/jalbum-settings.jap
+    JALBUM_HOME=/Users/zo/Photos
+    JALBUM_SETTINGS=$JALBUM_HOME/jalbum-settings.jap
 
-	JALBUM_JAR="/Applications/jAlbum.app/Contents/Resources/Java/JAlbum.jar"
-	JALBUM_SKIN=Turtle
+    JALBUM_JAR="/Applications/jAlbum.app/Contents/Resources/Java/JAlbum.jar"
+    JALBUM_SKIN=Turtle
 
-	time java -Xmx1024M -jar $JALBUM_JAR -directory "`pwd`" -outputDirectory "`pwd`" -skin $JALBUM_SKIN -projectFile $JALBUM_SETTINGS -customImageOrdering
-	rm humans.txt
+    time java -Xmx1024M -jar $JALBUM_JAR -directory "`pwd`" -outputDirectory "`pwd`" -skin $JALBUM_SKIN -projectFile $JALBUM_SETTINGS -customImageOrdering
+    rm humans.txt
 }
 
 
 function photo_convert {
-	if [ ! -f meta.properties.original ]
-	then
-		dos2unix meta.properties
-		dos2unix albumfiles.txt
+    if [ ! -f meta.properties.original ]
+    then
+        dos2unix meta.properties
+        dos2unix albumfiles.txt
 
-		cp meta.properties meta.properties.original
-		cp albumfiles.txt albumfiles.txt.original
+        cp meta.properties meta.properties.original
+        cp albumfiles.txt albumfiles.txt.original
 
-		cp meta.properties comments.properties
-		sed '/title=/d'    comments.properties > foo; mv foo comments.properties
-		sed '/subtitle=/d' comments.properties > foo; mv foo comments.properties
-		sed '/date=/d'     comments.properties > foo; mv foo comments.properties
-		sed 's/=/.jpg=/'   comments.properties > foo; mv foo comments.properties
-		sed '/^$/d'        comments.properties > foo; mv foo comments.properties
-		sort comments.properties > foo; mv foo comments.properties
+        cp meta.properties comments.properties
+        sed '/title=/d'    comments.properties > foo; mv foo comments.properties
+        sed '/subtitle=/d' comments.properties > foo; mv foo comments.properties
+        sed '/date=/d'     comments.properties > foo; mv foo comments.properties
+        sed 's/=/.jpg=/'   comments.properties > foo; mv foo comments.properties
+        sed '/^$/d'        comments.properties > foo; mv foo comments.properties
+        sort comments.properties > foo; mv foo comments.properties
 
-		grep 'title=\|date=\|description=\|ordering=' meta.properties > foo; mv foo meta.properties
-		sed 's/subtitle=/description=/' meta.properties > foo; mv foo meta.properties
+        grep 'title=\|date=\|description=\|ordering=' meta.properties > foo; mv foo meta.properties
+        sed 's/subtitle=/description=/' meta.properties > foo; mv foo meta.properties
 
-		if ! grep ordering meta.properties; then
-			echo 'ordering=custom' >> meta.properties
-		fi
+        if ! grep ordering meta.properties; then
+            echo 'ordering=custom' >> meta.properties
+        fi
 
-		if ! grep folderimage albumfiles.txt; then
-    		echo '-folderimage.jpg' >> albumfiles.txt
-    		echo '-folderthumb.jpg' >> albumfiles.txt
-		fi
+        if ! grep folderimage albumfiles.txt; then
+            echo '-folderimage.jpg' >> albumfiles.txt
+            echo '-folderthumb.jpg' >> albumfiles.txt
+        fi
 
-		description=`grep description= meta.properties`
-		date=`grep date meta.properties | cut -d= -f2`
-		sed '/description=/d' meta.properties > foo; mv foo meta.properties
-		echo "description=$description<br/>$date" >> meta.properties
-	fi
+        description=`grep description= meta.properties`
+        date=`grep date meta.properties | cut -d= -f2`
+        sed '/description=/d' meta.properties > foo; mv foo meta.properties
+        echo "description=$description<br/>$date" >> meta.properties
+    fi
 }
 
 function photo_ls {
-	remote_dir="$PHOTO_REMOTE_BASE/$1"
-	photo "ls -la $remote_dir"
+    remote_dir="$PHOTO_REMOTE_BASE/$1"
+    photo "ls -la $remote_dir"
 }
 
 function photo_push {
-	local_dir=$1
-	remote_dir=$2
+    local_dir=$1
+    remote_dir=$2
 
-  	if [ "$local_dir" = "" ]; then
-    	local_dir="."
-  	fi
+      if [ "$local_dir" = "" ]; then
+        local_dir="."
+      fi
 
-  	if [ "$remote_dir" = "" ]; then
-		dir=`pwd`
-		# http://stackoverflow.com/questions/16623835/bash-remove-a-fixed-prefix-suffix-from-a-string
-		remote_dir=${dir#$PHOTO_LOCAL_HOME/}
-  	fi
+      if [ "$remote_dir" = "" ]; then
+        dir=`pwd`
+        # http://stackoverflow.com/questions/16623835/bash-remove-a-fixed-prefix-suffix-from-a-string
+        remote_dir=${dir#$PHOTO_LOCAL_HOME/}
+      fi
 
-	remote_path="$PHOTO_REMOTE_BASE/$remote_dir"
-	echo "Syncing photos in $local_dir to $remote_path"
+    remote_path="$PHOTO_REMOTE_BASE/$remote_dir"
+    echo "Syncing photos in $local_dir to $remote_path"
 
-	echo "Creating remote directory"
-	photo "cd $PHOTO_REMOTE_BASE; mkdir $remote_dir"
-	echo "created."
+    echo "Creating remote directory"
+    photo "cd $PHOTO_REMOTE_BASE; mkdir $remote_dir"
+    echo "created."
 
-	rsync -Prtv --progress $local_dir/* $PHOTO_USER@$PHOTO_HOST:$PHOTO_REMOTE_HOME/$remote_path/.
+    rsync -Prtv --progress $local_dir/* $PHOTO_USER@$PHOTO_HOST:$PHOTO_REMOTE_HOME/$remote_path/.
 }
 
 function photo_pull {
-	remote_dir=$1
-	local_dir=$2
+    remote_dir=$1
+    local_dir=$2
 
-	if [ "$local_dir" = "" ]; then
-		local_dir="."
-	fi
+    if [ "$local_dir" = "" ]; then
+        local_dir="."
+    fi
 
-	remote_path="$PHOTO_REMOTE_BASE/$remote_dir"
-	echo "Pulling photos from $remote_path to $local_dir"
+    remote_path="$PHOTO_REMOTE_BASE/$remote_dir"
+    echo "Pulling photos from $remote_path to $local_dir"
 
-	rsync -Prtv --progress $PHOTO_USER@$PHOTO_HOST:$PHOTO_REMOTE_HOME/$remote_path/* $local_dir/. 
+    rsync -Prtv --progress $PHOTO_USER@$PHOTO_HOST:$PHOTO_REMOTE_HOME/$remote_path/* $local_dir/. 
 }
 
 function photo_pull_jacq {
-	local_mount=$PHOTO_MOUNT_JACQ
-	local_dir=$PHOTO_LOCAL_HOME/JacqsPhone
-	mkdir $local_dir
-	find "$local_mount" -name \*JPG -exec cp -pvn {} $local_dir/. \;
-	find "$local_mount" -name \*MOV -exec cp -pvn {} $local_dir/. \;
+    local_mount=$PHOTO_MOUNT_JACQ
+    local_dir=$PHOTO_LOCAL_HOME/JacqsPhone
+    mkdir $local_dir
+    find "$local_mount" -name \*JPG -exec cp -pvn {} $local_dir/. \;
+    find "$local_mount" -name \*MOV -exec cp -pvn {} $local_dir/. \;
 }
 
 function photo_pull_zo {
-	local_mount=$PHOTO_MOUNT_ZO
-	local_dir=$PHOTO_LOCAL_HOME/ZoPhone
-	mkdir $local_dir
-	find "$local_mount" -name \*JPG -exec cp -pvn {} $local_dir/. \;
-	find "$local_mount" -name \*MOV -exec cp -pvn {} $local_dir/. \;
+    local_mount=$PHOTO_MOUNT_ZO
+    local_dir=$PHOTO_LOCAL_HOME/ZoPhone
+    mkdir $local_dir
+    find "$local_mount" -name \*JPG -exec cp -pvn {} $local_dir/. \;
+    find "$local_mount" -name \*MOV -exec cp -pvn {} $local_dir/. \;
 }
 
 
 function photo_pull_samsung {
     local_dir=$PHOTO_LOCAL_HOME/SamsungCamera
-	camera_dir=/sdcard/DCIM/Camera/
-	cd $local_dir
-	adb pull $camera_dir
+    camera_dir=/sdcard/DCIM/Camera/
+    cd $local_dir
+    adb pull $camera_dir
 }
 
 function photo_clear_samsung {
-	camera_dir=/sdcard/DCIM/Camera
-	echo "`adb shell \"ls -la $camera_dir\" | wc -l` files on Camera: $camera_dir"
-	echo "Clearing"
-	adb shell "rm $camera_dir/*"
-	adb shell "ls -la $camera_dir"
-	echo "Cleared $camera_dir"
+    camera_dir=/sdcard/DCIM/Camera
+    echo "`adb shell \"ls -la $camera_dir\" | wc -l` files on Camera: $camera_dir"
+    echo "Clearing"
+    adb shell "rm $camera_dir/*"
+    adb shell "ls -la $camera_dir"
+    echo "Cleared $camera_dir"
 }
 
 function tolower {
-	time for f in `find . -type f -maxdepth 1`; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
+    time for f in `find . -type f -maxdepth 1`; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
 }
 
 
 function b64 {
-	echo
-	echo "$1" | base64 -D
-	echo 
+    echo
+    echo "$1" | base64 -D
+    echo 
 }
 
 function pz {
@@ -596,8 +600,8 @@ function geo {
 }
 
 function wildcard_csr {
-	domain=$1
-	openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
+    domain=$1
+    openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
 }
 
 function timestamp {
@@ -611,13 +615,13 @@ function timestamp-diff {
 
 function sshquiet {
     if [ "$#" == "0" ]; then
-		echo
-		echo "Sorry. I need a string to remove from ~/.ssh/known_hosts"
-		echo
-	else
-		echo "Removing $1"
-		grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
-	fi
+        echo
+        echo "Sorry. I need a string to remove from ~/.ssh/known_hosts"
+        echo
+    else
+        echo "Removing $1"
+        grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
+    fi
 }
 
 function title {
@@ -631,8 +635,8 @@ function init-cam {
     echo " init-cam <name>"
     echo
     echo "Ex: init-cam prod-xray2"
-	echo
-	return
+    echo
+    return
   fi
 
   name=$1
@@ -666,8 +670,8 @@ function init-app {
     echo " init-app <name>"
     echo
     echo "Ex: init-app prod-app2"
-	echo
-	return
+    echo
+    return
   fi
 
   name=$1
@@ -722,9 +726,9 @@ function init-app {
 
 function rs-create-old {
   if [ "$1" = "" ]; then
-	echo
+    echo
     echo " Rackspace Pricing: http://www.rackspace.com/cloud/servers/pricing"
-	echo
+    echo
     echo " > knife rackspace flavor list"
     echo "              ID   Name                 VCPUs  RAM    Disk      Cost"
     echo "              2    512MB Standard       1      512    20GB      \$16"
@@ -752,10 +756,10 @@ function rs-create-old {
     echo "       <flavor>   defaults to \"2\" (512MB small)"
     echo "       <image>    defaults to \"Ubuntu 12.10\". Use prod-app, prod-resizer, prod-store, or dev-app"
     echo "       <location> defaults to \"dfw\" (\"ord\" is a valid alternative)"
-	echo
+    echo
 
     echo "Ex: rs-create dev app99 'role[app-all]' dev-app"
-	echo
+    echo
     return
   fi
 
@@ -782,9 +786,9 @@ function rs-create-old {
   elif [ "$5" = "prod-store" ]; then
     image="be5a693d-890f-4255-9954-9a1a9a84bfdd"
   elif [ "$5" = "dev-blank-app" ]; then
-	image="96f429fe-c4d3-494a-b225-97f57363ab32"
+    image="96f429fe-c4d3-494a-b225-97f57363ab32"
   elif [ "$5" = "dev-blank-cam" ]; then
-	image="fc177284-d31f-4674-a579-e497b14b50d8"
+    image="fc177284-d31f-4674-a579-e497b14b50d8"
   else
     image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
   fi
@@ -811,78 +815,78 @@ function rs-create-old {
 
 
 function rs-create {
-  	if [ "$1" = "" ]; then
-    	echo
-    	echo " Rackspace Pricing: http://www.rackspace.com/cloud/servers/pricing"
-    	echo
-    	echo " > knife rackspace flavor list"
-    	echo "              ID   Name                 VCPUs  RAM    Disk      Cost"
-    	echo "              2    512MB Standard       1      512    20GB      \$16"
-    	echo "              3    1GB Standard         1      1GB    40GB      \$44"
-    	echo "              4    2GB Standard         2      2GB    80GB      \$88   <- app/cam prod"
-    	echo "              5    4GB Standard         2      4GB    160GB     \$175"
-    	echo "              6    8GB Standard         4      8GB    320GB     \$350  <- giga lb"
-    	echo "              7    15GB Standard        6      15GB   620GB     \$657  <- tera lb"
-    	echo "              8    30GB Standard        8      30GB   1200GB    \$876  <- peta lb"
-    	echo " performance1-1    1 GB Performance     1      1GB    20GB      \$29"
-    	echo " performance1-2    2 GB Performance     2      2GB    40/20GB   \$58   <- app/cam prod NEW"
-    	echo " performance1-4    4 GB Performance     4      4GB    40/40GB   \$117"
-    	echo " performance1-8    8 GB Performance     8      8GB    40/80GB   \$234"
-    	echo " performance2-15   15 GB Performance    4      15GB   40/150GB  \$496"
-    	echo " performance2-30   30 GB Performance    8      30GB   40/300GB  \$993  <- peta lb NEW"
-    	echo " performance2-60   60 GB Performance    16     61GB   40/600GB  \$1986 <- exa lb"
-    	echo " performance2-90   90 GB Performance    24     92GB   40/900GB  \$2978"
-    	echo " performance2-120  120 GB Performance   32     122GB  40/1200GB \$3971"
-    	echo
-    	echo " rs-create <env> <name> <run_list> <location> <flavor> <image>"
-    	echo
-    	echo "       <env>      "
-    	echo "       <name>     "
-    	echo "       <run_list> (needs single quotes)"
-    	echo "       <location> defaults to \"dfw\" (\"hkg\" is a valid alternative)"
-    	echo "       <flavor>   defaults to \"2\" (512MB small)"
-    	echo "       <image>    defaults to \"Ubuntu 12.10\""
-    	echo
-	
-    	echo "Ex: rs-create green app99 'role[app-all]' hkg performance1-2"
-    	echo
-    	return
-  	fi
+      if [ "$1" = "" ]; then
+        echo
+        echo " Rackspace Pricing: http://www.rackspace.com/cloud/servers/pricing"
+        echo
+        echo " > knife rackspace flavor list"
+        echo "              ID   Name                 VCPUs  RAM    Disk      Cost"
+        echo "              2    512MB Standard       1      512    20GB      \$16"
+        echo "              3    1GB Standard         1      1GB    40GB      \$44"
+        echo "              4    2GB Standard         2      2GB    80GB      \$88   <- app/cam prod"
+        echo "              5    4GB Standard         2      4GB    160GB     \$175"
+        echo "              6    8GB Standard         4      8GB    320GB     \$350  <- giga lb"
+        echo "              7    15GB Standard        6      15GB   620GB     \$657  <- tera lb"
+        echo "              8    30GB Standard        8      30GB   1200GB    \$876  <- peta lb"
+        echo " performance1-1    1 GB Performance     1      1GB    20GB      \$29"
+        echo " performance1-2    2 GB Performance     2      2GB    40/20GB   \$58   <- app/cam prod NEW"
+        echo " performance1-4    4 GB Performance     4      4GB    40/40GB   \$117"
+        echo " performance1-8    8 GB Performance     8      8GB    40/80GB   \$234"
+        echo " performance2-15   15 GB Performance    4      15GB   40/150GB  \$496"
+        echo " performance2-30   30 GB Performance    8      30GB   40/300GB  \$993  <- peta lb NEW"
+        echo " performance2-60   60 GB Performance    16     61GB   40/600GB  \$1986 <- exa lb"
+        echo " performance2-90   90 GB Performance    24     92GB   40/900GB  \$2978"
+        echo " performance2-120  120 GB Performance   32     122GB  40/1200GB \$3971"
+        echo
+        echo " rs-create <env> <name> <run_list> <location> <flavor> <image>"
+        echo
+        echo "       <env>      "
+        echo "       <name>     "
+        echo "       <run_list> (needs single quotes)"
+        echo "       <location> defaults to \"dfw\" (\"hkg\" is a valid alternative)"
+        echo "       <flavor>   defaults to \"2\" (512MB small)"
+        echo "       <image>    defaults to \"Ubuntu 12.10\""
+        echo
+    
+        echo "Ex: rs-create green app99 'role[app-all]' hkg performance1-2"
+        echo
+        return
+      fi
 
-  	env=$1
-  	name=$2
-  	run_list="'$3'"
+      env=$1
+      name=$2
+      run_list="'$3'"
 
-  	if [ "$4" = "" ]; then
-    	rs_location=$RS_DEFAULT_LOCATION
-  	else
-    	rs_location=$4
-  	fi
+      if [ "$4" = "" ]; then
+        rs_location=$RS_DEFAULT_LOCATION
+      else
+        rs_location=$4
+      fi
 
-  	if [ "$5" = "" ]; then
-    	rs_flavor="performance1-1"
-  	else
-    	rs_flavor=$5
-  	fi
-		
-	rs-default-image $rs_location
+      if [ "$5" = "" ]; then
+        rs_flavor="performance1-1"
+      else
+        rs_flavor=$5
+      fi
+        
+    rs-default-image $rs_location
 
-  	fullname=$env-$rs_location-$name
-  	if [ "$rs_location" = "dfw" ]; then
-  		fullname=$env-$name
-	fi
-  	echo "Creating $fullname with a run_list of $run_list, flavor $rs_flavor, image $rs_image, in $rs_location"
+      fullname=$env-$rs_location-$name
+      if [ "$rs_location" = "dfw" ]; then
+          fullname=$env-$name
+    fi
+      echo "Creating $fullname with a run_list of $run_list, flavor $rs_flavor, image $rs_image, in $rs_location"
 
-	# Authorize ourselves
-	rs-auth
+    # Authorize ourselves
+    rs-auth
 
-	# Create the server
-	rs_response=`curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers \
-		-X POST \
-		-H "Content-Type: application/json" \
-		-H "X-Auth-Token: $RS_TOKEN" \
-		-H "X-Auth-Project-Id: vsco" \
-		-d"{
+    # Create the server
+    rs_response=`curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers \
+        -X POST \
+        -H "Content-Type: application/json" \
+        -H "X-Auth-Token: $RS_TOKEN" \
+        -H "X-Auth-Project-Id: vsco" \
+        -d"{
             \"server\" : {
                     \"name\" : \"$fullname\",
                     \"imageRef\" : \"$rs_image\",
@@ -893,68 +897,68 @@ function rs-create {
                 }
             }" `
 
-	# parse the server_id and pw out of the response
-	echo $rs_response | js
-	rs_server_id=`echo $rs_response | underscore extract "server.id" --outfmt text`
-	rs_pw=`echo $rs_response | underscore extract "server.adminPass" --outfmt text`
+    # parse the server_id and pw out of the response
+    echo $rs_response | js
+    rs_server_id=`echo $rs_response | underscore extract "server.id" --outfmt text`
+    rs_pw=`echo $rs_response | underscore extract "server.adminPass" --outfmt text`
 
-	# wait for the server to get created
-	rs-wait $rs_location $rs_server_id
+    # wait for the server to get created
+    rs-wait $rs_location $rs_server_id
 
-	# get the IP address
-	ip=`rs-ip $rs_location $rs_server_id`
-	
-	# Chef Bootstrap
-	echo "Bootstrapping $ip with $rs_pw"
-	a=`timestamp`
-	c
-	knife bootstrap $ip -E $env -d vsco-ubuntu -r $run_list -N $fullname -x root -P $rs_pw -V
-	cd -
-	echo "Bootstrapping Server $fullname took `timestamp-diff $a `seconds"
+    # get the IP address
+    ip=`rs-ip $rs_location $rs_server_id`
+    
+    # Chef Bootstrap
+    echo "Bootstrapping $ip with $rs_pw"
+    a=`timestamp`
+    c
+    knife bootstrap $ip -E $env -d vsco-ubuntu -r $run_list -N $fullname -x root -P $rs_pw -V
+    cd -
+    echo "Bootstrapping Server $fullname took `timestamp-diff $a `seconds"
 }
 
 function rs-wait {
-	rs_location=$1
-	rs_id=$2
+    rs_location=$1
+    rs_id=$2
 
-	a=`timestamp`
-	while true
-	do 
-		sleep 1
-		echo -n "."
-		status=`rs-status $rs_location $rs_id`
-		if [ $status == "ACTIVE" ]
-		then 
-			echo ""
-			echo "Creating Server took `timestamp-diff $a `seconds"
-			break
-		fi
-	done
+    a=`timestamp`
+    while true
+    do 
+        sleep 1
+        echo -n "."
+        status=`rs-status $rs_location $rs_id`
+        if [ $status == "ACTIVE" ]
+        then 
+            echo ""
+            echo "Creating Server took `timestamp-diff $a `seconds"
+            break
+        fi
+    done
 }
 
 function rs-default-image {
-	rs-args-one $*
-	case "$rs_location" in
-		dfw)
- 	    	rs_image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
-			;;
-		hkg)
-			rs_image="d45ed9c5-d6fc-4c9d-89ea-1b3ae1c83999"
-			;;
-	esac
-	# echo "IMAGE for $rs_location is $rs_image"
+    rs-args-one $*
+    case "$rs_location" in
+        dfw)
+             rs_image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
+            ;;
+        hkg)
+            rs_image="d45ed9c5-d6fc-4c9d-89ea-1b3ae1c83999"
+            ;;
+    esac
+    # echo "IMAGE for $rs_location is $rs_image"
 }
 
 function rs-auth {
     export RS_TOKEN=`curl -s -H "Content-Type: application/json" https://auth.api.rackspacecloud.com/v2.0/tokens  -XPOST -d"{ \"auth\": { \"RAX-KSKEY:apiKeyCredentials\": { \"username\": \"$RS_USERNAME\", \"apiKey\": \"$RS_APIKEY\" } } }" | underscore extract 'access.token.id' --outfmt text`
 
-	if [ -z "$RS_TOKEN" ]; then
-		echo
-    	echo "Unable to get RS_TOKEN!"
-		echo "RS_USERNAME: $RS_USERNAME"
-		echo "RS_APIKEY:   $RS_APIKEY"
-		echo
-	fi 
+    if [ -z "$RS_TOKEN" ]; then
+        echo
+        echo "Unable to get RS_TOKEN!"
+        echo "RS_USERNAME: $RS_USERNAME"
+        echo "RS_APIKEY:   $RS_APIKEY"
+        echo
+    fi 
 }
 
 function rs-args-two {
@@ -977,23 +981,23 @@ function rs-args-one {
 
 
 function rs-getid {
-	rs-serverinfo $* | underscore pluck 'id' --outfmt text
+    rs-serverinfo $* | underscore pluck 'id' --outfmt text
 }
 
 function rs-parsename {
-	IFS=- read env rs_location name <<< "$1"
+    IFS=- read env rs_location name <<< "$1"
 
     # if its in the "old" naming format, default the location
     if [ "$name" = "" ]; then
-		name=$rs_location
-		rs_location="dfw"
-	fi
+        name=$rs_location
+        rs_location="dfw"
+    fi
 }
 
 function rs-serverinfo {
-	fullname=$1
-	rs-parsename	$fullname
-	rs-list $rs_location | underscore select ":has(:root > .name:val(\"$fullname\"))" | js
+    fullname=$1
+    rs-parsename    $fullname
+    rs-list $rs_location | underscore select ":has(:root > .name:val(\"$fullname\"))" | js
 }
 
 function rs-delete {
@@ -1006,79 +1010,79 @@ function rs-delete {
         return
     fi
 
-	fullname=$1
-	rs-parsename	$fullname
+    fullname=$1
+    rs-parsename    $fullname
 
-	echo -n "Authorizing ..."
-	rs-auth
+    echo -n "Authorizing ..."
+    rs-auth
 
-	rs_server=`rs-getid $fullname`
+    rs_server=`rs-getid $fullname`
 
-	echo "Deleting Server $rs_server ..."
-	output=`curl -s -v https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -X DELETE -H "X-Auth-Token: $RS_TOKEN"`
-	if echo $output | grep " 204 No Content"
-	then
-		echo "Deleted"
-	else
-		echo "Server NOT Deleted:"
-		echo $output
-	fi
+    echo "Deleting Server $rs_server ..."
+    output=`curl -s -v https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -X DELETE -H "X-Auth-Token: $RS_TOKEN"`
+    if echo $output | grep " 204 No Content"
+    then
+        echo "Deleted"
+    else
+        echo "Server NOT Deleted:"
+        echo $output
+    fi
 
-	echo
-	echo "Deleting DNS entries"
+    echo
+    echo "Deleting DNS entries"
     dns-delete $fullname           vsco.co
     dns-delete $fullname-private   vsco.co
 
-	echo
-	echo "Deleting Opscode entries"
+    echo
+    echo "Deleting Opscode entries"
     knife client delete -y $fullname
     knife node   delete -y $fullname
 
-	echo
-	echo "Deleting ObjectRocket entries"
+    echo
+    echo "Deleting ObjectRocket entries"
     or-delete $fullname
-	echo "done"
+    echo "done"
 
-	echo
-	echo "Deleting SSH cache"
-	sshquiet $fullname
-	echo "done"
+    echo
+    echo "Deleting SSH cache"
+    sshquiet $fullname
+    echo "done"
 }
 
 function rs-list {
-	rs-args-one $*
-	rs-auth
-	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/detail -H "X-Auth-Token: $RS_TOKEN" | js
+    rs-args-one $*
+    rs-auth
+    curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/detail -H "X-Auth-Token: $RS_TOKEN" | js
 }
 
 function rs-info {
-	rs-args-two $*
-	rs-auth
-	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | js
+    rs-args-two $*
+    rs-auth
+    curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | js
 }
 
 function rs-ip {
-	rs-args-two $*
-	rs-auth
-	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | underscore extract 'server.accessIPv4' --outfmt text
+    rs-args-two $*
+    rs-auth
+    curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | underscore extract 'server.accessIPv4' --outfmt text
 }
 
 function rs-status {
-	rs-args-two $*
-	rs-auth
-	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | underscore extract 'server.status' --outfmt text
+    rs-args-two $*
+    rs-auth
+    curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/servers/$rs_server -H "X-Auth-Token: $RS_TOKEN" | underscore extract 'server.status' --outfmt text
 }
 
 function rs-images {
-	rs-args-one $*
-	rs-auth
-	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/images/detail -H "X-Auth-Token: $RS_TOKEN" | js
+    rs-args-one $*
+    rs-auth
+    curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/images/detail -H "X-Auth-Token: $RS_TOKEN" | js
 }
 
 function rs-flavors {
-	rs-args-one $*
-	rs-auth
-	curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/flavors -H "X-Auth-Token: $RS_TOKEN" | js
+    rs-args-one $*
+    rs-auth
+    curl -s https://$rs_location.servers.api.rackspacecloud.com/v2/$RS_ACCOUNT/flavors -H "X-Auth-Token: $RS_TOKEN" | js
 }
 
 
@@ -1235,82 +1239,82 @@ function or-delete-ip {
 }
 
 function dns-update-ttl {
-  	if [ "$1" = "" ]; then
-		echo
-		echo "dns-update-ttl <domain> <ttl>"
-		echo
-		echo "Example:"
-		echo "dns-update-ttl vsco.co 600"
-		echo "    sets TTL to 600 seconds (10 minutes)"
-		echo
-		return
-	fi
+      if [ "$1" = "" ]; then
+        echo
+        echo "dns-update-ttl <domain> <ttl>"
+        echo
+        echo "Example:"
+        echo "dns-update-ttl vsco.co 600"
+        echo "    sets TTL to 600 seconds (10 minutes)"
+        echo
+        return
+    fi
 
-	for record in `dnsimple record:list $1 | grep -v Found` 
-	do
-		if [[ $record == id* ]] ;
-		then
-			dnsimple record:update $1 `echo "${record%?}" | cut -f 2 -d ":"` ttl:$2
-		fi
-	done
+    for record in `dnsimple record:list $1 | grep -v Found` 
+    do
+        if [[ $record == id* ]] ;
+        then
+            dnsimple record:update $1 `echo "${record%?}" | cut -f 2 -d ":"` ttl:$2
+        fi
+    done
 }
 
 function dns-delete {
-	# dns-delete [machine name] [domain name]
-  	dns_id=`dnsimple record:list $2 | grep "$1.$2 (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
+    # dns-delete [machine name] [domain name]
+      dns_id=`dnsimple record:list $2 | grep "$1.$2 (A)" | awk '{print $5}' | cut -f 2 -d ":" | cut -f 1 -d ")"`
 
-  	if [ -z "$dns_id" ]; then
-    	echo "DNS record is empty for $1.$2. Not deleting."
-  	else
-    	echo "Deleting DNS record $dns_id for $1.$2"
-    	dnsimple record:delete $2 $dns_id
-  	fi
+      if [ -z "$dns_id" ]; then
+        echo "DNS record is empty for $1.$2. Not deleting."
+      else
+        echo "Deleting DNS record $dns_id for $1.$2"
+        dnsimple record:delete $2 $dns_id
+      fi
 }
 
 function rs-delete-old {
-  	if [ "$1" = "" ]; then
-    	echo
-    	echo " rs-delete <name>"
-    	echo
-    	echo "Ex: rs-delete dev-xray9"
-		echo
-		return
-  	fi
+      if [ "$1" = "" ]; then
+        echo
+        echo " rs-delete <name>"
+        echo
+        echo "Ex: rs-delete dev-xray9"
+        echo
+        return
+      fi
 
-	c
+    c
 
 
-  	id=`knife rackspace server list | grep "$1 " | awk '{print $1}'`
-  	time knife rackspace server delete $id -P
+      id=`knife rackspace server list | grep "$1 " | awk '{print $1}'`
+      time knife rackspace server delete $id -P
 
-  	dns-delete $1			vsco.co
-  	dns-delete $1-private	vsco.co
+      dns-delete $1            vsco.co
+      dns-delete $1-private    vsco.co
     # knife client delete $1
 
-	or-delete $1
+    or-delete $1
 
-  	cd -
+      cd -
 }
 
 function aws-bootstrap {
-	env="blue"
-	knife bootstrap $1 -N $env-$2 -r 'role[redis]' -E $env -d vsco-amazon -V -x ubuntu -i ~/.ssh/$AWS_KEY_NAME.pem --hint '{"ec2":true}' --bootstrap-version="11.12.4"
+    env="blue"
+    knife bootstrap $1 -N $env-$2 -r 'role[redis]' -E $env -d vsco-amazon -V -x ubuntu -i ~/.ssh/$AWS_KEY_NAME.pem --hint '{"ec2":true}' --bootstrap-version="11.12.4"
 }
 
 # EOL conversions
 function dos2unix {
-	cat $1 | tr -d '\r' > foo.tmp
-	mv foo.tmp $1
+    cat $1 | tr -d '\r' > foo.tmp
+    mv foo.tmp $1
 }
 
 function unix2mac {
-	cat $1 | tr '\n' '\r' > foo.tmp
-	mv foo.tmp $1
+    cat $1 | tr '\n' '\r' > foo.tmp
+    mv foo.tmp $1
 }
 
 function mac2unix {
-	cat $1 | tr '\r' '\n' > foo.tmp
-	mv foo.tmp $1
+    cat $1 | tr '\r' '\n' > foo.tmp
+    mv foo.tmp $1
 }
 
 
