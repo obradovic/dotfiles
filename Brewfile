@@ -87,6 +87,7 @@ brew 'jq'
 brew 'libev'
 brew 'openssl'
 brew 'mas'
+brew 'maven'
 brew 'mosh'
 brew 'mysql', restart_service: true
 brew 'ncurses'
