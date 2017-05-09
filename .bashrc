@@ -112,7 +112,7 @@ function restore-latest-backup {
     # gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
     # gzip -d fullschema.sql.gz
 
-    gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f4` backup.sql.gz
+    gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
     rm -f backup.sql
     echo "Decompressing..."
     gzip -d backup.sql.gz
@@ -121,10 +121,13 @@ function restore-latest-backup {
     mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "CREATE DATABASE phil_data"
     mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "RESET MASTER"
     mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "UPDATE mysql.user SET Super_Priv='Y' WHERE user='root' AND host='%'"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "SET autocommit=0;"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "SET unique_checks=0;"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "SET foreign_key_checks=0;"
     mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "FLUSH PRIVILEGES"
 
-
     pv backup.sql | mysql -uroot -p$PHIL_GCLOUD_DB_PW phil_data
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "COMMIT;"
     popd
 }
 
