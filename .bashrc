@@ -6,10 +6,10 @@ umask 0022
 
 # PHIL
 function phil-db {
-    echo Password copied
-    echo $PHIL_GCLOUD_DB_PW | pbcopy
+    # echo Password copied
+    # echo $PHIL_GCLOUD_DB_PW | pbcopy
     # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
-    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p
+    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-root {
     echo Password copied
@@ -112,7 +112,7 @@ function restore-latest-backup {
     # gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
     # gzip -d fullschema.sql.gz
 
-    gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
+    gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f4` backup.sql.gz
     rm -f backup.sql
     echo "Decompressing..."
     gzip -d backup.sql.gz
@@ -241,6 +241,8 @@ alias tl='tail -f'
 alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
 alias js='python -m json.tool'
 alias us='underscore'
+alias less='less -X -F'
+alias b='. ~/.bashrc'
 
 function mcd {
     mkdir $1
