@@ -11,6 +11,9 @@ function phil-db {
     # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
     mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
+function phil-db-dev {
+    mysql -h $PHIL_GCLOUD_DB_IP_DEV $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+}
 function phil-db-root {
     echo Password copied
     echo $PHIL_GCLOUD_DB_PW | pbcopy
@@ -29,7 +32,18 @@ function g-create {
     --environment prod \
     --run-list 'role[$1]'
 }
-function g-create-advanced {
+function g-create-db {
+    knife google server create $1 \
+    --gce-machine-type n1-standard-2 \
+    --gce-boot-disk-size 500 \
+    --gce-boot-disk-ssd true \
+    --gce-image ubuntu-1604-lts \
+    --ssh-user $CHEF_USERNAME \
+    --identity-file ~/.ssh/id_rsa \
+    --environment dev \
+    --run-list 'role[db]'
+}
+function g-create-advance {
     knife google server create $1 \
     --gce-machine-type n1-standard-2 \
     --gce-boot-disk-size 200 \
@@ -46,21 +60,36 @@ function g-create-draft {
     --gce-image ubuntu-1604-lts \
     --ssh-user $CHEF_USERNAME \
     --identity-file ~/.ssh/id_rsa \
-    --environment prod \
+    --environment dev \
     --run-list 'role[draft]'
 }
 function g-create-api {
     knife google server create $1 \
-    --gce-machine-type n1-standard-1 \
+    --gce-machine-type n1-standard-2 \
+    --gce-boot-disk-size 200 \
+    --gce-boot-disk-ssd true \
+    --gce-image ubuntu-1604-lts \
+    --ssh-user $CHEF_USERNAME \
+    --identity-file ~/.ssh/id_rsa \
+    --environment dev \
+    --run-list 'role[api]'
+}
+function g-create-websocket {
+    knife google server create $1 \
+    --gce-machine-type n1-standard-2 \
+    --gce-boot-disk-size 200 \
+    --gce-boot-disk-ssd true \
     --gce-image ubuntu-1604-lts \
     --ssh-user $CHEF_USERNAME \
     --identity-file ~/.ssh/id_rsa \
     --environment prod \
-    --run-list 'role[api]'
+    --run-list 'role[websocket]'
 }
 function g-create-lb {
     knife google server create $1 \
     --gce-machine-type n1-standard-1 \
+    --gce-boot-disk-size 100 \
+    --gce-boot-disk-ssd true \
     --gce-image ubuntu-1604-lts \
     --ssh-user $CHEF_USERNAME \
     --identity-file ~/.ssh/id_rsa \
@@ -94,7 +123,7 @@ function g-list {
 }
 function s {
     . ~/.bashrc
-    local ip=`knife google server list  | grep $1 | tr -s ' ' | cut -d ' ' -f5`
+    local ip=`knife google server list  | grep -v terminated | grep $1 | tr -s ' ' | cut -d ' ' -f5`
     ssh $ip
 }
 function ls-backups {
@@ -131,6 +160,31 @@ function restore-latest-backup {
     popd
 }
 
+function restore-latest-backup-dev {
+    # pushd .
+    # cd $SRC_HOME
+    # mkdir -p backups
+    # cd backups
+
+    # gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
+    # rm -f backup.sql
+    # echo "Decompressing..."
+    # gzip -d backup.sql.gz
+
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "DROP DATABASE phil_data"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "CREATE DATABASE phil_data"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "RESET MASTER"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "UPDATE mysql.user SET Super_Priv='Y' WHERE user='root' AND host='%'"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "SET autocommit=0;"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "SET unique_checks=0;"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "SET foreign_key_checks=0;"
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "FLUSH PRIVILEGES"
+
+    pv backup.sql | mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV phil_data
+    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "COMMIT;"
+    popd
+}
+
 export FLASK_APP=main.py
 export FLASK_DEBUG=1
 
@@ -155,7 +209,7 @@ alias ks='knife status'
 alias ck='knife cookbook'
 alias up='knife cookbook upload'
 alias upp='up phillies'
-alias upr='knife role from file'
+alias upr='knife upload'
 alias upe='knife environment from file'
 alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
@@ -194,6 +248,13 @@ alias stash='git stash'
 alias stahs='stash'
 alias sta='stash'
 alias master='co master'
+alias dev='co dev'
+
+# MANDRILL
+function message {
+    python bin/get_email_html.py $1 > message.html
+    echo 'message.html written'
+}
 
 # ELASTICSEARCH
 function curles {
@@ -258,6 +319,9 @@ function fin {
 
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq .
+}
+function api-dev {
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api-dev.phils.io/$1" | jq .
 }
 function apih {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1" | jq .
@@ -375,12 +439,15 @@ add_to_PATH () {
   done
 }
 
+add_to_PATH /usr/local/opt/openssl/bin
 add_to_PATH /usr/local/bin
 add_to_PATH /usr/local/sbin
 # add_to_PATH $NPM_HOME/bin
 # add_to_PATH ~/bin
 add_to_PATH .
 add_to_PATH $NPM_RELATIVE
+add_to_PATH $GOPATH/bin
+add_to_PATH /usr/local/opt/openssl/bin
 
 # export PATH=$HOME/.rvm/bin:$PATH
 # export PATH=/usr/local/bin:$PATH
