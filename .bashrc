@@ -22,95 +22,41 @@ function phil-db-root {
 function admin {
     gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE admin
 }
-function g-create {
-    # g-create draft draft_1
-    knife google server create $2 \
-    --gce-machine-type n1-standard-1 \
-    --gce-image ubuntu-1604-lts \
-    --ssh-user $CHEF_USERNAME \
-    --identity-file ~/.ssh/id_rsa \
-    --environment prod \
-    --run-list 'role[$1]'
-}
 function g-create-db {
-    knife google server create $1 \
-    --gce-machine-type n1-standard-2 \
-    --gce-boot-disk-size 500 \
-    --gce-boot-disk-ssd true \
-    --gce-image ubuntu-1604-lts \
-    --ssh-user $CHEF_USERNAME \
-    --identity-file ~/.ssh/id_rsa \
-    --environment dev \
-    --run-list 'role[db]'
+    g-create $1 $1-$2 'role[db]' 500 n1-standard-2
 }
 function g-create-advance {
-    knife google server create $1 \
-    --gce-machine-type n1-standard-2 \
-    --gce-boot-disk-size 200 \
-    --gce-boot-disk-ssd true \
-    --gce-image ubuntu-1604-lts \
-    --ssh-user $CHEF_USERNAME \
-    --identity-file ~/.ssh/id_rsa \
-    --environment prod \
-    --run-list 'role[advanced]'
+    g-create $1 $1-$2 'role[advanced]' 200 n1-standard-2
 }
 function g-create-draft {
-    knife google server create $1 \
-    --gce-machine-type n1-standard-1 \
-    --gce-image ubuntu-1604-lts \
-    --ssh-user $CHEF_USERNAME \
-    --identity-file ~/.ssh/id_rsa \
-    --environment dev \
-    --run-list 'role[draft]'
+    g-create $1 $1-$2 'role[draft]' 50 n1-standard-1
 }
 function g-create-api {
-    knife google server create $1 \
-    --gce-machine-type n1-standard-2 \
-    --gce-boot-disk-size 200 \
-    --gce-boot-disk-ssd true \
-    --gce-image ubuntu-1604-lts \
-    --ssh-user $CHEF_USERNAME \
-    --identity-file ~/.ssh/id_rsa \
-    --environment dev \
-    --run-list 'role[api]'
+    g-create $1 $1-$2 'role[api]' 200 n1-standard-2
 }
 function g-create-websocket {
-    knife google server create $1 \
-    --gce-machine-type n1-standard-2 \
-    --gce-boot-disk-size 200 \
-    --gce-boot-disk-ssd true \
-    --gce-image ubuntu-1604-lts \
-    --ssh-user $CHEF_USERNAME \
-    --identity-file ~/.ssh/id_rsa \
-    --environment prod \
-    --run-list 'role[websocket]'
+    g-create $1 $1-$2 'role[websocket]' 200 n1-standard-2
 }
 function g-create-lb {
-    knife google server create $1 \
-    --gce-machine-type n1-standard-1 \
-    --gce-boot-disk-size 100 \
-    --gce-boot-disk-ssd true \
-    --gce-image ubuntu-1604-lts \
-    --ssh-user $CHEF_USERNAME \
-    --identity-file ~/.ssh/id_rsa \
-    --environment prod \
-    --run-list 'role[lb]'
+    g-create $1 $1-$2 'role[lb]' 100 n1-standard-1
 }
 function g-create-admin {
-    # https://github.com/chef/knife-google
-    knife google server create $1 \
-        --gce-machine-type n1-standard-1 \
-        --gce-boot-disk-size 500 \
-        --gce-boot-disk-ssd true \
-        --gce-image ubuntu-1604-lts \
-        --gce-project $PHIL_GCLOUD_PROJECT \
-        --gce-zone $PHIL_GCLOUD_ZONE \
-        --ssh-user $CHEF_USERNAME \
-        --identity-file ~/.ssh/id_rsa \
-        --environment prod \
-        --request-timeout 6000 \
-        --auth-timeout 300 \
-        --run-list 'role[admin]' 
+    g-create $1 $1-$2 'role[admin]' 500 n1-standard-1
+}
+function g-create {
+    knife google server create $2 \
+    --gce-machine-type $5 \
+    --gce-boot-disk-size $4 \
+    --gce-boot-disk-ssd true \
+    --gce-image ubuntu-1604-lts \
+    --gce-project $PHIL_GCLOUD_PROJECT \
+    --gce-zone $PHIL_GCLOUD_ZONE \
+    --ssh-user $CHEF_USERNAME \
+    --identity-file ~/.ssh/id_rsa \
+    --environment $1 \
+    --request-timeout 6000 \
+    --auth-timeout 300 \
+    --run-list $3
 }
 function g-delete {
     knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
@@ -124,6 +70,11 @@ function g-list {
 function s {
     . ~/.bashrc
     local ip=`knife google server list  | grep -v terminated | grep $1 | tr -s ' ' | cut -d ' ' -f5`
+    ssh $ip
+}
+function p {
+    . ~/.bashrc
+    local ip=`knife google server list  | grep -v terminated | grep prod | grep $1 | tr -s ' ' | cut -d ' ' -f5`
     ssh $ip
 }
 function ls-backups {
@@ -352,7 +303,7 @@ function api-localyz {
 }
 
 # dirs
-alias p='cd  $SRC_HOME'
+alias src='cd  $SRC_HOME'
 alias a='cd  $SRC_HOME/api'
 alias u='cd  $SRC_HOME/util'
 alias ad='cd  $SRC_HOME/AdvancedScoutingAutomation/'
