@@ -71,6 +71,7 @@ brew 'autoenv'
 brew 'bash'
 brew 'bash-completion'
 brew 'bazel'
+brew 'coreutils'
 brew 'cowsay'
 brew 'entr'
 brew 'exiftool'
@@ -118,3 +119,6 @@ mas 'Xcode', id: 497799835
 mas 'Docs for Xcode', id: 688199928
 mas 'Wunderlist', id: 410628904
 
+# MSSQL: https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-setup-tools#macos
+tap 'microsoft/mssql-preview https://github.com/Microsoft/homebrew-mssql-preview'
+brew 'mssql-tools'
