@@ -5,6 +5,15 @@ export SRC_HOME="/Users/zo/phillies"
 umask 0022
 
 # PHIL
+function datalab {
+  gcloud compute ssh --quiet \
+  --project $PHIL_GCLOUD_PROJECT \
+  --zone $PHIL_GCLOUD_ZONE \
+  --ssh-flag="-N" \
+  --ssh-flag="-L" \
+  --ssh-flag="localhost:8081:localhost:8080" \
+  "zo@prod-datalab-1"
+}
 function phil-db {
     # echo Password copied
     # echo $PHIL_GCLOUD_DB_PW | pbcopy
@@ -22,28 +31,53 @@ function phil-db-root {
 function admin {
     gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE admin
 }
+function lb {
+    p lb
+}
+function wiki {
+    p wiki
+}
 function g-create-db {
-    g-create $1 $1-$2 'role[db]' 500 n1-standard-2
+    g-create $1 $1-$2 db 500 n1-standard-2
 }
 function g-create-advance {
-    g-create $1 $1-$2 'role[advanced]' 200 n1-standard-2
+    g-create $1 $1-$2 advanced 200 n1-standard-2
 }
 function g-create-draft {
-    g-create $1 $1-$2 'role[draft]' 50 n1-standard-1
+    g-create $1 $1-$2 draft 50 n1-standard-1
 }
 function g-create-api {
-    g-create $1 $1-$2 'role[api]' 200 n1-standard-2
+    g-create $1 $1-$2 api 200 n1-standard-2
 }
 function g-create-websocket {
-    g-create $1 $1-$2 'role[websocket]' 200 n1-standard-2
+    g-create $1 $1-$2 websocket 200 n1-standard-2
 }
 function g-create-lb {
-    g-create $1 $1-$2 'role[lb]' 100 n1-standard-1
+    g-create $1 $1-$2 lb 100 n1-standard-1
 }
 function g-create-admin {
-    g-create $1 $1-$2 'role[admin]' 500 n1-standard-1
+    g-create $1 $1-$2 admin 1000 n1-highmem-2
+}
+function g-create-shiny {
+    g-create $1 $1-$2 shiny 50 n1-standard-1
+}
+function g-create-wiki {
+    g-create $1 $1-$2 wiki 100 n1-standard-1
+}
+function g-create-pro {
+    g-create $1 $1-$2 pro 50 n1-standard-1
+}
+function g-create-schematron {
+    g-create $1 $1-$2 schematron 50 n1-standard-1
+}
+function g-create-datalab {
+    g-create $1 $1-$2 datalab 100 n1-standard-2
+}
+function g-create-jupyter {
+    g-create $1 $1-$2 jupyter 100 n1-standard-2
 }
 function g-create {
+    echo ARGS are $*
     knife google server create $2 \
     --gce-machine-type $5 \
     --gce-boot-disk-size $4 \
@@ -56,7 +90,7 @@ function g-create {
     --environment $1 \
     --request-timeout 6000 \
     --auth-timeout 300 \
-    --run-list $3
+    --run-list "role[$3]"
 }
 function g-delete {
     knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
@@ -390,6 +424,8 @@ add_to_PATH () {
   done
 }
 
+# export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
 add_to_PATH /usr/local/opt/openssl/bin
 add_to_PATH /usr/local/bin
 add_to_PATH /usr/local/sbin
@@ -447,7 +483,7 @@ export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W 
 # misc
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
-alias loadspeed='phantomjs /Users/zo/performance/loadspeed.js'
+alias loadspeed='phantomjs /Users/zo/.loadspeed.js'
 
 # photo
 alias ph='cd ~/Photos'
