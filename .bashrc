@@ -18,7 +18,7 @@ function phil-db {
     # echo Password copied
     # echo $PHIL_GCLOUD_DB_PW | pbcopy
     # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
-    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-dev {
     mysql -h $PHIL_GCLOUD_DB_IP_DEV $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
@@ -29,7 +29,7 @@ function phil-db-root {
     mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p
 }
 function admin {
-    gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE admin
+    gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE prod-admin-1
 }
 function lb {
     p lb
@@ -56,7 +56,7 @@ function g-create-lb {
     g-create $1 $1-$2 lb 100 n1-standard-1
 }
 function g-create-admin {
-    g-create $1 $1-$2 admin 1000 n1-highmem-2
+    g-create $1 $1-$2 admin 2000 n1-highmem-4
 }
 function g-create-shiny {
     g-create $1 $1-$2 shiny 50 n1-standard-1
@@ -201,11 +201,11 @@ alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
 function ksearch {
-    knife search node "roles:$1" 
+    knife search node "roles:$1"
 }
-function kd { 
+function kd {
     knife node delete -y $1
-    knife client delete -y $1 
+    knife client delete -y $1
 }
 
 
@@ -292,6 +292,7 @@ alias js='python -m json.tool'
 alias us='underscore'
 alias less='less -X -F'
 alias b='. ~/.bashrc'
+alias kit='vi ~/Dropbox/Kitchen/marbleslabs.txt'
 
 function mcd {
     mkdir $1
