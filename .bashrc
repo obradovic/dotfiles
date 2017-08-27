@@ -21,12 +21,12 @@ function phil-db {
     mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-dev {
-    mysql -h $PHIL_GCLOUD_DB_IP_DEV $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+    mycli -h $PHIL_GCLOUD_DB_IP_DEV $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-root {
     echo Password copied
     echo $PHIL_GCLOUD_DB_PW | pbcopy
-    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p
+    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p
 }
 function admin {
     gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE prod-admin-1
