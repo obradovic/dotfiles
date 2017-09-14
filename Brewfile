@@ -93,6 +93,7 @@ brew 'openssl'
 brew 'mas'
 brew 'maven'
 brew 'mobile-shell'
+brew 'mtr'
 brew 'mycli'
 brew 'mysql', restart_service: true
 brew 'ncurses'
