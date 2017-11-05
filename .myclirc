@@ -34,7 +34,7 @@ timing = True
 # psql, plain, simple, grid, fancy_grid, pipe, orgtbl, rst, mediawiki, html,
 # latex, latex_booktabs, textile, moinmoin, jira, vertical, tsv, csv.
 # Recommended: ascii
-table_format = vertical
+table_format = github
 
 # Syntax coloring style. Possible values (many support the "-dark" suffix):
 # manni, igor, xcode, vim, autumn, vs, rrt, native, perldoc, borland, tango, emacs,
