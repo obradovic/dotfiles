@@ -93,6 +93,7 @@ brew 'httpie'
 brew 'jq'
 brew 'kibana'  # brew services start kibana
 brew 'libev'
+brew 'librdkafka'
 brew 'openssl'
 brew 'mas'
 brew 'maven'
