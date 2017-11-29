@@ -58,8 +58,11 @@ function g-create-lb {
 function g-create-admin {
     g-create $1 $1-$2 admin 2000 n1-highmem-4
 }
+function g-create-video {
+    g-create $1 $1-$2 video 2000 n1-highcpu-64
+}
 function g-create-shiny {
-    g-create $1 $1-$2 shiny 50 n1-standard-1
+    g-create $1 $1-$2 shiny 100 n1-standard-2
 }
 function g-create-wiki {
     g-create $1 $1-$2 wiki 100 n1-standard-1
@@ -75,6 +78,12 @@ function g-create-datalab {
 }
 function g-create-jupyter {
     g-create $1 $1-$2 jupyter 100 n1-standard-2
+}
+function g-create-apps {
+    g-create $1 $1-$2 apps 50 n1-standard-1
+}
+function g-create-kafka {
+    g-create $1 $1-$2 kafka 200 n1-standard-1
 }
 function g-create {
     echo ARGS are $*
@@ -214,6 +223,10 @@ function kd {
 #export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
 alias vst='vagrant status'
 
+# KAFKA
+KAFKA_HOME=/Users/zo/phillies/kafka/confluent-3.3.1
+SQLLINE_HOME=/Users/zo/phillies/kafka/sqlline
+
 
 # GIT'R DONE!
 alias gi='git'
@@ -269,6 +282,7 @@ alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.5; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.5; . ~/.bashrc'
 alias please='sudo'
+alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
 alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f3-)"
 alias be='bundle exec'
 alias bcap='bundle exec cap'
@@ -292,8 +306,14 @@ alias js='python -m json.tool'
 alias us='underscore'
 alias less='less -X -F'
 alias b='. ~/.bashrc'
-alias kit='vi ~/Dropbox/Kitchen/marbleslabs.txt'
+alias pt='papertrail'
 
+function lsg {
+    gsutil ls -l gs://$1
+}
+function lsv {
+    lsg phil-videos/$1
+}
 function mcd {
     mkdir $1
     cd $1
@@ -365,9 +385,6 @@ function vpurge {
     curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_PROD$1 2>&1 >/dev/null | grep HTTP
 }
 
-# Java
-export CLASSPATH=~/bin:$CLASSPATH
-
 # OpsCode / Chef
 export OPSCODE_USER=zo
 
@@ -384,6 +401,7 @@ export GSUTIL_HOME=~/bin/gsutil
 # Python
 export PYTHONPATH=~/
 export PYTHONPATH=$PYTHONPATH:$SRC_HOME/api
+export PYTHONPATH=$PYTHONPATH:$SRC_HOME
 export PYTHONDONTWRITEBYTECODE=true
 # source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate'
@@ -414,6 +432,17 @@ _virtualenv_auto_activate() {
 }
 export PROMPT_COMMAND=_virtualenv_auto_activate
 
+add_to_CLASSPATH () {
+  for d; do
+    # d=$(cd -- "$d" && { pwd -P || pwd; }) 2>/dev/null  # canonicalize symbolic links
+    # if [ -z "$d" ]; then continue; fi  # skip nonexistent directory
+    case ":$CLASSPATH:" in
+      *":$d:"*) :;;
+      *) CLASSPATH=$CLASSPATH:$d;;
+    esac
+  done
+}
+
 add_to_PATH () {
   for d; do
     # d=$(cd -- "$d" && { pwd -P || pwd; }) 2>/dev/null  # canonicalize symbolic links
@@ -425,7 +454,15 @@ add_to_PATH () {
   done
 }
 
-# export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+# Java
+export MYSQL_CONNECTOR_HOME=/Users/zo/phillies/kafka/mysql-connector-java-5.1.44
+export CLASSPATH=~/bin
+add_to_CLASSPATH $MYSQL_CONNECTOR_HOME/mysql-connector-java-5.1.44-bin.jar
+add_to_CLASSPATH /Users/zo/phillies/kafka/sqlline/target/sqlline-1.4.0-SNAPSHOT-jar-with-dependencies.jar
+
+
+#export PATH="$(brew --prefix coreutils)/libexec/gnubin:/usr/local/bin:$PATH"
+export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
 add_to_PATH /usr/local/opt/openssl/bin
 add_to_PATH /usr/local/bin
@@ -436,6 +473,9 @@ add_to_PATH .
 add_to_PATH $NPM_RELATIVE
 add_to_PATH $GOPATH/bin
 add_to_PATH /usr/local/opt/openssl/bin
+add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
+add_to_PATH $KAFKA_HOME/bin
+add_to_PATH $SQLLINE_HOME/bin
 
 # export PATH=$HOME/.rvm/bin:$PATH
 # export PATH=/usr/local/bin:$PATH
@@ -485,6 +525,17 @@ export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W 
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
 alias loadspeed='phantomjs /Users/zo/.loadspeed.js'
+function loadspeeder {
+    loadspeed='phantomjs /Users/zo/.loadspeed.js'
+}
+function run() {
+    number=$1
+    shift
+    for n in $(seq $number); do
+      $@
+    done
+}
+
 
 # photo
 alias ph='cd ~/Photos'
@@ -520,7 +571,8 @@ function jalbum {
     JALBUM_HOME=/Users/zo/Photos
     JALBUM_SETTINGS=$JALBUM_HOME/jalbum-settings.jap
 
-    JALBUM_JAR="/Applications/jAlbum.app/Contents/Resources/Java/JAlbum.jar"
+    #JALBUM_JAR="/Applications/jAlbum.app/Contents/Resources/Java/JAlbum.jar"
+    JALBUM_JAR="/Users/zo/Dropbox/Code/jAlbum/JAlbum.jar"
     JALBUM_SKIN=Turtle
 
     time java -Xmx1024M -jar $JALBUM_JAR -directory "`pwd`" -outputDirectory "`pwd`" -skin $JALBUM_SKIN -projectFile $JALBUM_SETTINGS -customImageOrdering
