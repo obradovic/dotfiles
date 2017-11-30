@@ -91,6 +91,7 @@ brew 'heroku'
 brew 'htop-osx'
 brew 'httpie'
 brew 'jq'
+brew 'kafkacat'
 brew 'kibana'  # brew services start kibana
 brew 'libev'
 brew 'librdkafka'
