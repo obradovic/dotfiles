@@ -1,4 +1,4 @@
-" Specify a directory for plugins (for Neovim: ~/.local/share/nvim/plugged)
+" Specify a directory for plugins
 call plug#begin('~/.vim/plugged')
 
 " Colors
@@ -6,6 +6,9 @@ Plug 'tomasr/molokai'
 Plug 'AlessandroYorba/Monrovia'
 Plug 'jnurmine/Zenburn'
 Plug 'altercation/vim-colors-solarized', { 'set': 'all' }
+
+
+Plug 'thiagoalessio/rainbow_levels.vim'
 
 " Editing
 Plug 'junegunn/vim-easy-align'
@@ -22,14 +25,21 @@ Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'scrooloose/syntastic', { 'on': 'SyntasticCheck' }
 Plug 'nvie/vim-flake8'
 
+" Handy stuff
+Plug 'wincent/terminus'
+
 " Close the plugin system
 call plug#end()
+
 
 " Colors
 " colorscheme solarized
 " colorscheme monrovia
-colorscheme molokai
 " colorscheme zenburn
+:silent! colorscheme molokai
+
+" Rainbow Levels
+map <leader>l :RainbowLevelsToggle<cr>
 
 set incsearch	" incremental search
 set hlsearch 	" search highlighting
@@ -39,6 +49,11 @@ set cursorline
 " set lazyredraw
 let python_highlight_all=1
 syntax on
+
+let g:TerminusCursorShape=1
+let g:TerminusMouse=1
+let g:TerminusBracketedPaste=1
+let g:TerminusAssumeITerm=1
 
 " Whitespace
 set expandtab
@@ -72,3 +87,6 @@ set directory=/tmp//,.
 " set paste
 
 set ruler
+set cursorcolumn
+
+:hi MatchParen cterm=bold ctermfg=black ctermbg=white
