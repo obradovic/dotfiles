@@ -186,6 +186,7 @@ export FLASK_DEBUG=1
 alias g='gcloud'
 alias sshg='gcloud compute ssh'
 alias gql='gcloud beta sql'
+alias adm='s admin'
 export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
 
 # GO
@@ -306,7 +307,24 @@ alias js='python -m json.tool'
 alias us='underscore'
 alias less='less -X -F'
 alias b='. ~/.bashrc'
+alias grepl='grep --line-buffered'
+alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
+alias nojello='grep --line-buffered -v jello'
+
+# Papertrail
 alias pt='papertrail'
+function l {
+    group=$1
+
+    if [ "$group" = "" ]; then
+        echo "No group specified. Using ALL"
+        group=""
+    else
+        group="-g $group"
+    fi
+    pt -f $group | nojello
+}
+
 
 function lsg {
     gsutil ls -l gs://$1
@@ -407,6 +425,7 @@ export PYTHONDONTWRITEBYTECODE=true
 alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
 alias py='ipython'
+alias ac='. .env/bin/activate'
 
 function update() {
     pushd .
