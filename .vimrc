@@ -51,7 +51,7 @@ let python_highlight_all=1
 syntax on
 
 let g:TerminusCursorShape=1
-let g:TerminusMouse=1
+let g:TerminusMouse=0
 let g:TerminusBracketedPaste=1
 let g:TerminusAssumeITerm=1
 
