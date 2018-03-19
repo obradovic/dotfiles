@@ -1,4 +1,5 @@
 " Specify a directory for plugins
+" https://github.com/junegunn/vim-plug
 call plug#begin('~/.vim/plugged')
 
 " Colors
