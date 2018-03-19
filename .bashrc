@@ -1,8 +1,12 @@
 shopt -s extglob
 set -o vi
 
-export SRC_HOME="/Users/zo/phillies"
+export SRC_HOME="$HOME/phillies"
 umask 0022
+
+if [ -f $HOME/.bashrc_private ]; then
+    source $HOME/.bashrc_private
+fi
 
 # PHIL
 function datalab {
@@ -18,7 +22,7 @@ function phil-db {
     # echo Password copied
     # echo $PHIL_GCLOUD_DB_PW | pbcopy
     # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
-    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-dev {
     mycli -h $PHIL_GCLOUD_DB_IP_DEV $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
@@ -48,6 +52,9 @@ function g-create-draft {
 }
 function g-create-api {
     g-create $1 $1-$2 api 200 n1-standard-2
+}
+function g-create-infield {
+    g-create $1 $1-$2 api 50 n1-standard-1
 }
 function g-create-websocket {
     g-create $1 $1-$2 websocket 200 n1-standard-2
@@ -85,21 +92,30 @@ function g-create-apps {
 function g-create-kafka {
     g-create $1 $1-$2 kafka 200 n1-standard-1
 }
+function g-create-kafka2 {
+    g-create $1 $1-$2 kafka 200 n1-standard-2
+}
 function g-create {
     echo ARGS are $*
     knife google server create $2 \
+    --bootstrap-version 12.21.31 \
     --gce-machine-type $5 \
     --gce-boot-disk-size $4 \
     --gce-boot-disk-ssd true \
     --gce-image ubuntu-1604-lts \
     --gce-project $PHIL_GCLOUD_PROJECT \
-    --gce-zone $PHIL_GCLOUD_ZONE \
+    --gce-zone $PHIL_GCLOUD_ZONE_1 \
     --ssh-user $CHEF_USERNAME \
     --identity-file ~/.ssh/id_rsa \
     --environment $1 \
     --request-timeout 6000 \
     --auth-timeout 300 \
     --run-list "role[$3]"
+}
+function g-bootstrap {
+    ip=$1
+    name=$2
+    knife bootstrap $ip -E dev -N $name -i ~/.ssh/id_rsa -x zo -V -r 'role[admin]' --sudo
 }
 function g-delete {
     knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
@@ -108,7 +124,10 @@ function g-ssh {
     gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
 }
 function g-list {
-    knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE
+    knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_1
+}
+function g-list2 {
+    knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_2
 }
 function s {
     . ~/.bashrc
@@ -186,7 +205,7 @@ export FLASK_DEBUG=1
 alias g='gcloud'
 alias sshg='gcloud compute ssh'
 alias gql='gcloud beta sql'
-alias adm='s admin'
+alias adm='s prod-admin'
 export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
 
 # GO
@@ -225,8 +244,8 @@ function kd {
 alias vst='vagrant status'
 
 # KAFKA
-KAFKA_HOME=/Users/zo/phillies/kafka/confluent-3.3.1
-SQLLINE_HOME=/Users/zo/phillies/kafka/sqlline
+KAFKA_HOME=$HOME/phillies/kafka/confluent-3.3.1
+SQLLINE_HOME=$HOME/phillies/kafka/sqlline
 
 
 # GIT'R DONE!
@@ -235,7 +254,6 @@ alias god='git'
 alias gs='git submodule'
 alias gd='git diff'
 alias gad='git add'
-alias com='git commit -m'
 alias st='git status'
 alias co='git checkout'
 alias gpl='git pull'
@@ -248,6 +266,10 @@ alias stahs='stash'
 alias sta='stash'
 alias master='co master'
 alias dev='co dev'
+
+function gc {
+    git commit -m '$@'
+}
 
 # MANDRILL
 function message {
@@ -379,8 +401,9 @@ function api-localyz {
 alias src='cd  $SRC_HOME'
 alias a='cd  $SRC_HOME/api'
 alias u='cd  $SRC_HOME/util'
-alias ad='cd  $SRC_HOME/AdvancedScoutingAutomation/'
 alias d='cd  $SRC_HOME/PhilDataUpload/'
+alias da='cd  $SRC_HOME/data/'
+alias daa='cd  $SRC_HOME/data/activemq/src/main/java/io/phils'
 alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
@@ -424,7 +447,7 @@ export PYTHONDONTWRITEBYTECODE=true
 # source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
-alias py='ipython'
+alias py='ipython2'
 alias ac='. .env/bin/activate'
 
 function update() {
@@ -474,10 +497,18 @@ add_to_PATH () {
 }
 
 # Java
-export MYSQL_CONNECTOR_HOME=/Users/zo/phillies/kafka/mysql-connector-java-5.1.44
-export CLASSPATH=~/bin
+export MYSQL_CONNECTOR_HOME=$HOME/phillies/kafka/mysql-connector-java-5.1.44
+add_to_CLASSPATH .
+add_to_CLASSPATH $HOME/phillies/data/activemq/target/dependency/*
+add_to_CLASSPATH $HOME/phillies/data/activemq/target/classes
+add_to_CLASSPATH $HOME/jars-kafka-serde-tools/*
+add_to_CLASSPATH $HOME/jars-schema-registry/*
 add_to_CLASSPATH $MYSQL_CONNECTOR_HOME/mysql-connector-java-5.1.44-bin.jar
-add_to_CLASSPATH /Users/zo/phillies/kafka/sqlline/target/sqlline-1.4.0-SNAPSHOT-jar-with-dependencies.jar
+add_to_CLASSPATH $HOME/phillies/kafka/sqlline/target/sqlline-1.4.0-SNAPSHOT-jar-with-dependencies.jar
+
+function finder {
+    find . -name '*.jar' -exec grep -Hls $1 {} \;
+}
 
 
 #export PATH="$(brew --prefix coreutils)/libexec/gnubin:/usr/local/bin:$PATH"
@@ -543,9 +574,9 @@ export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W 
 # misc
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
-alias loadspeed='phantomjs /Users/zo/.loadspeed.js'
+alias loadspeed='phantomjs $HOME/.loadspeed.js'
 function loadspeeder {
-    loadspeed='phantomjs /Users/zo/.loadspeed.js'
+    loadspeed='phantomjs $HOME/.loadspeed.js'
 }
 function run() {
     number=$1
@@ -587,11 +618,11 @@ function jalbum_convert {
 function jalbum {
     tolower
 
-    JALBUM_HOME=/Users/zo/Photos
+    JALBUM_HOME=$HOME/Photos
     JALBUM_SETTINGS=$JALBUM_HOME/jalbum-settings.jap
 
     #JALBUM_JAR="/Applications/jAlbum.app/Contents/Resources/Java/JAlbum.jar"
-    JALBUM_JAR="/Users/zo/Dropbox/Code/jAlbum/JAlbum.jar"
+    JALBUM_JAR="$HOME/Dropbox/Code/jAlbum/JAlbum.jar"
     JALBUM_SKIN=Turtle
 
     time java -Xmx1024M -jar $JALBUM_JAR -directory "`pwd`" -outputDirectory "`pwd`" -skin $JALBUM_SKIN -projectFile $JALBUM_SETTINGS -customImageOrdering
@@ -1450,20 +1481,19 @@ function mac2unix {
 
 
 # The next line updates PATH for the Google Cloud SDK.
-if [ -f /Users/zo/src/google-cloud-sdk/path.bash.inc ]; then
-  source '/Users/zo/src/google-cloud-sdk/path.bash.inc'
+if [ -f $HOME/src/google-cloud-sdk/path.bash.inc ]; then
+  source $HOME/src/google-cloud-sdk/path.bash.inc
 fi
 
 # The next line enables shell command completion for gcloud.
-if [ -f /Users/zo/src/google-cloud-sdk/completion.bash.inc ]; then
-  source '/Users/zo/src/google-cloud-sdk/completion.bash.inc'
+if [ -f $HOME/src/google-cloud-sdk/completion.bash.inc ]; then
+  source $HOME/src/google-cloud-sdk/completion.bash.inc
 fi
 
 
-. ~/.z.sh
-. ~/.bashrc_private
+[ -f $HOME/.z.sh ] && source $HOME/.z.sh
 
 # added by travis gem
-[ -f /Users/zo/.travis/travis.sh ] && source /Users/zo/.travis/travis.sh
+[ -f $HOME/.travis/travis.sh ] && source $HOME/.travis/travis.sh
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
