@@ -22,6 +22,7 @@
     default = simple
 [alias]
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
+    lol = log --pretty=oneline --abbrev-commit --graph --decorate
     st = status
     ci = commit
     commmit = commit
@@ -32,9 +33,11 @@
     discover = blame
     praise = blame
     sub = submodule
+    repush = !git pull --rebase && git push
 [push]
     default = matching
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
 	required = true
+	process = git-lfs filter-process
