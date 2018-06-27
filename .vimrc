@@ -1,5 +1,4 @@
 " Specify a directory for plugins
-" https://github.com/junegunn/vim-plug
 call plug#begin('~/.vim/plugged')
 
 " Colors
@@ -88,6 +87,6 @@ set directory=/tmp//,.
 " set paste
 
 set ruler
-set cursorcolumn
+" set cursorcolumn
 
-:hi MatchParen cterm=bold ctermfg=black ctermbg=white
+:hi MatchParen cterm=none ctermfg=202 ctermbg=202
