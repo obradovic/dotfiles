@@ -34,6 +34,7 @@
     praise = blame
     sub = submodule
     repush = !git pull --rebase && git push
+    wip = !git commit -am "WIP" && git push
 [push]
     default = matching
 [filter "lfs"]
