@@ -1,3 +1,4 @@
+
 shopt -s extglob
 set -o vi
 
@@ -9,6 +10,43 @@ if [ -f $HOME/.bashrc_private ]; then
 fi
 
 # PHIL
+function rd {
+    local project='reports'
+    diff $SRC_HOME/phy/$project/$1 $SRC_HOME/$project/$1 | grep -v import
+}
+function bucket-logs {
+
+    local dir="~/logs"
+    local bucket="gs://phil-logs"
+    local file_prefix="access-log-"
+
+    # get all the files
+    mkdir -p $dir
+    rm -rf $dir
+    cd $dir
+    gsutil rsync $bucket/$file_prefix* .
+    # gsutil rsync $bucket .
+
+    # remove the ==> header line from any files that have it
+    for filename in $file_prefix*; do
+        grep -v "==>" $filename  > tmp
+        mv tmp $filename
+    done
+
+    # save the header from one of the files
+    local one_file=`ls -a | head -4 | tail -1`
+    head -1 $one_file > header
+
+    # remove the header from all the files
+    for filename in $file_prefix*; do
+        sed 1d $filename > foo
+        mv foo $filename
+    done
+
+    # cat all the files together
+    rm -f output.csv
+    cat header $file_prefix* > output.csv
+}
 function datalab {
   gcloud compute ssh --quiet \
   --project $PHIL_GCLOUD_PROJECT \
@@ -22,10 +60,14 @@ function phil-db {
     # echo Password copied
     # echo $PHIL_GCLOUD_DB_PW | pbcopy
     # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
+    # mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
     mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-dev {
-    mycli -h $PHIL_GCLOUD_DB_IP_DEV $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+    mysql -h $PHIL_GCLOUD_DB_IP_DEV phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+}
+function phil-db-clone {
+    mysql -h $PHIL_GCLOUD_DB_CLONE_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-root {
     echo Password copied
@@ -41,6 +83,10 @@ function lb {
 function wiki {
     p wiki
 }
+function g-create-branch {
+    name=$1-$2
+    g-create $1 $name branch 30 n1-standard-1
+}
 function g-create-db {
     g-create $1 $1-$2 db 500 n1-standard-2
 }
@@ -53,8 +99,11 @@ function g-create-draft {
 function g-create-api {
     g-create $1 $1-$2 api 200 n1-standard-2
 }
+function g-create-api-4 {
+    g-create $1 $1-$2 api 200 n1-standard-4
+}
 function g-create-infield {
-    g-create $1 $1-$2 api 50 n1-standard-1
+    g-create $1 $1-$2 api 100 n1-standard-1
 }
 function g-create-websocket {
     g-create $1 $1-$2 websocket 200 n1-standard-2
@@ -63,13 +112,13 @@ function g-create-lb {
     g-create $1 $1-$2 lb 100 n1-standard-1
 }
 function g-create-admin {
-    g-create $1 $1-$2 admin 2000 n1-highmem-4
+    g-create $1 $1-$2 admin 2000 n1-standard-8
 }
 function g-create-video {
     g-create $1 $1-$2 video 2000 n1-highcpu-64
 }
 function g-create-shiny {
-    g-create $1 $1-$2 shiny 100 n1-standard-2
+    g-create $1 $1-$2 shiny 150 n1-standard-2
 }
 function g-create-wiki {
     g-create $1 $1-$2 wiki 100 n1-standard-1
@@ -95,6 +144,24 @@ function g-create-kafka {
 function g-create-kafka2 {
     g-create $1 $1-$2 kafka 200 n1-standard-2
 }
+function g-create-matchup-4 {
+    g-create $1 $1-$2 matchup 200 n1-standard-4
+}
+function g-create-matchup-8 {
+    g-create $1 $1-$2 matchup 200 n1-standard-8
+}
+function g-create-matchup-16 {
+    g-create $1 $1-$2 matchup 200 n1-standard-16
+}
+function g-create-matchup-64 {
+    g-create $1 $1-$2 matchup 200 n1-standard-64
+}
+function g-create-bigcron {
+    g-create $1 $1-$2 bigcron 200 n1-highmem-16
+}
+function g-create-megacron {
+    g-create $1 $1-$2 bigcron 200 n1-standard-96
+}
 function g-create {
     echo ARGS are $*
     knife google server create $2 \
@@ -115,7 +182,7 @@ function g-create {
 function g-bootstrap {
     ip=$1
     name=$2
-    knife bootstrap $ip -E dev -N $name -i ~/.ssh/id_rsa -x zo -V -r 'role[admin]' --sudo
+    knife bootstrap $ip -E prod -N $name -i ~/.ssh/id_rsa -x zo -V -r 'role[bigcron]' --sudo
 }
 function g-delete {
     knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
@@ -197,15 +264,20 @@ function restore-latest-backup-dev {
     mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "COMMIT;"
     popd
 }
+function get_mandrill {
+    python get_mandrill_html.py $1 > test.html
+}
 
 export FLASK_APP=main.py
 export FLASK_DEBUG=1
 
 # GCLOUD
-alias g='gcloud'
 alias sshg='gcloud compute ssh'
 alias gql='gcloud beta sql'
+alias gdb='gcloud sql instances'
+alias gdbs='gdb list'
 alias adm='s prod-admin'
+alias big='s prod-bigcron'
 export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
 
 # GO
@@ -249,6 +321,8 @@ SQLLINE_HOME=$HOME/phillies/kafka/sqlline
 
 
 # GIT'R DONE!
+alias b='git co'  # b <branch_name>
+alias bs='git branch' # list all branches
 alias gi='git'
 alias god='git'
 alias gs='git submodule'
@@ -257,15 +331,45 @@ alias gad='git add'
 alias st='git status'
 alias co='git checkout'
 alias gpl='git pull'
-alias gpo='git pull origin'
+alias gplo='git pull origin'
 alias gps='git push'
+alias merge='git merge'
 alias branch='co -b'
-alias branchd='git branch -d'
 alias stash='git stash'
 alias stahs='stash'
 alias sta='stash'
 alias master='co master'
 alias dev='co dev'
+
+alias gitter='python bin/gitter.py'
+
+function branchd {
+    branch=$1
+    if [ "$branch" = "" ]; then
+        echo "No branch specified. Exiting."
+        return
+    fi
+    # cd ~/phillies/uploader
+    git branch -D $1
+    git push origin --delete $1
+    # cd -
+}
+function branchm {
+    branch=$1
+    if [ "$branch" = "" ]; then
+        echo "No branch specified. Exiting."
+        return
+    fi
+    cd ~/phillies/uploader
+    git checkout -b $1
+    git push origin $1
+    cd -
+}
+
+function deltag {
+    git tag --delete $1
+    git push --delete origin $1
+}
 
 function gc {
     git commit -m '$@'
@@ -328,7 +432,6 @@ alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
 alias js='python -m json.tool'
 alias us='underscore'
 alias less='less -X -F'
-alias b='. ~/.bashrc'
 alias grepl='grep --line-buffered'
 alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
@@ -363,6 +466,9 @@ function fin {
     find . -name \*$1\* ${@:2} 
 }
 
+function api-local {
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://private:81/$1" | jq .
+}
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq .
 }
@@ -399,8 +505,12 @@ function api-localyz {
 
 # dirs
 alias src='cd  $SRC_HOME'
-alias a='cd  $SRC_HOME/api'
-alias u='cd  $SRC_HOME/util'
+alias re='cd  $SRC_HOME/phy/reports'
+alias a='cd  $SRC_HOME/phy/api'
+alias g='cd  $SRC_HOME/phy/githook'
+alias i='cd  $SRC_HOME/phy/infield'
+alias phy='cd  $SRC_HOME/phy'
+alias u='cd  $SRC_HOME/uploader'
 alias d='cd  $SRC_HOME/PhilDataUpload/'
 alias da='cd  $SRC_HOME/data/'
 alias daa='cd  $SRC_HOME/data/activemq/src/main/java/io/phils'
@@ -408,6 +518,11 @@ alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
+
+# gcloud
+# function gdb-add-ip {
+    # alias gdb-ip-add='time gdb patch $PHIL_GCLOUD_DB_INSTANCE --authorized-networks'
+# }
 
 # android
 alias logcat='adb logcat > /tmp/logcat.txt &'
@@ -440,15 +555,17 @@ export GROOVY_HOME=/usr/local/opt/groovy/libexec
 export GSUTIL_HOME=~/bin/gsutil
 
 # Python
-export PYTHONPATH=~/
-export PYTHONPATH=$PYTHONPATH:$SRC_HOME/api
-export PYTHONPATH=$PYTHONPATH:$SRC_HOME
+export PYENV_VERSION=2.7.13
+export PYTHONPATH=$SRC_HOME
+export PHY=$SRC_HOME/phy
 export PYTHONDONTWRITEBYTECODE=true
 # source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
 alias py='ipython2'
 alias ac='. .env/bin/activate'
+alias pi='pip install'
+alias env_create='pyenv virtualenv $PYENV_VERSION .env'
 
 function update() {
     pushd .
@@ -526,6 +643,7 @@ add_to_PATH /usr/local/opt/openssl/bin
 add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
 add_to_PATH $KAFKA_HOME/bin
 add_to_PATH $SQLLINE_HOME/bin
+add_to_PATH /Library/TeX/texbin
 
 # export PATH=$HOME/.rvm/bin:$PATH
 # export PATH=/usr/local/bin:$PATH
@@ -758,7 +876,7 @@ function pz {
 }
 
 function geo {
-    curl -s http://freegeoip.net/json/$1 | python -mjson.tool 
+    curl -s http://api.ipstack.com/$1?access_key=$IPSTACK_TOKEN | jq .continent_name,.country_name,.region_name,.city
 }
 
 function wildcard_csr {
@@ -1497,3 +1615,7 @@ fi
 [ -f $HOME/.travis/travis.sh ] && source $HOME/.travis/travis.sh
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
+# eval "$(pyenv init -)"
+# $(pyenv root)/completions/pyenv.bash
+# eval "$(pyenv virtualenv-init -)"
