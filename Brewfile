@@ -102,6 +102,8 @@ brew 'kafkacat'
 brew 'kibana'  # brew services start kibana
 brew 'lftp'
 brew 'libev'
+brew 'libmicrohttpd' # for kismet
+brew 'librtlsdr' # for kismet
 brew 'librdkafka'
 brew 'openssl'
 brew 'mas'
@@ -117,6 +119,7 @@ brew 'ncurses'
 brew 'nghttp2'
 brew 'node'
 brew 'phantomjs'
+brew 'protobufc' # for kismet
 brew 'pv'
 brew 'pyenv'
 brew 'pyenv-virtualenv'
