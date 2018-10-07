@@ -89,4 +89,4 @@ set directory=/tmp//,.
 set ruler
 " set cursorcolumn
 
-:hi MatchParen cterm=none ctermfg=202 ctermbg=202
+" :hi MatchParen cterm=none ctermfg=none ctermbg=green
