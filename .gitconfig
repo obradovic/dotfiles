@@ -42,3 +42,5 @@
 	smudge = git-lfs smudge -- %f
 	required = true
 	process = git-lfs filter-process
+    la = "!git config -l | grep alias | cut -c 7-"
+    tagcommit = rev-list -n 1
