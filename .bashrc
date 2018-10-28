@@ -278,6 +278,8 @@ alias gdb='gcloud sql instances'
 alias gdbs='gdb list'
 alias adm='s prod-admin'
 alias big='s prod-bigcron'
+alias gtopic='gcloud pubsub topics'
+alias gsub='gcloud pubsub subscriptions'
 export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
 
 # GO
@@ -340,6 +342,7 @@ alias stahs='stash'
 alias sta='stash'
 alias master='co master'
 alias dev='co dev'
+alias push='git push'
 
 alias gitter='python bin/gitter.py'
 
@@ -435,6 +438,10 @@ alias less='less -X -F'
 alias grepl='grep --line-buffered'
 alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
+
+# Dropbox
+alias pd='cd ~/Dropbox/Phillies/'
+alias pde='cd ~/Dropbox/Phillies/edger'
 
 # Papertrail
 alias pt='papertrail'
@@ -566,6 +573,8 @@ alias py='ipython2'
 alias ac='. .env/bin/activate'
 alias pi='pip install'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
+alias chef-all='phy && BUNDLE_GEMFILE=.gemfile ROLES=all bundle exec cap -f .capfile prod chef && cd -'
+alias chef-api='phy && BUNDLE_GEMFILE=.gemfile ROLES=api bundle exec cap -f .capfile prod chef && cd -'
 
 function update() {
     pushd .
@@ -644,6 +653,7 @@ add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
 add_to_PATH $KAFKA_HOME/bin
 add_to_PATH $SQLLINE_HOME/bin
 add_to_PATH /Library/TeX/texbin
+add_to_PATH ~/bin
 
 # export PATH=$HOME/.rvm/bin:$PATH
 # export PATH=/usr/local/bin:$PATH
@@ -1595,6 +1605,13 @@ function unix2mac {
 function mac2unix {
     cat $1 | tr '\r' '\n' > foo.tmp
     mv foo.tmp $1
+}
+
+function wifis {
+    wifis=`airport -s`
+    echo "$wifis" | head -1
+    wifi_data=`echo "$wifis" | grep -v "SECURITY (auth/unicast/group)"`
+    echo "$wifi_data" | sort -b -k 3
 }
 
 
