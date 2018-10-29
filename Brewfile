@@ -123,6 +123,7 @@ brew 'ncurses'
 brew 'nghttp2'
 brew 'node'
 brew 'ntopng'
+brew 'p0f'
 brew 'phantomjs'
 brew 'protobufc' # for kismet
 brew 'pv'
