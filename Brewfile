@@ -74,6 +74,8 @@ cask 'yakyak'
 
 brew 'aircrack-ng'
 brew 'autoenv'
+brew 'arp-sk'
+brew 'arping'
 brew 'bash'
 brew 'bash-completion'
 brew 'bazel'
