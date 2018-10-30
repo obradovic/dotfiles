@@ -389,6 +389,13 @@ function curles {
     curl -s "localhost:9200/$1" | python -m json.tool
 }
 
+
+# CHROME
+alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
+alias chrome-canary="/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary"
+alias chromium="/Applications/Chromium.app/Contents/MacOS/Chromium"
+
+
 # generic
 alias dir='ls -la'
 alias dirw='ls -al | grep drw'
