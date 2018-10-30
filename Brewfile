@@ -53,7 +53,7 @@ cask 'iterm2'
 cask 'dropbox'
 cask 'flux'
 cask 'gimp'
-cask 'github-desktop'
+# cask 'github-desktop'
 cask 'google-earth'
 cask 'google-hangouts'
 cask 'java'
@@ -61,7 +61,7 @@ cask 'little-snitch'
 cask 'lunchy'
 cask 'mactex'
 cask 'metasploit'
-cask 'slack'
+# cask 'slack'
 cask 'sublime-text'
 cask 'torbrowser'
 cask 'transmit'
@@ -70,7 +70,7 @@ cask 'virtualbox'
 cask 'vagrant'
 cask 'wireshark'
 cask 'xquartz'
-cask 'yakyak'
+# cask 'yakyak'
 
 brew 'aircrack-ng'
 brew 'autoenv'
@@ -83,7 +83,7 @@ brew 'bfg'
 brew 'coreutils'
 brew 'cowsay'
 brew 'datamash'
-brew 'elasticsearch' # brew services start elasticsearch to start now and restart at login
+# brew 'elasticsearch' # brew services start elasticsearch to start now and restart at login
 brew 'entr'
 brew 'exiftool'
 brew 'figlet'
@@ -102,7 +102,7 @@ brew 'htop-osx'
 brew 'httpie'
 brew 'jq'
 brew 'kafkacat'
-brew 'kibana'  # brew services start kibana
+# brew 'kibana'  # brew services start kibana
 brew 'lftp'
 brew 'libev'
 brew 'libmicrohttpd' # for kismet
@@ -116,7 +116,7 @@ brew 'mitmproxy'
 brew 'mobile-shell'
 brew 'mtr'
 brew 'mycli'
-brew 'mysql', restart_service: true
+# brew 'mysql', restart_service: true
 brew 'namebench'
 brew 'ncftp'
 brew 'ncurses'
@@ -157,5 +157,5 @@ mas 'Docs for Xcode', id: 688199928
 mas 'Wunderlist', id: 410628904
 
 # MSSQL: https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-setup-tools#macos
-tap 'microsoft/mssql-preview https://github.com/Microsoft/homebrew-mssql-preview'
-brew 'mssql-tools'
+# tap 'microsoft/mssql-preview https://github.com/Microsoft/homebrew-mssql-preview'
+# brew 'mssql-tools'
