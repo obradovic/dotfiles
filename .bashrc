@@ -1,21 +1,223 @@
-
+#
+# COMMON
+#
 shopt -s extglob
 set -o vi
-
-export SRC_HOME="$HOME/phillies"
 umask 0022
+export SRC_HOME="$HOME/phillies"
 
 if [ -f $HOME/.bashrc_private ]; then
     source $HOME/.bashrc_private
 fi
 
-# PHIL
-function rd {
-    local project='reports'
-    diff $SRC_HOME/phy/$project/$1 $SRC_HOME/$project/$1 | grep -v import
-}
-function bucket-logs {
 
+#
+# RASPBERRY PI
+#
+alias ras='screen /dev/cu.usbserial 115200'
+
+
+#
+# WIFI
+#
+function wifi-init {
+    local airport_exe=/usr/local/bin/airport
+    if [ ! -L $airport_exe ]; then
+        ln -s /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport $airport_exe
+        echo "Created airport symlink"
+    fi
+}
+
+function wifi {
+    wifi-init
+    wifis=`airport -s`
+    echo "$wifis" | head -1
+    wifi_data=`echo "$wifis" | grep -v "SECURITY (auth/unicast/group)"`
+    echo "$wifi_data" | sort -b -k 3
+}
+
+function wifi-me {
+    wifi-init
+    airport -I
+}
+
+
+#
+# GENERIC
+#
+alias dir='ls -la'
+alias dirw='ls -al | grep drw'
+alias la='ls -la'
+alias dor='dir'
+alias dri='dir'
+alias dur='dir'
+# alias h='history 100'
+alias j='jobs'
+alias 1='fg %1'
+alias 2='fg %2'
+alias 3='fg %3'
+alias 4='fg %4'
+alias del='rm'
+alias vig='mvim'
+alias vo='vi'
+alias vu='vi'
+alias mroe='more'
+alias copy='cp'
+alias move='mv'
+alias bas='vi ~/.bashrc; sleep 0.5; . ~/.bashrc'
+alias bass='vi ~/.bashrc_private; sleep 0.5; . ~/.bashrc'
+alias please='sudo'
+alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
+alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f3-)"
+alias cd..='cd ..'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias ,,='..'
+alias ,,,='...'
+alias ,,,,='....'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
+alias du1='du -h -d 1'
+alias du2='du -h -d 2'
+alias dfk='df -h -k'
+alias tl='tail -f'
+alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
+alias js='python -m json.tool'
+alias us='underscore'
+alias less='less -X -F'
+alias grepl='grep --line-buffered'
+alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
+alias nojello='grep --line-buffered -v jello'
+
+alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
+alias ip='curl -s http://ipecho.net/plain; echo'
+alias loadspeed='phantomjs $HOME/.loadspeed.js'
+function loadspeeder {
+    loadspeed='phantomjs $HOME/.loadspeed.js'
+}
+function run() {
+    # runs something n times
+    number=$1
+    shift
+    for n in $(seq $number); do
+      $@
+    done
+}
+function mcd {
+    mkdir $1
+    cd $1
+}
+function fin {
+    find . -name \*$1\* ${@:2}
+}
+function pz {
+  ps -aef | grep -i $1 | grep -v grep
+}
+function tolower {
+    time for f in `find . -type f -maxdepth 1`; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
+}
+function b64 {
+    echo
+    echo "$1" | base64 -D
+    echo
+}
+function geo {
+    curl -s http://api.ipstack.com/$1?access_key=$IPSTACK_TOKEN | jq .continent_name,.country_name,.region_name,.city
+}
+function wildcard_csr {
+    domain=$1
+    openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
+}
+function timestamp {
+    date +"%s"
+}
+function timestamp-diff {
+    cur=`timestamp`
+    expr $cur - $1
+}
+function sshquiet {
+    if [ "$#" == "0" ]; then
+        echo
+        echo "Sorry. I need a string to remove from ~/.ssh/known_hosts"
+        echo
+    else
+        echo "Removing $1"
+        grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
+    fi
+}
+function title {
+  echo -e "\033];$1\007"
+  echo "Title set to $1"
+}
+
+
+# PROMPT, and other bash goodies
+export CLICOLOR=1
+export HISTSIZE=5000
+export HISTFILESIZE=5000
+export HISTFILE=~/.history_bash
+export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
+export EDITOR=vi
+
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+  . $(brew --prefix)/etc/bash_completion
+fi
+
+
+#
+# PYTHON
+#
+export FLASK_APP=main.py
+export FLASK_DEBUG=1
+export PYENV_VERSION=2.7.13
+export PYTHONPATH=$SRC_HOME
+export PHY=$SRC_HOME/phy
+export PYTHONDONTWRITEBYTECODE=true
+# source $(brew --prefix autoenv)/activate.sh
+alias e='source .env/bin/activate'
+alias rmp='find . -name \*.pyc | xargs rm'
+alias py='ipython2'
+alias ac='. .env/bin/activate'
+alias pi='pip install'
+alias env_create='pyenv virtualenv $PYENV_VERSION .env'
+
+_virtualenv_auto_activate() {
+    if [ -e ".env" ]; then
+        # Check to see if already activated to avoid redundant activating
+        if [ "$VIRTUAL_ENV" != "$(pwd -P)/.env" ]; then
+            _VENV_NAME=$(basename `pwd`)
+            echo Activating virtualenv \"$_VENV_NAME\"...
+            VIRTUAL_ENV_DISABLE_PROMPT=1
+            source .env/bin/activate
+            _OLD_VIRTUAL_PS1="$PS1"
+            PS1="($_VENV_NAME) $PS1"
+            export PS1
+        fi
+    fi
+}
+export PROMPT_COMMAND=_virtualenv_auto_activate
+
+
+#
+# RUBY
+#
+alias be='bundle exec'
+alias bcap='bundle exec cap'
+alias dep='bundle exec cap prod deploy'
+# source ~/.rvm/scripts/rvm
+
+
+
+#
+# GO
+#
+export GOPATH=~/go
+
+
+# PHIL
+function bucket-logs {
     local dir="~/logs"
     local bucket="gs://phil-logs"
     local file_prefix="access-log-"
@@ -55,33 +257,6 @@ function datalab {
   --ssh-flag="-L" \
   --ssh-flag="localhost:8081:localhost:8080" \
   "zo@prod-datalab-1"
-}
-function phil-db {
-    # echo Password copied
-    # echo $PHIL_GCLOUD_DB_PW | pbcopy
-    # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
-    # mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
-    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
-}
-function phil-db-dev {
-    mysql -h $PHIL_GCLOUD_DB_IP_DEV phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
-}
-function phil-db-clone {
-    mysql -h $PHIL_GCLOUD_DB_CLONE_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
-}
-function phil-db-root {
-    echo Password copied
-    echo $PHIL_GCLOUD_DB_PW | pbcopy
-    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p
-}
-function admin {
-    gcloud compute --project $PHIL_GCLOUD_PROJECT ssh --zone $PHIL_GCLOUD_ZONE prod-admin-1
-}
-function lb {
-    p lb
-}
-function wiki {
-    p wiki
 }
 function g-create-branch {
     name=$1-$2
@@ -187,6 +362,11 @@ function g-bootstrap {
 function g-delete {
     knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
 }
+
+
+#
+# SSH
+#
 function g-ssh {
     gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
 }
@@ -205,6 +385,29 @@ function p {
     . ~/.bashrc
     local ip=`knife google server list  | grep -v terminated | grep prod | grep $1 | tr -s ' ' | cut -d ' ' -f5`
     ssh $ip
+}
+
+
+#
+# DATABASE
+#
+function phil-db {
+    # echo Password copied
+    # echo $PHIL_GCLOUD_DB_PW | pbcopy
+    # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
+    # mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+}
+function phil-db-dev {
+    mysql -h $PHIL_GCLOUD_DB_IP_DEV phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+}
+function phil-db-clone {
+    mysql -h $PHIL_GCLOUD_DB_CLONE_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+}
+function phil-db-root {
+    echo Password copied
+    echo $PHIL_GCLOUD_DB_PW | pbcopy
+    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p
 }
 function ls-backups {
     gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/
@@ -264,12 +467,12 @@ function restore-latest-backup-dev {
     mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "COMMIT;"
     popd
 }
-function get_mandrill {
-    python get_mandrill_html.py $1 > test.html
-}
 
-export FLASK_APP=main.py
-export FLASK_DEBUG=1
+# function gdb-add-ip {
+    # alias gdb-ip-add='time gdb patch $PHIL_GCLOUD_DB_INSTANCE --authorized-networks'
+# }
+
+
 
 # GCLOUD
 alias sshg='gcloud compute ssh'
@@ -278,14 +481,13 @@ alias gdb='gcloud sql instances'
 alias gdbs='gdb list'
 alias adm='s prod-admin'
 alias big='s prod-bigcron'
+alias lb="p lb"
 alias gtopic='gcloud pubsub topics'
 alias gsub='gcloud pubsub subscriptions'
 export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
 
-# GO
-export GOPATH=~/go
-
-# CHEF shortcuts
+# CHEF
+export OPSCODE_USER=zo
 alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
 alias k='knife'
@@ -303,6 +505,8 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
+alias chef-all='phy && BUNDLE_GEMFILE=.gemfile ROLES=all bundle exec cap -f .capfile prod chef && cd -'
+alias chef-api='phy && BUNDLE_GEMFILE=.gemfile ROLES=api bundle exec cap -f .capfile prod chef && cd -'
 function ksearch {
     knife search node "roles:$1"
 }
@@ -343,7 +547,6 @@ alias sta='stash'
 alias master='co master'
 alias dev='co dev'
 alias push='git push'
-
 alias gitter='python bin/gitter.py'
 
 function branchd {
@@ -378,10 +581,22 @@ function gc {
     git commit -m '$@'
 }
 
+export GIT_PS1_SHOWSTASHSTATE=true
+export GIT_PS1_SHOWDIRTYSTATE=true
+export GIT_PS1_SHOWUPSTREAM="auto"
+
+. ~/.git-prompt.sh
+. ~/.git-completion.sh
+. ~/.colors_bash
+
+export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
+# export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
+
+
 # MANDRILL
-function message {
-    python bin/get_email_html.py $1 > message.html
-    echo 'message.html written'
+function get_mandrill {
+    python $PHY/reports/bin/get_mandrill_html.py $1 > /tmp/message.html
+    cat /tmp/message.html
 }
 
 # ELASTICSEARCH
@@ -389,61 +604,13 @@ function curles {
     curl -s "localhost:9200/$1" | python -m json.tool
 }
 
-# generic
-alias dir='ls -la'
-alias dirw='ls -al | grep drw'
-alias la='ls -la'
-alias dor='dir'
-alias dri='dir'
-alias dur='dir'
-# alias h='history 100'
-alias j='jobs'
-alias 1='fg %1'
-alias 2='fg %2'
-alias 3='fg %3'
-alias 4='fg %4'
-alias del='rm'
-alias vig='mvim'
-alias vo='vi'
-alias vu='vi'
-alias mroe='more'
-alias copy='cp'
-alias move='mv'
-alias bas='vi ~/.bashrc; sleep 0.5; . ~/.bashrc'
-alias bass='vi ~/.bashrc_private; sleep 0.5; . ~/.bashrc'
-alias please='sudo'
-alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
-alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f3-)"
-alias be='bundle exec'
-alias bcap='bundle exec cap'
-alias dep='bundle exec cap prod deploy'
-alias cd..='cd ..'
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias ,,='..'
-alias ,,,='...'
-alias ,,,,='....'
-alias .3='cd ../../..'
-alias .4='cd ../../../..'
-alias .5='cd ../../../../..'
-alias du1='du -h -d 1'
-alias du2='du -h -d 2'
-alias dfk='df -h -k'
-alias tl='tail -f'
-alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
-alias js='python -m json.tool'
-alias us='underscore'
-alias less='less -X -F'
-alias grepl='grep --line-buffered'
-alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
-alias nojello='grep --line-buffered -v jello'
 
-# Dropbox
+# DROPBOX
 alias pd='cd ~/Dropbox/Phillies/'
 alias pde='cd ~/Dropbox/Phillies/edger'
 
-# Papertrail
+
+# PAPERTRAIL
 alias pt='papertrail'
 function l {
     group=$1
@@ -464,38 +631,31 @@ function lsg {
 function lsv {
     lsg phil-videos/$1
 }
-function mcd {
-    mkdir $1
-    cd $1
-}
 
-function fin {
-    find . -name \*$1\* ${@:2} 
-}
 
+#
+# API
+#
 function api-local {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://private:81/$1" | jq .
 }
 function api {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq .
-}
-function api-dev {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api-dev.phils.io/$1" | jq .
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
 }
 function apih {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1" | jq .
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://$PHIL_API_SERVER/$1" | jq .
 }
 function apio {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1"
 }
 function apioh {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://api.phils.io/$1"
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://$PHIL_API_SERVER/$1"
 }
 function apiy {
-    curly -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+    curly -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1"
 }
 function apiyz {
-    curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1"
+    curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1"
 }
 function api-local {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq .
@@ -510,15 +670,15 @@ function api-localyz {
     curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
 }
 
-# dirs
+
+# DIRS
 alias src='cd  $SRC_HOME'
-alias re='cd  $SRC_HOME/phy/reports'
-alias a='cd  $SRC_HOME/phy/api'
-alias g='cd  $SRC_HOME/phy/githook'
-alias i='cd  $SRC_HOME/phy/infield'
-alias phy='cd  $SRC_HOME/phy'
-alias u='cd  $SRC_HOME/uploader'
-alias d='cd  $SRC_HOME/PhilDataUpload/'
+alias re='cd  $PHY/reports'
+alias a='cd  $PHY/api'
+alias g='cd  $PHY/githook'
+alias i='cd  $PHY/infield'
+alias u='cd  $PHY/uploader'
+alias phy='cd  $PHY'
 alias da='cd  $SRC_HOME/data/'
 alias daa='cd  $SRC_HOME/data/activemq/src/main/java/io/phils'
 alias c='cd  $SRC_HOME/chef'
@@ -526,30 +686,26 @@ alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
 
-# gcloud
-# function gdb-add-ip {
-    # alias gdb-ip-add='time gdb patch $PHIL_GCLOUD_DB_INSTANCE --authorized-networks'
-# }
 
-# android
+# ANDROID
 alias logcat='adb logcat > /tmp/logcat.txt &'
 alias logall='tail -f /tmp/logcat.txt'
 alias adb-restart='adb kill-server; adb start-server'
 # export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
 
-# loader
+
+# LOADER
 function loader {
     curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | python -mjson.tool
 }
 
-# varnish
+
+# VARNISH
 alias vl='varnishlog -m rxURL:/rss/blog -c'
 function vpurge {
     curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_PROD$1 2>&1 >/dev/null | grep HTTP
 }
 
-# OpsCode / Chef
-export OPSCODE_USER=zo
 
 # some default locations
 export NGINX_HOME=/usr/local/Cellar/nginx/current
@@ -561,22 +717,9 @@ export NPM_RELATIVE="./node_modules/.bin"
 export GROOVY_HOME=/usr/local/opt/groovy/libexec
 export GSUTIL_HOME=~/bin/gsutil
 
-# Python
-export PYENV_VERSION=2.7.13
-export PYTHONPATH=$SRC_HOME
-export PHY=$SRC_HOME/phy
-export PYTHONDONTWRITEBYTECODE=true
-# source $(brew --prefix autoenv)/activate.sh
-alias e='source .env/bin/activate'
-alias rmp='find . -name \*.pyc | xargs rm'
-alias py='ipython2'
-alias ac='. .env/bin/activate'
-alias pi='pip install'
-alias env_create='pyenv virtualenv $PYENV_VERSION .env'
-alias chef-all='phy && BUNDLE_GEMFILE=.gemfile ROLES=all bundle exec cap -f .capfile prod chef && cd -'
-alias chef-api='phy && BUNDLE_GEMFILE=.gemfile ROLES=api bundle exec cap -f .capfile prod chef && cd -'
 
-function update() {
+# BREW
+function brew-update() {
     pushd .
     cd ~/.dotfiles
     brew update
@@ -584,22 +727,8 @@ function update() {
     popd
 }
 
-_virtualenv_auto_activate() {
-    if [ -e ".env" ]; then
-        # Check to see if already activated to avoid redundant activating
-        if [ "$VIRTUAL_ENV" != "$(pwd -P)/.env" ]; then
-            _VENV_NAME=$(basename `pwd`)
-            echo Activating virtualenv \"$_VENV_NAME\"...
-            VIRTUAL_ENV_DISABLE_PROMPT=1
-            source .env/bin/activate
-            _OLD_VIRTUAL_PS1="$PS1"
-            PS1="($_VENV_NAME) $PS1"
-            export PS1
-        fi
-    fi
-}
-export PROMPT_COMMAND=_virtualenv_auto_activate
 
+# IDEMPOTENT PATHS
 add_to_CLASSPATH () {
   for d; do
     # d=$(cd -- "$d" && { pwd -P || pwd; }) 2>/dev/null  # canonicalize symbolic links
@@ -622,7 +751,10 @@ add_to_PATH () {
   done
 }
 
-# Java
+# JAVA
+function finder {
+    find . -name '*.jar' -exec grep -Hls $1 {} \;
+}
 export MYSQL_CONNECTOR_HOME=$HOME/phillies/kafka/mysql-connector-java-5.1.44
 add_to_CLASSPATH .
 add_to_CLASSPATH $HOME/phillies/data/activemq/target/dependency/*
@@ -632,9 +764,6 @@ add_to_CLASSPATH $HOME/jars-schema-registry/*
 add_to_CLASSPATH $MYSQL_CONNECTOR_HOME/mysql-connector-java-5.1.44-bin.jar
 add_to_CLASSPATH $HOME/phillies/kafka/sqlline/target/sqlline-1.4.0-SNAPSHOT-jar-with-dependencies.jar
 
-function finder {
-    find . -name '*.jar' -exec grep -Hls $1 {} \;
-}
 
 
 #export PATH="$(brew --prefix coreutils)/libexec/gnubin:/usr/local/bin:$PATH"
@@ -655,67 +784,16 @@ add_to_PATH $SQLLINE_HOME/bin
 add_to_PATH /Library/TeX/texbin
 add_to_PATH ~/bin
 
-# export PATH=$HOME/.rvm/bin:$PATH
-# export PATH=/usr/local/bin:$PATH
-# export PATH=/usr/local/sbin:$PATH
-# export PATH=$PATH:$NPM_HOME/bin
-# export PATH=$PATH:$ANDROID_HOME/tools
-# export PATH=$PATH:$ANDROID_HOME/platform-tools
-# export PATH=$PATH:$HEROKU_HOME/bin
-# export PATH=$PATH:$GSUTIL_HOME
-# export PATH=$PATH:.
-# export PATH=~/bin:$PATH
-# export PATH=$NPM_RELATIVE:$PATH
-
 # LUNCHY
 # LUNCHY_DIR=$(dirname `gem which lunchy`)/../extras
   # if [ -f $LUNCHY_DIR/lunchy-completion.bash ]; then
     # . $LUNCHY_DIR/lunchy-completion.bash
 # fi
 
-# RVM
-# source ~/.rvm/scripts/rvm
-
-# Prompt, and other bash goodies
-export CLICOLOR=1
-export HISTSIZE=5000
-export HISTFILESIZE=5000
-export HISTFILE=~/.history_bash
-export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
-export EDITOR=vi
-
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  . $(brew --prefix)/etc/bash_completion
-fi
-
-export GIT_PS1_SHOWSTASHSTATE=true
-export GIT_PS1_SHOWDIRTYSTATE=true
-export GIT_PS1_SHOWUPSTREAM="auto"
-
-. ~/.git-prompt.sh
-. ~/.git-completion.sh
-. ~/.colors_bash
-
-export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
-# export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
-
-# misc
-alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
-alias ip='curl -s http://ipecho.net/plain; echo'
-alias loadspeed='phantomjs $HOME/.loadspeed.js'
-function loadspeeder {
-    loadspeed='phantomjs $HOME/.loadspeed.js'
-}
-function run() {
-    number=$1
-    shift
-    for n in $(seq $number); do
-      $@
-    done
-}
 
 
-# photo
+
+# PHOTO
 alias ph='cd ~/Photos'
 alias photo='ssh $PHOTO_USER@$PHOTO_HOST'
 alias photo_mount='sshfs $PHOTO_USER@$PHOTO_HOST: $PHOTO_DIR_LOCAL_MOUNT'
@@ -870,54 +948,6 @@ function photo_clear_samsung {
     echo "Cleared $camera_dir"
 }
 
-function tolower {
-    time for f in `find . -type f -maxdepth 1`; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
-}
-
-
-function b64 {
-    echo
-    echo "$1" | base64 -D
-    echo 
-}
-
-function pz {
-  ps -aef | grep -i $1 | grep -v grep
-}
-
-function geo {
-    curl -s http://api.ipstack.com/$1?access_key=$IPSTACK_TOKEN | jq .continent_name,.country_name,.region_name,.city
-}
-
-function wildcard_csr {
-    domain=$1
-    openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
-}
-
-function timestamp {
-    date +"%s"
-}
-
-function timestamp-diff {
-    cur=`timestamp`
-    expr $cur - $1
-}
-
-function sshquiet {
-    if [ "$#" == "0" ]; then
-        echo
-        echo "Sorry. I need a string to remove from ~/.ssh/known_hosts"
-        echo
-    else
-        echo "Removing $1"
-        grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
-    fi
-}
-
-function title {
-  echo -e "\033];$1\007" 
-  echo "Title set to $1"
-}
 
 function init-cam {
   if [ "$1" = "" ]; then
@@ -1607,12 +1637,6 @@ function mac2unix {
     mv foo.tmp $1
 }
 
-function wifis {
-    wifis=`airport -s`
-    echo "$wifis" | head -1
-    wifi_data=`echo "$wifis" | grep -v "SECURITY (auth/unicast/group)"`
-    echo "$wifi_data" | sort -b -k 3
-}
 
 
 # The next line updates PATH for the Google Cloud SDK.
