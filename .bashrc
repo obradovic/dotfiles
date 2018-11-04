@@ -367,6 +367,9 @@ function g-delete {
 #
 # SSH
 #
+alias adm='p admin'
+alias big='p bigcron'
+alias lb="p lb"
 function g-ssh {
     gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
 }
@@ -479,12 +482,28 @@ alias sshg='gcloud compute ssh'
 alias gql='gcloud beta sql'
 alias gdb='gcloud sql instances'
 alias gdbs='gdb list'
-alias adm='s prod-admin'
-alias big='s prod-bigcron'
-alias lb="p lb"
 alias gtopic='gcloud pubsub topics'
 alias gsub='gcloud pubsub subscriptions'
 export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
+
+function lsg {
+    gsutil ls -l gs://$1
+}
+function lsv {
+    lsg phil-videos/$1
+}
+
+# Updates PATH for the Google Cloud SDK.
+if [ -f $HOME/src/google-cloud-sdk/path.bash.inc ]; then
+  source $HOME/src/google-cloud-sdk/path.bash.inc
+fi
+
+# Enables shell command completion for gcloud.
+if [ -f $HOME/src/google-cloud-sdk/completion.bash.inc ]; then
+  source $HOME/src/google-cloud-sdk/completion.bash.inc
+fi
+
+
 
 # CHEF
 export OPSCODE_USER=zo
@@ -615,6 +634,10 @@ alias pd='cd ~/Dropbox/Phillies/'
 alias pde='cd ~/Dropbox/Phillies/edger'
 
 
+# TRAVIS
+[ -f $HOME/.travis/travis.sh ] && source $HOME/.travis/travis.sh
+
+
 # PAPERTRAIL
 alias pt='papertrail'
 function l {
@@ -629,13 +652,6 @@ function l {
     pt -f $group | nojello
 }
 
-
-function lsg {
-    gsutil ls -l gs://$1
-}
-function lsv {
-    lsg phil-videos/$1
-}
 
 
 #
@@ -1643,24 +1659,10 @@ function mac2unix {
 }
 
 
-
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f $HOME/src/google-cloud-sdk/path.bash.inc ]; then
-  source $HOME/src/google-cloud-sdk/path.bash.inc
-fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f $HOME/src/google-cloud-sdk/completion.bash.inc ]; then
-  source $HOME/src/google-cloud-sdk/completion.bash.inc
-fi
-
-
 [ -f $HOME/.z.sh ] && source $HOME/.z.sh
-
-# added by travis gem
-[ -f $HOME/.travis/travis.sh ] && source $HOME/.travis/travis.sh
-
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
+
 
 # eval "$(pyenv init -)"
 # $(pyenv root)/completions/pyenv.bash
