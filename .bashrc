@@ -45,12 +45,12 @@ function wifi-me {
 #
 # GENERIC
 #
-alias dir='ls -la'
-alias dirw='ls -al | grep drw'
 alias la='ls -la'
-alias dor='dir'
-alias dri='dir'
-alias dur='dir'
+alias dir='la'
+alias dor='la'
+alias dri='la'
+alias dur='la'
+alias dirw='la | grep drw'
 # alias h='history 100'
 alias j='jobs'
 alias 1='fg %1'
@@ -476,14 +476,16 @@ function restore-latest-backup-dev {
 # }
 
 
-
+#
 # GCLOUD
+#
 alias sshg='gcloud compute ssh'
 alias gql='gcloud beta sql'
 alias gdb='gcloud sql instances'
 alias gdbs='gdb list'
-alias gtopic='gcloud pubsub topics'
-alias gsub='gcloud pubsub subscriptions'
+alias gpub='gcloud pubsub'
+alias gtopic='gpub topics'
+alias gsub='gpub subscriptions'
 export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
 
 function lsg {
