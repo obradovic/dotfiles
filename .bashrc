@@ -593,6 +593,12 @@ export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W 
 # export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 
 
+# CHROME
+alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
+alias chrome-canary="/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary"
+alias chromium="/Applications/Chromium.app/Contents/MacOS/Chromium"
+
+
 # MANDRILL
 function get_mandrill {
     python $PHY/reports/bin/get_mandrill_html.py $1 > /tmp/message.html
@@ -603,7 +609,6 @@ function get_mandrill {
 function curles {
     curl -s "localhost:9200/$1" | python -m json.tool
 }
-
 
 # DROPBOX
 alias pd='cd ~/Dropbox/Phillies/'
