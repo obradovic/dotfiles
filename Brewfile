@@ -72,6 +72,7 @@ cask 'wireshark'
 cask 'xquartz'
 # cask 'yakyak'
 
+brew 'adwaita-icon-theme' # needed for ettercap to show icons
 brew 'aircrack-ng'
 brew 'autoenv'
 brew 'arp-sk'
@@ -85,6 +86,7 @@ brew 'cowsay'
 brew 'datamash'
 # brew 'elasticsearch' # brew services start elasticsearch to start now and restart at login
 brew 'entr'
+brew 'ettercap'
 brew 'exiftool'
 brew 'figlet'
 brew 'fortune'
