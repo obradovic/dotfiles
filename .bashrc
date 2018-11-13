@@ -5,9 +5,14 @@ shopt -s extglob
 set -o vi
 umask 0022
 export SRC_HOME="$HOME/phillies"
+export PHY=$SRC_HOME/phy
 
 if [ -f $HOME/.bashrc_private ]; then
     source $HOME/.bashrc_private
+fi
+
+if [ -f $PHY/bin/gcp-shared.sh ]; then
+    source $PHY/bin/gcp-shared.sh
 fi
 
 
@@ -173,7 +178,6 @@ export FLASK_APP=main.py
 export FLASK_DEBUG=1
 export PYENV_VERSION=2.7.13
 export PYTHONPATH=$SRC_HOME
-export PHY=$SRC_HOME/phy
 export PYTHONDONTWRITEBYTECODE=true
 # source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate'
@@ -259,8 +263,9 @@ function datalab {
   "zo@prod-datalab-1"
 }
 function g-create-branch {
-    name=$1-$2
-    g-create $1 $name branch 30 n1-standard-1
+    env=dev
+    name=$env-branch-template-1
+    g-create2 $env $name branch 30GB n1-standard-1
 }
 function g-create-db {
     g-create $1 $1-$2 db 500 n1-standard-2
@@ -334,8 +339,8 @@ function g-create-matchup-64 {
 function g-create-bigcron {
     g-create $1 $1-$2 bigcron 200 n1-highmem-16
 }
-function g-create-megacron {
-    g-create $1 $1-$2 bigcron 200 n1-standard-96
+function g-create-elephant {
+    g-create2 $1 $1-$2 elephant 200GB n1-highmem-96
 }
 function g-create {
     echo ARGS are $*
@@ -354,13 +359,77 @@ function g-create {
     --auth-timeout 300 \
     --run-list "role[$3]"
 }
-function g-bootstrap {
-    ip=$1
+
+function g-create2 {
+    env=$1
     name=$2
-    knife bootstrap $ip -E prod -N $name -i ~/.ssh/id_rsa -x zo -V -r 'role[bigcron]' --sudo
+    chef_role=$3
+    disk_size=$4
+    machine_type=$5
+
+    boot_disk_type=pd-ssd
+
+
+    # when you add an accelerator, you can only have 16 cpus max
+    # --accelerator=count=1,type=nvidia-tesla-p100 \
+
+    image=`get-latest-image`
+
+    response=`$compute instances create $name \
+        --boot-disk-size=$disk_size \
+        --boot-disk-type=$boot_disk_type \
+        --image=$image \
+        --labels=env=$env \
+        --machine-type=$machine_type \
+        --maintenance-policy=TERMINATE \
+        --restart-on-failure \
+        --min-cpu-platform=skylake \
+        --project=$PHIL_GCLOUD_PROJECT \
+        --zone=$PHIL_GCLOUD_ZONE_1 \
+        --format=json`
+
+    status=`echo $response | jq -r .[0].status`
+    if [ "$status" != "RUNNING" ]; then
+        echo $response | jq 
+        echo "ERROR: $name is NOT RUNNING"
+        return
+    fi
+
+    ip=`echo $response | jq -r .[0].networkInterfaces[0].accessConfigs[0].natIP`
+
+    g-bootstrap $env $chef_role $name $ip
+
 }
+
+function g-bootstrap {
+    env=$1
+    chef_role=$2
+    name=$3
+    ip=$4
+
+    knife bootstrap $ip \
+        --bootstrap-version 12.21.31 \
+        -E $env \
+        -N $name \
+        -i ~/.ssh/id_rsa \
+        -x zo \
+        -V \
+        -r "role[$chef_role]" \
+        -sudo
+
+}
+
 function g-delete {
     knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
+}
+
+function g-stop {
+    name=$1
+    $compute instances stop $name --zone $PHIL_GCLOUD_ZONE
+}
+function g-start {
+    name=$1
+    $compute instances start $name --zone $PHIL_GCLOUD_ZONE
 }
 
 
