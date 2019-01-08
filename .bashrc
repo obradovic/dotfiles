@@ -19,7 +19,9 @@ fi
 #
 # RASPBERRY PI
 #
-alias ras='screen /dev/cu.usbserial 115200'
+alias rube-net='ssh zo@`arp-scan -l | grep -i "raspberry\|legra" | head -1 | cut -f1`'
+alias rube-local='screen /dev/cu.usbserial 115200'
+alias rube-eth='ssh pi@192.168.2.2'
 
 
 #
@@ -220,6 +222,12 @@ alias dep='bundle exec cap prod deploy'
 export GOPATH=~/go
 
 
+#
+# VMWARE
+#
+alias vmrun="/Applications/VMware\ Fusion.app/Contents/Public/vmrun"
+
+
 # PHIL
 function bucket-logs {
     local dir="~/logs"
@@ -408,15 +416,14 @@ function g-bootstrap {
     ip=$4
 
     knife bootstrap $ip \
-        --bootstrap-version 12.21.31 \
+        --bootstrap-version 12.22.5 \
         -E $env \
         -N $name \
         -i ~/.ssh/id_rsa \
         -x zo \
         -V \
         -r "role[$chef_role]" \
-        -sudo
-
+        --sudo
 }
 
 function g-delete {
@@ -595,8 +602,8 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
-alias chef-all='phy && BUNDLE_GEMFILE=.gemfile ROLES=all bundle exec cap -f .capfile prod chef && cd -'
-alias chef-api='phy && BUNDLE_GEMFILE=.gemfile ROLES=api bundle exec cap -f .capfile prod chef && cd -'
+alias chef-all='phy && ROLES=all bundle exec cap prod chef && cd -'
+alias chef-api='phy && ROLES=api bundle exec cap prod chef && cd -'
 function ksearch {
     knife search node "roles:$1"
 }
@@ -639,6 +646,16 @@ alias dev='co dev'
 alias push='git push'
 alias gitter='python bin/gitter.py'
 
+function git-show-largest-files {
+    git rev-list --objects --all \
+    | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' \
+    | awk '/^blob/ {print substr($0,6)}' \
+    | sort --numeric-sort --key=2 --reverse \
+    | head -20 \
+    | cut --complement --characters=13-40 \
+    | numfmt --field=2 --to=iec-i --suffix=B --padding=7 --round=nearest
+}
+
 function branchd {
     branch=$1
     if [ "$branch" = "" ]; then
@@ -662,9 +679,20 @@ function branchm {
     cd -
 }
 
-function deltag {
+function tag-del {
     git tag --delete $1
     git push --delete origin $1
+}
+
+function tag-list {
+    for tag in `git tag`
+    do
+        echo "`git rev-list -n 1 $tag`: $tag"
+    done
+}
+
+function tag-update-local {
+    git fetch origin --tags
 }
 
 function gc {
@@ -681,6 +709,27 @@ export GIT_PS1_SHOWUPSTREAM="auto"
 
 export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 # export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
+
+
+# RUBE
+function rube-chef-bootstrap {
+    env=prod
+    chef_role=rube
+    name=prod-rube-1
+    ip=192.168.0.105
+
+    kd $name
+
+    knife bootstrap $ip \
+        --bootstrap-version 12.21.31 \
+        -E $env \
+        -N $name \
+        -x zo \
+        -P foobar \
+        -V \
+        -r "role[$chef_role]" \
+        -sudo
+}
 
 
 # CHROME
@@ -701,8 +750,7 @@ function curles {
 }
 
 # DROPBOX
-alias pd='cd ~/Dropbox/Phillies/'
-alias pde='cd ~/Dropbox/Phillies/edger'
+alias edg='cd ~/Dropbox/Phillies/edger'
 
 
 # TRAVIS
@@ -777,6 +825,7 @@ alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
+alias dot='cd ~/.dotfiles'
 
 
 # ANDROID
@@ -788,7 +837,7 @@ alias adb-restart='adb kill-server; adb start-server'
 
 # LOADER
 function loader {
-    curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | python -mjson.tool
+    curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | jq .
 }
 
 
