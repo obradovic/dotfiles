@@ -90,3 +90,7 @@ set ruler
 " set cursorcolumn
 
 " :hi MatchParen cterm=none ctermfg=none ctermbg=green
+
+" KITE: https://github.com/kiteco/plugins/tree/master/vim
+set statusline=%<%f\ %h%m%r%{kite#statusline()}%=%-14.(%l,%c%V%)\ %P
+set laststatus=2  " always display the status line
