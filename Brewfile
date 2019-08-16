@@ -150,6 +150,7 @@ brew 'tree'
 brew 'unrar'
 brew 'vim'
 brew 'wget'
+brew 'youtube-dl'
 
 brew 'curl', args:['with-nghttp2']
 
