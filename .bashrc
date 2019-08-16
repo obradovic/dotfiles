@@ -6,6 +6,8 @@ set -o vi
 umask 0022
 export SRC_HOME="$HOME/phillies"
 export PHY=$SRC_HOME/phy
+export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
+export LESS="-XFR"
 
 if [ -f $HOME/.bashrc_private ]; then
     source $HOME/.bashrc_private
@@ -16,6 +18,10 @@ if [ -f $PHY/bin/gcp-shared.sh ]; then
 fi
 
 
+# hap
+# grep " api/" messages | grep -v " 200 " | sed 's/{.*\}//' | cut -d' ' -f1-4,9,10-23 | tr -d '"'
+# grep NOSRV messages
+
 #
 # RASPBERRY PI
 #
@@ -23,6 +29,10 @@ alias rube-net='ssh zo@`arp-scan -l | grep -i "raspberry\|legra" | head -1 | cut
 alias rube-local='screen /dev/cu.usbserial 115200'
 alias rube-eth='ssh pi@192.168.2.2'
 
+
+# NOTIFICATIONS
+alias notifications-enable='launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist'
+alias notifications-disable='launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist; killall NotificationCenter'
 
 #
 # WIFI
@@ -64,6 +74,7 @@ alias 1='fg %1'
 alias 2='fg %2'
 alias 3='fg %3'
 alias 4='fg %4'
+alias bi='vi'
 alias del='rm'
 alias vig='mvim'
 alias vo='vi'
@@ -181,16 +192,22 @@ export FLASK_DEBUG=1
 export PYENV_VERSION=2.7.13
 export PYTHONPATH=$SRC_HOME
 export PYTHONDONTWRITEBYTECODE=true
+
+export WHEELHOUSE="${HOME}/.cache/pip/wheelhouse"
+export PIP_FIND_LINKS="file://${WHEELHOUSE}"
+export PIP_WHEEL_DIR="${WHEELHOUSE}"
+mkdir -p $WHEELHOUSE
+
 # source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
-alias py='ipython2'
+alias py='ipython2 --no-banner --pprint -i --'
 alias ac='. .env/bin/activate'
 alias pi='pip install'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
 
 _virtualenv_auto_activate() {
-    if [ -e ".env" ]; then
+    if [ -d ".env" ]; then
         # Check to see if already activated to avoid redundant activating
         if [ "$VIRTUAL_ENV" != "$(pwd -P)/.env" ]; then
             _VENV_NAME=$(basename `pwd`)
@@ -275,6 +292,12 @@ function g-create-branch {
     name=$env-branch-template-1
     g-create2 $env $name branch 30GB n1-standard-1
 }
+function g-create-urlshortener {
+    g-create $1 $1-$2 urlshortener 20 n1-standard-1
+}
+function g-create-tunnel {
+    g-create $1 $1-$2 tunnel 50 n1-standard-1
+}
 function g-create-db {
     g-create $1 $1-$2 db 500 n1-standard-2
 }
@@ -285,19 +308,20 @@ function g-create-draft {
     g-create $1 $1-$2 draft 50 n1-standard-1
 }
 function g-create-api {
-    g-create $1 $1-$2 api 200 n1-standard-2
-}
-function g-create-api-4 {
     g-create $1 $1-$2 api 200 n1-standard-4
 }
+function g-create-box {
+    g-create $1 $1-$2 box 200 n1-standard-4
+}
 function g-create-infield {
-    g-create $1 $1-$2 api 100 n1-standard-1
+    g-create $1 $1-$2 infield 100 n1-standard-2
 }
 function g-create-websocket {
     g-create $1 $1-$2 websocket 200 n1-standard-2
 }
 function g-create-lb {
-    g-create $1 $1-$2 lb 100 n1-standard-1
+    g-create2 $1 $1-$2 lb 100 n1-standard-1
+    gcloud compute instances add-tags $1-$2 --tags http-server,https-server
 }
 function g-create-admin {
     g-create $1 $1-$2 admin 2000 n1-standard-8
@@ -311,8 +335,17 @@ function g-create-shiny {
 function g-create-wiki {
     g-create $1 $1-$2 wiki 100 n1-standard-1
 }
-function g-create-pro {
-    g-create $1 $1-$2 pro 50 n1-standard-1
+function g-create-rocky {
+    g-create $1 $1-$2 rocky 50 n1-standard-1
+}
+function g-create-rocky-chris {
+    g-create $1 $1-$2 rocky-chris 50 n1-standard-1
+}
+function g-create-rocky-marcus {
+    g-create $1 $1-$2 rocky-marcus 50 n1-standard-1
+}
+function g-create-rocky-spencer {
+    g-create $1 $1-$2 rocky-spencer 50 n1-standard-1
 }
 function g-create-schematron {
     g-create $1 $1-$2 schematron 50 n1-standard-1
@@ -347,13 +380,19 @@ function g-create-matchup-64 {
 function g-create-bigcron {
     g-create $1 $1-$2 bigcron 200 n1-highmem-16
 }
+function g-create-generic {
+    g-create $1 $1-$2 generic 100 n1-standard-16
+}
+function g-create-ftp {
+    g-create $1 $1-$2 ftp 200 n1-standard-1
+}
 function g-create-elephant {
-    g-create2 $1 $1-$2 elephant 200GB n1-highmem-96
+    g-create2 $1 $1-$2 elephant 200GB n1-highmem-16
 }
 function g-create {
     echo ARGS are $*
     knife google server create $2 \
-    --bootstrap-version 12.21.31 \
+    --bootstrap-version 13.12.14 \
     --gce-machine-type $5 \
     --gce-boot-disk-size $4 \
     --gce-boot-disk-ssd true \
@@ -377,36 +416,47 @@ function g-create2 {
 
     boot_disk_type=pd-ssd
 
-
     # when you add an accelerator, you can only have 16 cpus max
-    # --accelerator=count=1,type=nvidia-tesla-p100 \
+    # T4 only in us-east1-c, see: gcloud compute accelerator-types list | grep nvidia-tesla-t4
+    gpu=""
+    zone="$PHIL_GCLOUD_ZONE_1"
+    if [ "$chef_role" == "elephant" ]; then
+        gpu="--accelerator type=nvidia-tesla-t4,count=1 "
+        zone="us-east1-c"
+    fi
 
     image=`get-latest-image`
+    # image="ubuntu-1604-lts"
+    # image="ubuntu-1604-xenial-v20190628"
 
     response=`$compute instances create $name \
-        --boot-disk-size=$disk_size \
-        --boot-disk-type=$boot_disk_type \
-        --image=$image \
-        --labels=env=$env \
-        --machine-type=$machine_type \
-        --maintenance-policy=TERMINATE \
+        --boot-disk-size $disk_size \
+        --boot-disk-type $boot_disk_type \
+        --image $image \
+        --labels env=$env,name=$name \
+        --machine-type $machine_type \
+        --maintenance-policy TERMINATE --restart-on-failure \
         --restart-on-failure \
-        --min-cpu-platform=skylake \
-        --project=$PHIL_GCLOUD_PROJECT \
-        --zone=$PHIL_GCLOUD_ZONE_1 \
-        --format=json`
+        --min-cpu-platform skylake \
+        --project $PHIL_GCLOUD_PROJECT \
+        --zone $zone \
+        $gpu \
+        --format json`
+
+    echo $response
 
     status=`echo $response | jq -r .[0].status`
     if [ "$status" != "RUNNING" ]; then
-        echo $response | jq 
+        echo $response | jq
         echo "ERROR: $name is NOT RUNNING"
         return
     fi
 
     ip=`echo $response | jq -r .[0].networkInterfaces[0].accessConfigs[0].natIP`
 
-    g-bootstrap $env $chef_role $name $ip
-
+    ssh-keygen -R $ip
+    whitelist $name $ip
+    g-bootstrap $env $chef_role $name $ip $zone
 }
 
 function g-bootstrap {
@@ -414,9 +464,10 @@ function g-bootstrap {
     chef_role=$2
     name=$3
     ip=$4
+    zone=$5
 
     knife bootstrap $ip \
-        --bootstrap-version 12.22.5 \
+        --bootstrap-version 13.12.14 \
         -E $env \
         -N $name \
         -i ~/.ssh/id_rsa \
@@ -427,7 +478,13 @@ function g-bootstrap {
 }
 
 function g-delete {
-    knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE -P $1
+    name="$1"
+    zone="$PHIL_GCLOUD_ZONE"
+    if [[ "$name" =~ "elephant" ]]; then
+        zone="us-east1-c"
+    fi
+
+    knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $zone -P $name
 }
 
 function g-stop {
@@ -443,8 +500,8 @@ function g-start {
 #
 # SSH
 #
-alias adm='p admin'
-alias big='p bigcron'
+alias adm='p admin-2'
+alias big='p bigcron-2'
 alias lb="p lb"
 function g-ssh {
     gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
@@ -465,23 +522,64 @@ function p {
     local ip=`knife google server list  | grep -v terminated | grep prod | grep $1 | tr -s ' ' | cut -d ' ' -f5`
     ssh $ip
 }
+alias tun='ssh 34.73.92.181'
+
+
+#
+# VIDEO
+#
+function vid-copy {
+    scp $1 zo@35.196.143.249:/mnt/videos/edgertronic-test/.
+}
+function vid-noaudio {
+    filepath=$1
+    filename=$(basename -- "$filepath")
+    extension="${filename##*.}"
+    filename="${filename%.*}"
+    time ffmpeg -hide_banner -y -i $filepath -c copy -an $filename-xx.$extension
+}
+# OSX:
+# original: 112321631 bytes
+# HandBrakeCli 12446540 bytes, 17.0 seconds
+# ffmpeg 17:   37824304 bytes, 19.6 seconds
+# ffmpeg 23:   10222457 bytes, 13.1 seconds
+# ffmpeg 30:    3968933 bytes, 11.5 seconds
+function vid-compress-ffmpeg {
+    filepath=$1
+    filename=$(basename -- "$filepath")
+    extension="${filename##*.}"
+    filename="${filename%.*}"
+
+    quality=17
+    time ffmpeg -hide_banner -y -i $filepath -crf $quality $filename-y-$quality.$extension
+}
+function vid-compress-handbrake {
+    filepath=$1
+    filename=$(basename -- "$filepath")
+    extension="${filename##*.}"
+    filename="${filename%.*}"
+    time HandBrakeCLI -O -i $filepath -o $filename-x.$extension
+}
 
 
 #
 # DATABASE
 #
+function phil-db-local {
+    mycli --port $PHIL_DOCKER_DB_PORT -h 127.0.0.1 -u$PHIL_DOCKER_DB_USER -p$PHIL_DOCKER_DB_PW phil_data
+}
 function phil-db {
     # echo Password copied
     # echo $PHIL_GCLOUD_DB_PW | pbcopy
     # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
     # mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
-    mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-dev {
-    mysql -h $PHIL_GCLOUD_DB_IP_DEV phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+    mycli -h $PHIL_GCLOUD_DB_IP_DEV phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-clone {
-    mysql -h $PHIL_GCLOUD_DB_CLONE_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+    mycli -h $PHIL_GCLOUD_DB_CLONE_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-root {
     echo Password copied
@@ -562,7 +660,8 @@ alias gdbs='gdb list'
 alias gpub='gcloud pubsub'
 alias gtopic='gpub topics'
 alias gsub='gpub subscriptions'
-export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
+# export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
+export GOOGLE_APPLICATION_CREDENTIALS=~/google-service-account.json
 
 function lsg {
     gsutil ls -l gs://$1
@@ -611,6 +710,10 @@ function kd {
     knife node delete -y $1
     knife client delete -y $1
 }
+
+
+# TIME
+export TIMEFORMAT="%3R"
 
 
 # VAGRANT
@@ -711,27 +814,6 @@ export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W 
 # export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 
 
-# RUBE
-function rube-chef-bootstrap {
-    env=prod
-    chef_role=rube
-    name=prod-rube-1
-    ip=192.168.0.105
-
-    kd $name
-
-    knife bootstrap $ip \
-        --bootstrap-version 12.21.31 \
-        -E $env \
-        -N $name \
-        -x zo \
-        -P foobar \
-        -V \
-        -r "role[$chef_role]" \
-        -sudo
-}
-
-
 # CHROME
 alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
 alias chrome-canary="/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary"
@@ -739,7 +821,7 @@ alias chromium="/Applications/Chromium.app/Contents/MacOS/Chromium"
 
 
 # MANDRILL
-function get_mandrill {
+function get-mandrill {
     python $PHY/reports/bin/get_mandrill_html.py $1 > /tmp/message.html
     cat /tmp/message.html
 }
@@ -782,6 +864,9 @@ function api-local {
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
 }
+function apipost {
+    curl ${@:2} -v -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" -X POST
+}
 function apih {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://$PHIL_API_SERVER/$1" | jq .
 }
@@ -814,6 +899,7 @@ function api-localyz {
 # DIRS
 alias src='cd  $SRC_HOME'
 alias re='cd  $PHY/reports'
+alias rep='re'
 alias a='cd  $PHY/api'
 alias g='cd  $PHY/githook'
 alias i='cd  $PHY/infield'
@@ -923,6 +1009,7 @@ add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
 add_to_PATH $KAFKA_HOME/bin
 add_to_PATH $SQLLINE_HOME/bin
 add_to_PATH /Library/TeX/texbin
+add_to_PATH /usr/local/opt/mysql-client/bin
 add_to_PATH ~/bin
 
 # LUNCHY
