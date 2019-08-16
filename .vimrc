@@ -92,5 +92,9 @@ set ruler
 " :hi MatchParen cterm=none ctermfg=none ctermbg=green
 
 " KITE: https://github.com/kiteco/plugins/tree/master/vim
+" this prevents the annoying preview window from popping up on top
+set completeopt-=preview
+" autocmd CompleteDone * if !pumvisible() | pclose | endif
+let g:kite_tab_complete=1
 set statusline=%<%f\ %h%m%r%{kite#statusline()}%=%-14.(%l,%c%V%)\ %P
 set laststatus=2  " always display the status line
