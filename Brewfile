@@ -103,6 +103,7 @@ brew 'handbrake'
 brew 'heroku'
 brew 'htop-osx'
 brew 'httpie'
+brew 'iperf3'
 brew 'jq'
 brew 'kafkacat'
 # brew 'kibana'  # brew services start kibana
