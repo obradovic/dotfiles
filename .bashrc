@@ -9,6 +9,42 @@ export PHY=$SRC_HOME/phy
 export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export LESS="-XFR"
 
+# VERSIONPING
+alias vp='cd ~/versionping/api'
+
+# GSTREAMER
+export GSTREAMER_HOME=/Library/Frameworks/GStreamer.framework/Versions/1.0/
+export CPATH=$GSTREAMER_HOME/include
+export CPATH=$CPATH:$GSTREAMER_HOME/include/gstreamer-1.0/
+export CPATH=$CPATH:$GSTREAMER_HOME/Headers
+export LIBRARY_PATH=$GSTREAMER_HOME/lib
+export PATH=$PATH:$GSTREAMER_HOME/bin
+# export GST_DEBUG=2
+
+alias gst-basic='gst-launch-1.0 videotestsrc ! ximagesink'
+alias gst-basic-osx='gst-launch-1.0 videotestsrc ! autovideosink'
+alias gst-display-screen='gst-launch-1.0 avfvideosrc capture-screen=true ! autovideosink'
+alias gst-webcam='gst-launch-1.0 autovideosrc device=/dev/video0 ! autovideosink'
+alias gst-add-text='gst-launch-1.0 -v videotestsrc ! clockoverlay halignment=left valignment=bottom text="95.4 mph 2450" shaded-background=true font-desc="Sans, 23" ! videoconvert ! ximagesink'
+alias gst-rtmp1='gst-launch-1.0 -v videotestsrc ! avenc_flv ! flvmux ! rtmpsink location="rtmp://localhost/path/to/stream" live=1'
+function gst-download {
+    url="$1"
+    filename="$2"
+    time gst-launch-1.0 -v souphttpsrc location="$url" ! filesink location="$2"
+}
+
+alias v3='ssh 192.168.68.129'
+alias v4='ssh 192.168.68.130'
+alias rap='cd ~/phillies/rapsodo'
+function tp {
+    server=$1
+    port=$2
+    nc -z -v -w 3 $server $port
+}
+function tpl {
+    tp 127.0.0.1 $1
+}
+
 if [ -f $HOME/.bashrc_private ]; then
     source $HOME/.bashrc_private
 fi
@@ -16,6 +52,11 @@ fi
 if [ -f $PHY/bin/gcp-shared.sh ]; then
     source $PHY/bin/gcp-shared.sh
 fi
+
+
+function nohuptime {
+    nohup bash -c 'time $* > nohup.out 2>&1'
+}
 
 
 # hap
@@ -108,6 +149,7 @@ alias less='less -X -F'
 alias grepl='grep --line-buffered'
 alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
+alias ports='netstat -tulanp'
 
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
@@ -201,9 +243,11 @@ mkdir -p $WHEELHOUSE
 # source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
-alias py='ipython2 --no-banner --pprint -i --'
+alias py='ipython3 --no-banner --pprint -i --'
 alias ac='. .env/bin/activate'
+alias ac3='. .py3env/bin/activate'
 alias pi='pip install'
+alias pi3='pip3 install'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
 
 _virtualenv_auto_activate() {
@@ -292,6 +336,24 @@ function g-create-branch {
     name=$env-branch-template-1
     g-create2 $env $name branch 30GB n1-standard-1
 }
+function g-create-edger-8 {
+    g-create2 $1 $1-$2 edger 100 c2-standard-8
+}
+function g-create-edger-30 {
+    g-create2 $1 $1-$2 edger 100 c2-standard-30
+}
+function g-create-edger-60 {
+    g-create2 $1 $1-$2 edger 100 c2-standard-60
+}
+function g-create-edger-n2 {
+    g-create2 $1 $1-$2 edger 100 n2-standard-80
+}
+function g-create-edger-gpu {
+    g-create2 $1 $1-$2 edger-gpu 100 n1-standard-8
+}
+function g-create-ghealey {
+    g-create2 $1 $1-$2 base 100 n1-standard-8
+}
 function g-create-urlshortener {
     g-create $1 $1-$2 urlshortener 20 n1-standard-1
 }
@@ -310,6 +372,12 @@ function g-create-draft {
 function g-create-api {
     g-create $1 $1-$2 api 200 n1-standard-4
 }
+function g-create-api-beta {
+    g-create $1 $1-$2 api-beta 200 n1-standard-4
+}
+function g-create-api-python3 {
+    g-create $1 $1-$2 api-python3 200 n1-standard-4
+}
 function g-create-box {
     g-create $1 $1-$2 box 200 n1-standard-4
 }
@@ -319,15 +387,18 @@ function g-create-infield {
 function g-create-websocket {
     g-create $1 $1-$2 websocket 200 n1-standard-2
 }
+function g-create-websocket-beta {
+    g-create $1 $1-$2 websocket-beta 200 n1-standard-2
+}
+function g-create-websocket-python3 {
+    g-create $1 $1-$2 websocket-python3 200 n1-standard-2
+}
 function g-create-lb {
-    g-create2 $1 $1-$2 lb 100 n1-standard-1
+    g-create2 $1 $1-$2 lb 100 n1-standard-2
     gcloud compute instances add-tags $1-$2 --tags http-server,https-server
 }
 function g-create-admin {
     g-create $1 $1-$2 admin 2000 n1-standard-8
-}
-function g-create-video {
-    g-create $1 $1-$2 video 2000 n1-highcpu-64
 }
 function g-create-shiny {
     g-create $1 $1-$2 shiny 150 n1-standard-2
@@ -337,6 +408,12 @@ function g-create-wiki {
 }
 function g-create-rocky {
     g-create $1 $1-$2 rocky 50 n1-standard-1
+}
+function g-create-rocky-beta {
+    g-create $1 $1-$2 rocky-beta 50 n1-standard-1
+}
+function g-create-rocky-python3 {
+    g-create $1 $1-$2 rocky-python3 50 n1-standard-1
 }
 function g-create-rocky-chris {
     g-create $1 $1-$2 rocky-chris 50 n1-standard-1
@@ -354,7 +431,7 @@ function g-create-datalab {
     g-create $1 $1-$2 datalab 100 n1-standard-2
 }
 function g-create-jupyter {
-    g-create $1 $1-$2 jupyter 100 n1-standard-2
+    g-create $1 $1-$2 jupyter 100 n1-standard-16
 }
 function g-create-apps {
     g-create $1 $1-$2 apps 50 n1-standard-1
@@ -379,6 +456,9 @@ function g-create-matchup-64 {
 }
 function g-create-bigcron {
     g-create $1 $1-$2 bigcron 200 n1-highmem-16
+}
+function g-create-megacron {
+    g-create $1 $1-$2 megacron 1000 n1-highmem-16
 }
 function g-create-generic {
     g-create $1 $1-$2 generic 100 n1-standard-16
@@ -416,6 +496,8 @@ function g-create2 {
 
     boot_disk_type=pd-ssd
 
+    echo "NAME is: $name"
+
     # when you add an accelerator, you can only have 16 cpus max
     # T4 only in us-east1-c, see: gcloud compute accelerator-types list | grep nvidia-tesla-t4
     gpu=""
@@ -425,9 +507,42 @@ function g-create2 {
         zone="us-east1-c"
     fi
 
+    if [[ "$name" == *"t4"* ]]; then
+        gpu="--accelerator type=nvidia-tesla-t4,count=1 "
+        zone="us-east1-c"
+    fi
+    if [[ "$name" == *"p100"* ]]; then
+        gpu="--accelerator type=nvidia-tesla-p100,count=1 "
+        zone="us-east1-c"
+    fi
+    if [[ "$name" == *"k80"* ]]; then
+        gpu="--accelerator type=nvidia-tesla-k80,count=1 "
+        zone="us-east1-c"
+    fi
+    if [[ "$name" == *"p4"* ]]; then
+        gpu="--accelerator type=nvidia-tesla-p4,count=1 "
+        zone="us-east4-a"
+    fi
+    if [[ "$name" == *"v100"* ]]; then
+        gpu="--accelerator type=nvidia-tesla-v100,count=1 "
+        zone="us-central1-c"
+    fi
+
+    # Cascade Lake CPUs are only available in this DC for now
+    # CORRECT INFO: gcloud compute machine-types list
+    # BAD INFO: https://cloud.google.com/compute/docs/regions-zones/#available
+    if [[ "$machine_type" == "c2-standard-"* ]]; then
+        zone="us-east1-b"
+    fi
+
+    if [[ "$machine_type" == "n2-standard-"* ]]; then
+        zone="us-central1-f"
+    fi
+
     image=`get-latest-image`
     # image="ubuntu-1604-lts"
     # image="ubuntu-1604-xenial-v20190628"
+    echo "ZONE is $zone"
 
     response=`$compute instances create $name \
         --boot-disk-size $disk_size \
@@ -502,7 +617,8 @@ function g-start {
 #
 alias adm='p admin-2'
 alias big='p bigcron-2'
-alias lb="p lb"
+alias lb="p lb-2"
+alias lbv='ssh 35.237.94.24'
 function g-ssh {
     gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
 }
@@ -523,6 +639,11 @@ function p {
     ssh $ip
 }
 alias tun='ssh 34.73.92.181'
+function cpbig {
+    file="$1"
+    ip="34.74.182.158"
+    scp zo@$ip:/tmp/$file $file
+}
 
 
 #
@@ -540,17 +661,19 @@ function vid-noaudio {
 }
 # OSX:
 # original: 112321631 bytes
-# HandBrakeCli 12446540 bytes, 17.0 seconds
-# ffmpeg 17:   37824304 bytes, 19.6 seconds
-# ffmpeg 23:   10222457 bytes, 13.1 seconds
-# ffmpeg 30:    3968933 bytes, 11.5 seconds
+# HandBrakeCli 12446540 bytes, 17.0 seconds on osx
+# ffmpeg 17:   37824304 bytes, 19.6 seconds on osx
+# ffmpeg 23:   10222457 bytes, 13.1 seconds on osx
+# ffmpeg 30:    3968933 bytes, 11.5 seconds on osx
+# ffmpeg 17:   37793868 bytes, 289 seconds on prod-video-4
+# ffmpeg 30:    3966501 bytes, 168 seconds on prod-video-4
 function vid-compress-ffmpeg {
     filepath=$1
     filename=$(basename -- "$filepath")
     extension="${filename##*.}"
     filename="${filename%.*}"
 
-    quality=17
+    quality=30
     time ffmpeg -hide_banner -y -i $filepath -crf $quality $filename-y-$quality.$extension
 }
 function vid-compress-handbrake {
@@ -745,6 +868,7 @@ alias stash='git stash'
 alias stahs='stash'
 alias sta='stash'
 alias master='co master'
+alias py3='co python3'
 alias dev='co dev'
 alias push='git push'
 alias gitter='python bin/gitter.py'
@@ -1006,9 +1130,9 @@ add_to_PATH $NPM_RELATIVE
 add_to_PATH $GOPATH/bin
 add_to_PATH /usr/local/opt/openssl/bin
 add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
-add_to_PATH $KAFKA_HOME/bin
+# add_to_PATH $KAFKA_HOME/bin
 add_to_PATH $SQLLINE_HOME/bin
-add_to_PATH /Library/TeX/texbin
+# add_to_PATH /Library/TeX/texbin
 add_to_PATH /usr/local/opt/mysql-client/bin
 add_to_PATH ~/bin
 
@@ -1874,3 +1998,7 @@ function mac2unix {
 # eval "$(pyenv init -)"
 # $(pyenv root)/completions/pyenv.bash
 # eval "$(pyenv virtualenv-init -)"
+
+# Setting PATH for Python 3.7
+# The original version is saved in .bash_profile.pysave
+export PATH="/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
