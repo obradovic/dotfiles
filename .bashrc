@@ -5,12 +5,283 @@ shopt -s extglob
 set -o vi
 umask 0022
 export SRC_HOME="$HOME/phillies"
-export PHY=$SRC_HOME/phy
+export PHILLIES_PATH=$SRC_HOME/phillies
+export PHY=$PHILLIES_PATH/phy
 export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export LESS="-XFR"
 
+
+# BASH
+export CLICOLOR=1
+# export HISTSIZE=5000
+# export HISTFILESIZE=5000
+export HISTFILE=~/.history_bash
+export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
+export EDITOR=vi
+export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
+# if [ -f $(brew --prefix)/etc/bash_completion ]; then
+  # . $(brew --prefix)/etc/bash_completion
+# fi
+[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
+
+
+#
+# GENERIC BASH ALIASES AND FUNCTIONS
+#
+alias la='ls -la'
+alias dir='la'
+alias dor='la'
+alias dri='la'
+alias dur='la'
+alias dirw='la | grep drw'
+# alias h='history 100'
+alias j='jobs'
+alias 1='fg %1'
+alias 2='fg %2'
+alias 3='fg %3'
+alias 4='fg %4'
+alias bi='vi'
+alias del='rm'
+alias vig='mvim'
+alias vo='vi'
+alias vu='vi'
+alias mroe='more'
+alias copy='cp'
+alias move='mv'
+alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
+alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
+alias please='sudo'
+alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
+alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f3-)"
+alias cd..='cd ..'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias ,,='..'
+alias ,,,='...'
+alias ,,,,='....'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
+alias du1='du -h -d 1'
+alias du2='du -h -d 2'
+alias dfk='df -h -k'
+alias tl='tail -f'
+alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
+alias js='python -m json.tool'
+alias less='less -X -F'
+alias grepl='grep --line-buffered'
+alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
+alias nojello='grep --line-buffered -v jello'
+alias ports='netstat -tulanp'
+
+alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
+alias ip='curl -s http://ipecho.net/plain; echo'
+alias loadspeed='phantomjs $HOME/.loadspeed.js'
+function run() {
+    # runs something n times
+    number=$1
+    shift
+    for n in $(seq $number); do
+      $@
+    done
+}
+function mcd {
+    mkdir $1
+    cd $1
+}
+function fin {
+    find . -name \*$1\* ${@:2}
+}
+function pz {
+  ps -aef | grep -i $1 | grep -v grep
+}
+function geo {
+    curl -s http://api.ipstack.com/$1?access_key=$IPSTACK_TOKEN | jq .continent_name,.country_name,.region_name,.city
+}
+function wildcard_csr {
+    domain=$1
+    openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
+}
+function timestamp {
+    date +"%s"
+}
+function timestamp-diff {
+    cur=`timestamp`
+    expr $cur - $1
+}
+function sshquiet {
+    if [ "$#" == "0" ]; then
+        echo
+        echo "Sorry. I need a string to remove from ~/.ssh/known_hosts"
+        echo
+    else
+        echo "Removing $1"
+        grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
+    fi
+}
+function nohuptime {
+    nohup bash -c 'time $* > nohup.out 2>&1'
+}
+function title {
+  echo -e "\033];$1\007"
+  echo "Title set to $1"
+}
+
+
+
+#
+# GITHUB ACTIONS
+#
+alias g='cd $PHY/../.github'
+alias w='g && cd workflows'
+alias sc='g && cd scripts'
+alias m='make'
+alias t='TIMEFORMAT="That took %1R seconds" && time'
+
+
+#
+# DOCKER
+#
+alias d='docker'
+alias dc='d container'
+alias di='d image'
+alias dps='d ps'
+alias doc='cd $PHILLIES_PATH/.docker/dash'
+alias ama='cd $PHY/dash/ama'
+
+function ubuntu-R {
+    run-in-container flex "/usr/bin/R --no-save -q"
+}
+
+function ubuntu-bash {
+    run-in-container flex "/bin/bash"
+}
+
+function run-in-container {
+    image="$1"
+    cmd="$2"
+    image_full="gcr.io/phil-new/$image:latest"
+    container_id=`docker ps | grep $image_full | cut -d' ' -f1`
+
+    # start it, if its not running
+    if [ -z "$container_id" ]; then
+        # echo "Starting container $image_full"
+        started_id=`docker container run -p 8000:80 -d --hostname $image --detach $image_full`
+        container_id=$started_id
+    fi
+    container_id=`echo $container_id | cut -c-12`   # make it a short id
+
+    echo
+    echo "  Entering $image container $container_id"
+    echo
+    docker container exec -it $container_id $cmd
+
+    # stop it, if it wasnt running
+    if [ -n "$started_id" ]; then
+        docker container stop -t 0 $started_id > /dev/null
+    fi
+}
+# etc=/Applications/Docker.app/Contents/Resources/etc
+# ln -s $etc/docker.bash-completion $(brew --prefix)/etc/bash_completion.d/docker
+# ln -s $etc/docker-compose.bash-completion $(brew --prefix)/etc/bash_completion.d/docker-compose
+
+
+#
+# KUBE
+#
+alias k=kubectl
+complete -F __start_kubectl k  # from https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+function kswitch {
+    new_context=$1
+
+    cd $PHILLIES_PATH/.docker/dash
+    make needs-credentials APP=$new_context
+    cd -
+}
+
+function __kube_ps1()
+{
+    # Get current context
+    CONTEXT=$(grep "current-context:" ~/.kube/config | sed "s/current-context: gke_phil-new_us-east1-b_//")
+
+    if [ -n "$CONTEXT" ]; then
+        echo "(k8s: ${CONTEXT})"
+    fi
+}
+
+#
+# HELM
+#
+function h {
+    if [ -z "$*" ]; then
+        cd $PHILLIES_PATH/.helm
+        return
+    fi
+    helm $*
+}
+
+
+
+#
+# GCLOUND DNS
+#
+export DNS_ZONE='philsio-zone'
+alias dns='gcloud dns'
+alias dns-transaction='dns record-sets transaction'
+alias dns-list-all='dns record-sets list --zone $DNS_ZONE'
+function dns-list {
+    dns-list-all --name $1.phils.io.
+}
+function dns-create {
+    local name=$1.phils.io.
+    local ip=$2
+
+    rm -f transaction.yaml
+    dns-transaction start --zone=$DNS_ZONE
+
+    dns-transaction add \
+        --name $name \
+        --ttl 10 \
+        --type A \
+        $ip \
+        --zone=$DNS_ZONE
+
+    # dns-transaction describe --zone=$DNS_ZONE
+    dns-transaction execute --zone=$DNS_ZONE
+}
+function dns-delete {
+    local name=$1.phils.io.
+
+    local record=`dns-list $1 | grep -v DATA`
+    local type=`echo $record | cut -d' ' -f2`
+    local ttl=`echo $record | cut -d' ' -f3`
+    local ip=`echo $record | cut -d' ' -f4`
+
+    rm -f transaction.yaml
+    dns-transaction start --zone=$DNS_ZONE
+
+    dns-transaction remove \
+        --name $name \
+        --ttl $ttl \
+        --type $type \
+        $ip \
+        --zone=$DNS_ZONE
+
+    # dns-transaction describe --zone=$DNS_ZONE
+    dns-transaction execute --zone=$DNS_ZONE
+}
+function dns-exists {
+    dns-list $1 > /dev/null 2>&1
+}
+
+
+# VEGGIETRONIC
+alias veg-attachment='curl -v http://veggietronic-zo.phils.io/static/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
+alias veg-attachment-no='curl -v http://veggietronic-zo.phils.io/static/asattachment/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
+
 # VERSIONPING
-alias vp='cd ~/versionping/api'
+alias vp='cd ~/versionping/versionping-api'
 
 # GSTREAMER
 export GSTREAMER_HOME=/Library/Frameworks/GStreamer.framework/Versions/1.0/
@@ -33,9 +304,11 @@ function gst-download {
     time gst-launch-1.0 -v souphttpsrc location="$url" ! filesink location="$2"
 }
 
+# VLC
+alias vlc=/Applications/VLC.app/Contents/MacOS/VLC
+
 alias v3='ssh 192.168.68.129'
 alias v4='ssh 192.168.68.130'
-alias rap='cd ~/phillies/rapsodo'
 function tp {
     server=$1
     port=$2
@@ -43,6 +316,12 @@ function tp {
 }
 function tpl {
     tp 127.0.0.1 $1
+}
+function mypylint {
+    filename="$1"
+    pycodestyle "$filename"
+    mypy "$filename"
+    pylint "$filename"
 }
 
 if [ -f $HOME/.bashrc_private ]; then
@@ -54,9 +333,6 @@ if [ -f $PHY/bin/gcp-shared.sh ]; then
 fi
 
 
-function nohuptime {
-    nohup bash -c 'time $* > nohup.out 2>&1'
-}
 
 
 # hap
@@ -100,130 +376,6 @@ function wifi-me {
 }
 
 
-#
-# GENERIC
-#
-alias la='ls -la'
-alias dir='la'
-alias dor='la'
-alias dri='la'
-alias dur='la'
-alias dirw='la | grep drw'
-# alias h='history 100'
-alias j='jobs'
-alias 1='fg %1'
-alias 2='fg %2'
-alias 3='fg %3'
-alias 4='fg %4'
-alias bi='vi'
-alias del='rm'
-alias vig='mvim'
-alias vo='vi'
-alias vu='vi'
-alias mroe='more'
-alias copy='cp'
-alias move='mv'
-alias bas='vi ~/.bashrc; sleep 0.5; . ~/.bashrc'
-alias bass='vi ~/.bashrc_private; sleep 0.5; . ~/.bashrc'
-alias please='sudo'
-alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
-alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f3-)"
-alias cd..='cd ..'
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias ,,='..'
-alias ,,,='...'
-alias ,,,,='....'
-alias .3='cd ../../..'
-alias .4='cd ../../../..'
-alias .5='cd ../../../../..'
-alias du1='du -h -d 1'
-alias du2='du -h -d 2'
-alias dfk='df -h -k'
-alias tl='tail -f'
-alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
-alias js='python -m json.tool'
-alias us='underscore'
-alias less='less -X -F'
-alias grepl='grep --line-buffered'
-alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
-alias nojello='grep --line-buffered -v jello'
-alias ports='netstat -tulanp'
-
-alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
-alias ip='curl -s http://ipecho.net/plain; echo'
-alias loadspeed='phantomjs $HOME/.loadspeed.js'
-function loadspeeder {
-    loadspeed='phantomjs $HOME/.loadspeed.js'
-}
-function run() {
-    # runs something n times
-    number=$1
-    shift
-    for n in $(seq $number); do
-      $@
-    done
-}
-function mcd {
-    mkdir $1
-    cd $1
-}
-function fin {
-    find . -name \*$1\* ${@:2}
-}
-function pz {
-  ps -aef | grep -i $1 | grep -v grep
-}
-function tolower {
-    time for f in `find . -type f -maxdepth 1`; do echo "lowercasing $f"; mv "$f" "`echo $f | tr "[:upper:]" "[:lower:]"`"; done
-}
-function b64 {
-    echo
-    echo "$1" | base64 -D
-    echo
-}
-function geo {
-    curl -s http://api.ipstack.com/$1?access_key=$IPSTACK_TOKEN | jq .continent_name,.country_name,.region_name,.city
-}
-function wildcard_csr {
-    domain=$1
-    openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
-}
-function timestamp {
-    date +"%s"
-}
-function timestamp-diff {
-    cur=`timestamp`
-    expr $cur - $1
-}
-function sshquiet {
-    if [ "$#" == "0" ]; then
-        echo
-        echo "Sorry. I need a string to remove from ~/.ssh/known_hosts"
-        echo
-    else
-        echo "Removing $1"
-        grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
-    fi
-}
-function title {
-  echo -e "\033];$1\007"
-  echo "Title set to $1"
-}
-
-
-# PROMPT, and other bash goodies
-export CLICOLOR=1
-export HISTSIZE=5000
-export HISTFILESIZE=5000
-export HISTFILE=~/.history_bash
-export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
-export EDITOR=vi
-
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  . $(brew --prefix)/etc/bash_completion
-fi
 
 
 #
@@ -232,8 +384,9 @@ fi
 export FLASK_APP=main.py
 export FLASK_DEBUG=1
 export PYENV_VERSION=2.7.13
-export PYTHONPATH=$SRC_HOME
+export PYTHONPATH=$SRC_HOME/phillies
 export PYTHONDONTWRITEBYTECODE=true
+export MYPYPATH=$PYTHONPATH
 
 export WHEELHOUSE="${HOME}/.cache/pip/wheelhouse"
 export PIP_FIND_LINKS="file://${WHEELHOUSE}"
@@ -243,6 +396,7 @@ mkdir -p $WHEELHOUSE
 # source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
+# alias py='cat .ipython.py && ipython3 --no-banner --pprint -i --'
 alias py='ipython3 --no-banner --pprint -i --'
 alias ac='. .env/bin/activate'
 alias ac3='. .py3env/bin/activate'
@@ -331,13 +485,17 @@ function datalab {
   --ssh-flag="localhost:8081:localhost:8080" \
   "zo@prod-datalab-1"
 }
-function g-create-branch {
-    env=dev
-    name=$env-branch-template-1
-    g-create2 $env $name branch 30GB n1-standard-1
+function g-create-template {
+    g-create2 $1 $1-$2 template 30 n1-standard-1
+}
+function g-create-edger-4 {
+    g-create2 $1 $1-$2 edger 100 c2-standard-4
 }
 function g-create-edger-8 {
     g-create2 $1 $1-$2 edger 100 c2-standard-8
+}
+function g-create-edger-16 {
+    g-create2 $1 $1-$2 edger 100 c2-standard-16
 }
 function g-create-edger-30 {
     g-create2 $1 $1-$2 edger 100 c2-standard-30
@@ -349,13 +507,10 @@ function g-create-edger-n2 {
     g-create2 $1 $1-$2 edger 100 n2-standard-80
 }
 function g-create-edger-gpu {
-    g-create2 $1 $1-$2 edger-gpu 100 n1-standard-8
+    g-create2 $1 $1-$2 edger-gpu 100 n1-highmem-16  # same as megacron
 }
 function g-create-ghealey {
     g-create2 $1 $1-$2 base 100 n1-standard-8
-}
-function g-create-urlshortener {
-    g-create $1 $1-$2 urlshortener 20 n1-standard-1
 }
 function g-create-tunnel {
     g-create $1 $1-$2 tunnel 50 n1-standard-1
@@ -363,20 +518,11 @@ function g-create-tunnel {
 function g-create-db {
     g-create $1 $1-$2 db 500 n1-standard-2
 }
-function g-create-advance {
-    g-create $1 $1-$2 advanced 200 n1-standard-2
-}
 function g-create-draft {
     g-create $1 $1-$2 draft 50 n1-standard-1
 }
 function g-create-api {
     g-create $1 $1-$2 api 200 n1-standard-4
-}
-function g-create-api-beta {
-    g-create $1 $1-$2 api-beta 200 n1-standard-4
-}
-function g-create-api-python3 {
-    g-create $1 $1-$2 api-python3 200 n1-standard-4
 }
 function g-create-box {
     g-create $1 $1-$2 box 200 n1-standard-4
@@ -384,48 +530,16 @@ function g-create-box {
 function g-create-infield {
     g-create $1 $1-$2 infield 100 n1-standard-2
 }
-function g-create-websocket {
-    g-create $1 $1-$2 websocket 200 n1-standard-2
-}
-function g-create-websocket-beta {
-    g-create $1 $1-$2 websocket-beta 200 n1-standard-2
-}
-function g-create-websocket-python3 {
-    g-create $1 $1-$2 websocket-python3 200 n1-standard-2
-}
 function g-create-lb {
     g-create2 $1 $1-$2 lb 100 n1-standard-2
     gcloud compute instances add-tags $1-$2 --tags http-server,https-server
 }
-function g-create-admin {
-    g-create $1 $1-$2 admin 2000 n1-standard-8
+function g-create-lbvideo {
+    g-create2 $1 $1-$2 lbvideo 100 n1-standard-2
+    gcloud compute instances add-tags $1-$2 --tags http-server,https-server,allow-rtsp,allow-vnc-lb
 }
 function g-create-shiny {
     g-create $1 $1-$2 shiny 150 n1-standard-2
-}
-function g-create-wiki {
-    g-create $1 $1-$2 wiki 100 n1-standard-1
-}
-function g-create-rocky {
-    g-create $1 $1-$2 rocky 50 n1-standard-1
-}
-function g-create-rocky-beta {
-    g-create $1 $1-$2 rocky-beta 50 n1-standard-1
-}
-function g-create-rocky-python3 {
-    g-create $1 $1-$2 rocky-python3 50 n1-standard-1
-}
-function g-create-rocky-chris {
-    g-create $1 $1-$2 rocky-chris 50 n1-standard-1
-}
-function g-create-rocky-marcus {
-    g-create $1 $1-$2 rocky-marcus 50 n1-standard-1
-}
-function g-create-rocky-spencer {
-    g-create $1 $1-$2 rocky-spencer 50 n1-standard-1
-}
-function g-create-schematron {
-    g-create $1 $1-$2 schematron 50 n1-standard-1
 }
 function g-create-datalab {
     g-create $1 $1-$2 datalab 100 n1-standard-2
@@ -433,41 +547,17 @@ function g-create-datalab {
 function g-create-jupyter {
     g-create $1 $1-$2 jupyter 100 n1-standard-16
 }
-function g-create-apps {
-    g-create $1 $1-$2 apps 50 n1-standard-1
-}
-function g-create-kafka {
-    g-create $1 $1-$2 kafka 200 n1-standard-1
-}
-function g-create-kafka2 {
-    g-create $1 $1-$2 kafka 200 n1-standard-2
-}
-function g-create-matchup-4 {
-    g-create $1 $1-$2 matchup 200 n1-standard-4
-}
-function g-create-matchup-8 {
-    g-create $1 $1-$2 matchup 200 n1-standard-8
-}
-function g-create-matchup-16 {
-    g-create $1 $1-$2 matchup 200 n1-standard-16
-}
-function g-create-matchup-64 {
-    g-create $1 $1-$2 matchup 200 n1-standard-64
-}
-function g-create-bigcron {
-    g-create $1 $1-$2 bigcron 200 n1-highmem-16
-}
 function g-create-megacron {
-    g-create $1 $1-$2 megacron 1000 n1-highmem-16
+    g-create2 $1 $1-$2 megacron 1000 n1-highmem-16
 }
 function g-create-generic {
-    g-create $1 $1-$2 generic 100 n1-standard-16
+    g-create2 $1 $1-$2 generic 100 n1-standard-16
 }
 function g-create-ftp {
-    g-create $1 $1-$2 ftp 200 n1-standard-1
+    g-create2 $1 $1-$2 ftp 200 n1-standard-1
 }
 function g-create-elephant {
-    g-create2 $1 $1-$2 elephant 200GB n1-highmem-16
+    g-create2 $1 $1-$2 elephant 200GB c2-standard-60
 }
 function g-create {
     echo ARGS are $*
@@ -495,16 +585,15 @@ function g-create2 {
     machine_type=$5
 
     boot_disk_type=pd-ssd
-
-    echo "NAME is: $name"
+    min_cpu_platform="skylake"
 
     # when you add an accelerator, you can only have 16 cpus max
     # T4 only in us-east1-c, see: gcloud compute accelerator-types list | grep nvidia-tesla-t4
     gpu=""
     zone="$PHIL_GCLOUD_ZONE_1"
     if [ "$chef_role" == "elephant" ]; then
-        gpu="--accelerator type=nvidia-tesla-t4,count=1 "
-        zone="us-east1-c"
+        # gpu="--accelerator type=nvidia-tesla-t4,count=1 "
+        zone="us-east1-b"
     fi
 
     if [[ "$name" == *"t4"* ]]; then
@@ -532,32 +621,47 @@ function g-create2 {
     # CORRECT INFO: gcloud compute machine-types list
     # BAD INFO: https://cloud.google.com/compute/docs/regions-zones/#available
     if [[ "$machine_type" == "c2-standard-"* ]]; then
-        zone="us-east1-b"
+        # zone="us-central1-c"
+        min_cpu_platform="cascadelake"
     fi
 
     if [[ "$machine_type" == "n2-standard-"* ]]; then
         zone="us-central1-f"
+        min_cpu_platform="cascadelake"
     fi
 
     image=`get-latest-image`
     # image="ubuntu-1604-lts"
     # image="ubuntu-1604-xenial-v20190628"
-    echo "ZONE is $zone"
+    # image="ubuntu-1604-xenial-v20191204"
+    # image="ubuntu-1804-bionic-v20191211"
+    # image="ubuntu-os-cloud"
 
-    response=`$compute instances create $name \
+    echo "IMAGE: $image"
+    echo "ZONE: $zone"
+    echo "NAME: $name"
+    echo "BOOT DISK: $boot_disk_type"
+    echo "MACHINE TYPE: $machine_type"
+    echo "MIN CPU PLATFORM: $min_cpu_platform"
+    echo "PHIL_GCLOUD_PROJECT: $PHIL_GCLOUD_PROJECT"
+    echo "GPU: $gpu"
+
+    command="$compute instances create $name \
         --boot-disk-size $disk_size \
         --boot-disk-type $boot_disk_type \
-        --image $image \
         --labels env=$env,name=$name \
         --machine-type $machine_type \
         --maintenance-policy TERMINATE --restart-on-failure \
         --restart-on-failure \
-        --min-cpu-platform skylake \
+        --min-cpu-platform $min_cpu_platform \
+        --image $image \
         --project $PHIL_GCLOUD_PROJECT \
         --zone $zone \
         $gpu \
-        --format json`
+        --format json"
 
+    echo "COMMAND: $command"
+    response=`$command`
     echo $response
 
     status=`echo $response | jq -r .[0].status`
@@ -617,6 +721,8 @@ function g-start {
 #
 alias adm='p admin-2'
 alias big='p bigcron-2'
+alias mega='p megacron-1'
+alias meg='mega'
 alias lb="p lb-2"
 alias lbv='ssh 35.237.94.24'
 function g-ssh {
@@ -649,6 +755,24 @@ function cpbig {
 #
 # VIDEO
 #
+function vid-180 {
+    vid-transpose "$1" "transpose=2,transpose=2"
+}
+function vid-90-clockwise {
+    vid-transpose "$1" "transpose=1"
+}
+function vid-90-counterclockwise {
+    vid-transpose "$1" "transpose=2"
+}
+function vid-transpose {
+    source="$1"
+    output="$source-flipped.mov"
+    transpose="$2"
+    ffmpeg -hide_banner -i "$source" -vf "$transpose" "$output"
+    echo
+    echo
+    echo "New video saved to: '$output'"
+}
 function vid-copy {
     scp $1 zo@35.196.143.249:/mnt/videos/edgertronic-test/.
 }
@@ -673,7 +797,7 @@ function vid-compress-ffmpeg {
     extension="${filename##*.}"
     filename="${filename%.*}"
 
-    quality=30
+    quality=28
     time ffmpeg -hide_banner -y -i $filepath -crf $quality $filename-y-$quality.$extension
 }
 function vid-compress-handbrake {
@@ -683,6 +807,30 @@ function vid-compress-handbrake {
     filename="${filename%.*}"
     time HandBrakeCLI -O -i $filepath -o $filename-x.$extension
 }
+function tele {
+    telnet `arp-scan -l | grep "00:1b:c5:09:65:94" | cut -f1`
+}
+function pihole {
+    ssh-mac b8:27:eb:8f:90:0c
+}
+function veg1 {
+    ssh-mac 00:d8:61:d7:22:04
+}
+function crapsodo {
+    ssh-mac dc:a6:32:38:8b:2b
+}
+function crapsodo2 {
+    ssh-mac dc:a6:32:38:8b:2a
+}
+function ssh-mac {
+    mac="$1"
+    ip=`arps | grep "$mac" | cut -f1`
+    ssh $ip
+}
+alias arps='arp-scan -l --plain --ignoredups | sort -b -k3,3 -k2,2'
+alias arps1='arps | sort -k1,1n'
+alias arps2='arps | sort -k2,2  -k1,1n'
+alias arps3='arps | sort -k3,3f -k1,1n'
 
 
 #
@@ -776,6 +924,8 @@ function restore-latest-backup-dev {
 #
 # GCLOUD
 #
+alias gcluster='gcloud container clusters'
+alias gcl='gcluster'
 alias sshg='gcloud compute ssh'
 alias gql='gcloud beta sql'
 alias gdb='gcloud sql instances'
@@ -805,11 +955,13 @@ fi
 
 
 
+#
 # CHEF
+#
 export OPSCODE_USER=zo
 alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
-alias k='knife'
+# alias k='knife'
 alias kg='knife google'
 alias ke='knife ec2'
 alias kinst='knife cookbook site install'
@@ -835,16 +987,16 @@ function kd {
 }
 
 
-# TIME
-export TIMEFORMAT="%3R"
-
-
+#
 # VAGRANT
+#
 #export VAGRANT_CWD=~/phillies/chef           # Lets you run vagrant from any directory
 #export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
 alias vst='vagrant status'
 
+#
 # KAFKA
+#
 KAFKA_HOME=$HOME/phillies/kafka/confluent-3.3.1
 SQLLINE_HOME=$HOME/phillies/kafka/sqlline
 
@@ -854,24 +1006,28 @@ alias b='git co'  # b <branch_name>
 alias bs='git branch' # list all branches
 alias gi='git'
 alias god='git'
-alias gs='git submodule'
 alias gd='git diff'
 alias gad='git add'
 alias st='git status'
 alias co='git checkout'
-alias gpl='git pull'
-alias gplo='git pull origin'
-alias gps='git push'
+alias gpl='git pull origin `git rev-parse --abbrev-ref HEAD`'
 alias merge='git merge'
 alias branch='co -b'
 alias stash='git stash'
 alias stahs='stash'
 alias sta='stash'
 alias master='co master'
-alias py3='co python3'
 alias dev='co dev'
-alias push='git push'
-alias gitter='python bin/gitter.py'
+alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
+
+function wip {
+    COMMENT="$*"
+    git status --untracked-files=no
+    sleep 2
+    git commit -a -m "WIP: $COMMENT"
+    gps
+}
+
 
 function git-show-largest-files {
     git rev-list --objects --all \
@@ -934,7 +1090,13 @@ export GIT_PS1_SHOWUPSTREAM="auto"
 . ~/.git-completion.sh
 . ~/.colors_bash
 
-export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
+COLOR_NORMAL="\[\033[00m\]"
+COLOR_GREEN_A="\[\e[0;92m\]"
+COLOR_GREEN_B="\[\e[0;32m\]"
+COLOR_END="\[\e[0m\]"
+export PS1="${COLOR_GREEN_A}\T${COLOR_END}$(__git_ps1 " (%s)") ${COLOR_GREEN_B}\W > ${COLOR_END}"
+# export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
+
 # export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 
 
@@ -1018,6 +1180,9 @@ function api-localy {
 function api-localyz {
     curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
 }
+function infield {
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://infield.phils.io/$1" | jq .
+}
 
 
 # DIRS
@@ -1025,12 +1190,11 @@ alias src='cd  $SRC_HOME'
 alias re='cd  $PHY/reports'
 alias rep='re'
 alias a='cd  $PHY/api'
-alias g='cd  $PHY/githook'
-alias i='cd  $PHY/infield'
+# alias i='cd  $PHY/infield'
 alias u='cd  $PHY/uploader'
 alias phy='cd  $PHY'
-alias da='cd  $SRC_HOME/data/'
-alias daa='cd  $SRC_HOME/data/activemq/src/main/java/io/phils'
+# alias da='cd  $SRC_HOME/data/'
+# alias daa='cd  $SRC_HOME/data/activemq/src/main/java/io/phils'
 alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
@@ -2002,3 +2166,6 @@ function mac2unix {
 # Setting PATH for Python 3.7
 # The original version is saved in .bash_profile.pysave
 export PATH="/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
+export PATH=/usr/local/bin:$PATH
+
+export PATH="$HOME/.poetry/bin:$PATH"
