@@ -16,7 +16,7 @@ export CLICOLOR=1
 # export HISTSIZE=5000
 # export HISTFILESIZE=5000
 export HISTFILE=~/.history_bash
-export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
+# export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
 export EDITOR=vi
 export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
 # if [ -f $(brew --prefix)/etc/bash_completion ]; then
