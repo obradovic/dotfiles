@@ -53,22 +53,23 @@ cask 'flux'
 cask 'gimp'
 # cask 'github-desktop'
 cask 'google-earth'
-cask 'google-hangouts'
+# cask 'google-hangouts'
 cask 'istat-menus'
 cask 'iterm2'
 cask 'java'
 cask 'kite'
 cask 'little-snitch'
 cask 'lunchy'
-cask 'mactex'
+# cask 'mactex'
 cask 'metasploit'
 # cask 'slack'
+cask 'soundflower'
 cask 'sublime-text'
 cask 'torbrowser'
 cask 'transmit'
 cask 'tunnelbear'
 cask 'virtualbox'
-cask 'vagrant'
+# cask 'vagrant'
 cask 'wireshark'
 cask 'xquartz'
 
@@ -159,7 +160,7 @@ mas 'Skitch', id: 425955336
 mas 'Slack', id: 803453959
 mas 'Xcode', id: 497799835
 mas 'Docs for Xcode', id: 688199928
-mas 'Wunderlist', id: 410628904
+# mas 'Wunderlist', id: 410628904
 
 # MSSQL: https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-setup-tools#macos
 # tap 'microsoft/mssql-preview https://github.com/Microsoft/homebrew-mssql-preview'
