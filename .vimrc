@@ -3,9 +3,9 @@ call plug#begin('~/.vim/plugged')
 
 " Colors
 Plug 'tomasr/molokai'
-Plug 'AlessandroYorba/Monrovia'
-Plug 'jnurmine/Zenburn'
-Plug 'altercation/vim-colors-solarized', { 'set': 'all' }
+" Plug 'AlessandroYorba/Monrovia'
+" Plug 'jnurmine/Zenburn'
+" Plug 'altercation/vim-colors-solarized', { 'set': 'all' }
 
 
 Plug 'thiagoalessio/rainbow_levels.vim'
@@ -18,12 +18,12 @@ Plug 'bronson/vim-trailing-whitespace'
 Plug 'ConradIrwin/vim-bracketed-paste'
 
 " Lang
-Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
-Plug 'octol/vim-cpp-enhanced-highlight'
+" Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
+" Plug 'octol/vim-cpp-enhanced-highlight'
 
 " Lint
-Plug 'scrooloose/syntastic', { 'on': 'SyntasticCheck' }
-Plug 'nvie/vim-flake8'
+" Plug 'scrooloose/syntastic', { 'on': 'SyntasticCheck' }
+" Plug 'nvie/vim-flake8'
 
 " Handy stuff
 Plug 'wincent/terminus'
@@ -93,8 +93,8 @@ set ruler
 
 " KITE: https://github.com/kiteco/plugins/tree/master/vim
 " this prevents the annoying preview window from popping up on top
-set completeopt-=preview
+" set completeopt-=preview
 " autocmd CompleteDone * if !pumvisible() | pclose | endif
-let g:kite_tab_complete=1
-set statusline=%<%f\ %h%m%r%{kite#statusline()}%=%-14.(%l,%c%V%)\ %P
-set laststatus=2  " always display the status line
+" let g:kite_tab_complete=1
+" set statusline=%<%f\ %h%m%r%{kite#statusline()}%=%-14.(%l,%c%V%)\ %P
+" set laststatus=2  " always display the status line
