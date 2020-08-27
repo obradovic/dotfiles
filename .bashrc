@@ -4,37 +4,38 @@
 shopt -s extglob
 set -o vi
 umask 0022
+
+# ENVS
 export SRC_HOME="$HOME/phillies"
 export PHILLIES_PATH=$SRC_HOME/phillies
 export PHY=$PHILLIES_PATH/phy
 export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export LESS="-XFR"
 
-
 # BASH
 export CLICOLOR=1
+export HISTFILE=~/.history_bash
 # export HISTSIZE=5000
 # export HISTFILESIZE=5000
-export HISTFILE=~/.history_bash
 # export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
 export EDITOR=vi
 export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
-# if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  # . $(brew --prefix)/etc/bash_completion
-# fi
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-
 
 #
 # GENERIC BASH ALIASES AND FUNCTIONS
 #
+alias m='make'
+alias t='TIMEFORMAT="That took %1R seconds" && time'
+alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
+alias ip='curl -s http://ipecho.net/plain; echo'
+alias loadspeed='phantomjs $HOME/.loadspeed.js'
 alias la='ls -la'
 alias dir='la'
 alias dor='la'
 alias dri='la'
 alias dur='la'
 alias dirw='la | grep drw'
-# alias h='history 100'
 alias j='jobs'
 alias 1='fg %1'
 alias 2='fg %2'
@@ -68,16 +69,13 @@ alias du2='du -h -d 2'
 alias dfk='df -h -k'
 alias tl='tail -f'
 alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
-alias js='python -m json.tool'
+alias js='python3 -m json.tool'
 alias less='less -X -F'
 alias grepl='grep --line-buffered'
 alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
-alias ports='netstat -tulanp'
+alias ports='netstat -tulan'
 
-alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
-alias ip='curl -s http://ipecho.net/plain; echo'
-alias loadspeed='phantomjs $HOME/.loadspeed.js'
 function run() {
     # runs something n times
     number=$1
@@ -87,8 +85,8 @@ function run() {
     done
 }
 function mcd {
-    mkdir $1
-    cd $1
+    mkdir "$1"
+    cd "$1"
 }
 function fin {
     find . -name \*$1\* ${@:2}
@@ -136,8 +134,6 @@ function title {
 alias g='cd $PHY/../.github'
 alias w='g && cd workflows'
 alias sc='g && cd scripts'
-alias m='make'
-alias t='TIMEFORMAT="That took %1R seconds" && time'
 
 
 #
@@ -149,20 +145,26 @@ alias di='d image'
 alias dps='d ps'
 alias doc='cd $PHILLIES_PATH/.docker/dash'
 alias ama='cd $PHY/dash/ama'
+alias dc='docker-compose -f $PHILLIES_PATH/.docker/phy-compose/docker-compose.yml'
+alias pc-up="(cd $PHILLIES_PATH && make pc-up)"
+alias pc-down="(cd $PHILLIES_PATH && make pc-down)"
+alias pc-enter="(cd $PHILLIES_PATH && make pc-enter)"
 
 function ubuntu-R {
     run-in-container flex "/usr/bin/R --no-save -q"
 }
+alias dr=ubuntu-R
 
 function ubuntu-bash {
     run-in-container flex "/bin/bash"
 }
+alias dbash=ubuntu-bash
 
 function run-in-container {
-    image="$1"
-    cmd="$2"
-    image_full="gcr.io/phil-new/$image:latest"
-    container_id=`docker ps | grep $image_full | cut -d' ' -f1`
+    local image="$1"
+    local cmd="$2"
+    local image_full="gcr.io/phil-new/$image:latest"
+    local container_id=`docker ps | grep $image_full | cut -d' ' -f1`
 
     # start it, if its not running
     if [ -z "$container_id" ]; then
@@ -191,9 +193,43 @@ function run-in-container {
 # KUBE
 #
 alias k=kubectl
+alias kg='k get'
+alias kall='k get all -A --show-labels'
 complete -F __start_kubectl k  # from https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+
+function kget {
+    kubectl get $*
+}
+function kj {
+    kget $* -o json | jq .
+}
+function ky {
+    kget $* -o yaml
+}
+alias deps='kget deployments'
+alias dep='kj deployment'
+alias pods='kget pods'
+alias pod='kj pod'
+alias svcs='kget services'
+alias svc='kj service'
+alias clusters='gcloud container clusters list'
+function cluster {
+    gcloud container clusters describe --format json $1 | jq .
+}
+
+function kall-default {
+    kall-iterate default
+}
+function kall-iterate {
+    local namespace="$1"
+    for i in $(kubectl api-resources --verbs=list --namespaced -o name | grep -v "events" | sort | uniq)
+    do
+        echo "Resource:" $i;     kubectl -n ${namespace} get --ignore-not-found ${i}
+    done
+}
+
 function kswitch {
-    new_context=$1
+    local new_context=$1
 
     cd $PHILLIES_PATH/.docker/dash
     make needs-credentials APP=$new_context
@@ -203,16 +239,18 @@ function kswitch {
 function __kube_ps1()
 {
     # Get current context
-    CONTEXT=$(grep "current-context:" ~/.kube/config | sed "s/current-context: gke_phil-new_us-east1-b_//")
+    local CONTEXT=$(grep "current-context:" ~/.kube/config | sed "s/current-context: gke_phil-new_us-east1-b_//")
 
     if [ -n "$CONTEXT" ]; then
-        echo "(k8s: ${CONTEXT})"
+        echo "[kube:${CONTEXT}]"
     fi
 }
+
 
 #
 # HELM
 #
+alias hls='helm ls --all -A'
 function h {
     if [ -z "$*" ]; then
         cd $PHILLIES_PATH/.helm
@@ -224,8 +262,9 @@ function h {
 
 
 #
-# GCLOUND DNS
+# GCLOUD
 #
+export CLOUDSDK_PYTHON=/usr/local/bin/python3
 export DNS_ZONE='philsio-zone'
 alias dns='gcloud dns'
 alias dns-transaction='dns record-sets transaction'
@@ -317,11 +356,15 @@ function tp {
 function tpl {
     tp 127.0.0.1 $1
 }
+alias my='mypy --config-file $PHY/setup.cfg'
 function mypylint {
     filename="$1"
-    pycodestyle "$filename"
-    mypy "$filename"
-    pylint "$filename"
+    pycodestyle --count --max-line-length=160 "$filename"
+    mypy --config-file $PHY/setup.cfg "$filename"
+    pylint --rcfile $PHY/.pylintrc "$filename"
+}
+function i {
+    touch `dirname $1`/__init__.py
 }
 
 if [ -f $HOME/.bashrc_private ]; then
@@ -334,11 +377,6 @@ fi
 
 
 
-
-# hap
-# grep " api/" messages | grep -v " 200 " | sed 's/{.*\}//' | cut -d' ' -f1-4,9,10-23 | tr -d '"'
-# grep NOSRV messages
-
 #
 # RASPBERRY PI
 #
@@ -347,9 +385,10 @@ alias rube-local='screen /dev/cu.usbserial 115200'
 alias rube-eth='ssh pi@192.168.2.2'
 
 
-# NOTIFICATIONS
+# OSX NOTIFICATIONS
 alias notifications-enable='launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist'
 alias notifications-disable='launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist; killall NotificationCenter'
+
 
 #
 # WIFI
@@ -377,7 +416,6 @@ function wifi-me {
 
 
 
-
 #
 # PYTHON
 #
@@ -393,7 +431,6 @@ export PIP_FIND_LINKS="file://${WHEELHOUSE}"
 export PIP_WHEEL_DIR="${WHEELHOUSE}"
 mkdir -p $WHEELHOUSE
 
-# source $(brew --prefix autoenv)/activate.sh
 alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
 # alias py='cat .ipython.py && ipython3 --no-banner --pprint -i --'
@@ -425,8 +462,8 @@ export PROMPT_COMMAND=_virtualenv_auto_activate
 # RUBY
 #
 alias be='bundle exec'
-alias bcap='bundle exec cap'
-alias dep='bundle exec cap prod deploy'
+# alias bcap='bundle exec cap'
+# alias dep='bundle exec cap prod deploy'
 # source ~/.rvm/scripts/rvm
 
 
@@ -683,7 +720,7 @@ function g-bootstrap {
     chef_role=$2
     name=$3
     ip=$4
-    zone=$5
+    zone=$5  # unused rn
 
     knife bootstrap $ip \
         --bootstrap-version 13.12.14 \
@@ -719,8 +756,6 @@ function g-start {
 #
 # SSH
 #
-alias adm='p admin-2'
-alias big='p bigcron-2'
 alias mega='p megacron-1'
 alias meg='mega'
 alias lb="p lb-2"
@@ -831,6 +866,12 @@ alias arps='arp-scan -l --plain --ignoredups | sort -b -k3,3 -k2,2'
 alias arps1='arps | sort -k1,1n'
 alias arps2='arps | sort -k2,2  -k1,1n'
 alias arps3='arps | sort -k3,3f -k1,1n'
+
+function macs {
+    local file=/usr/local/share/arp-scan/mac-override.txt
+    sudo vi $file
+    sudo cp -f $file $file.bak
+}
 
 
 #
@@ -962,7 +1003,7 @@ export OPSCODE_USER=zo
 alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
 # alias k='knife'
-alias kg='knife google'
+# alias kg='knife google'
 alias ke='knife ec2'
 alias kinst='knife cookbook site install'
 alias kservers='knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE'
@@ -1016,7 +1057,8 @@ alias branch='co -b'
 alias stash='git stash'
 alias stahs='stash'
 alias sta='stash'
-alias master='co master'
+alias prod='co prod'
+alias master='prod'
 alias dev='co dev'
 alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
 
@@ -1094,9 +1136,9 @@ COLOR_NORMAL="\[\033[00m\]"
 COLOR_GREEN_A="\[\e[0;92m\]"
 COLOR_GREEN_B="\[\e[0;32m\]"
 COLOR_END="\[\e[0m\]"
-export PS1="${COLOR_GREEN_A}\T${COLOR_END}$(__git_ps1 " (%s)") ${COLOR_GREEN_B}\W > ${COLOR_END}"
+export PS1="${COLOR_GREEN_A}\T \$(__kube_ps1)${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${COLOR_END}"
+# export PS1="${COLOR_GREEN_A}\T \$(__kube_ps1)${COLOR_END}$(__git_ps1 " (%s)") ${COLOR_GREEN_B}\W > ${COLOR_END}"
 # export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
-
 # export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 
 
@@ -1119,10 +1161,6 @@ function curles {
 
 # DROPBOX
 alias edg='cd ~/Dropbox/Phillies/edger'
-
-
-# TRAVIS
-[ -f $HOME/.travis/travis.sh ] && source $HOME/.travis/travis.sh
 
 
 # PAPERTRAIL
@@ -1190,11 +1228,8 @@ alias src='cd  $SRC_HOME'
 alias re='cd  $PHY/reports'
 alias rep='re'
 alias a='cd  $PHY/api'
-# alias i='cd  $PHY/infield'
 alias u='cd  $PHY/uploader'
 alias phy='cd  $PHY'
-# alias da='cd  $SRC_HOME/data/'
-# alias daa='cd  $SRC_HOME/data/activemq/src/main/java/io/phils'
 alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
@@ -1278,8 +1313,6 @@ add_to_CLASSPATH $HOME/jars-kafka-serde-tools/*
 add_to_CLASSPATH $HOME/jars-schema-registry/*
 add_to_CLASSPATH $MYSQL_CONNECTOR_HOME/mysql-connector-java-5.1.44-bin.jar
 add_to_CLASSPATH $HOME/phillies/kafka/sqlline/target/sqlline-1.4.0-SNAPSHOT-jar-with-dependencies.jar
-
-
 
 #export PATH="$(brew --prefix coreutils)/libexec/gnubin:/usr/local/bin:$PATH"
 export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
@@ -2157,15 +2190,14 @@ function mac2unix {
 [ -f $HOME/.z.sh ] && source $HOME/.z.sh
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
-
-
-# eval "$(pyenv init -)"
-# $(pyenv root)/completions/pyenv.bash
-# eval "$(pyenv virtualenv-init -)"
-
 # Setting PATH for Python 3.7
 # The original version is saved in .bash_profile.pysave
 export PATH="/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
 export PATH=/usr/local/bin:$PATH
-
 export PATH="$HOME/.poetry/bin:$PATH"
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/zo/Downloads/google-cloud-sdk/path.bash.inc' ]; then . '/Users/zo/Downloads/google-cloud-sdk/path.bash.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/zo/Downloads/google-cloud-sdk/completion.bash.inc' ]; then . '/Users/zo/Downloads/google-cloud-sdk/completion.bash.inc'; fi
