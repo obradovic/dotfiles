@@ -22,6 +22,11 @@ export EDITOR=vi
 export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
+function dv {
+    file="$1"
+    diff ~/video.prod/$file ~/video.dev/$file
+}
+
 #
 # GENERIC BASH ALIASES AND FUNCTIONS
 #
@@ -75,6 +80,10 @@ alias grepl='grep --line-buffered'
 alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
 alias ports='netstat -tulan'
+alias .ale='make'
+alias utc='date -u'
+alias ut='utc'
+alias tp='make phy-typecheck && make phy-lint'
 
 function run() {
     # runs something n times
@@ -142,10 +151,11 @@ alias sc='g && cd scripts'
 alias d='docker'
 alias dc='d container'
 alias di='d image'
-alias dps='d ps'
+alias dps='d ps -a'
 alias doc='cd $PHILLIES_PATH/.docker/dash'
 alias ama='cd $PHY/dash/ama'
 alias dc='docker-compose -f $PHILLIES_PATH/.docker/phy-compose/docker-compose.yml'
+alias drun='docker container run'
 alias pc-up="(cd $PHILLIES_PATH && make pc-up)"
 alias pc-down="(cd $PHILLIES_PATH && make pc-down)"
 alias pc-enter="(cd $PHILLIES_PATH && make pc-enter)"
@@ -187,6 +197,12 @@ function run-in-container {
 # etc=/Applications/Docker.app/Contents/Resources/etc
 # ln -s $etc/docker.bash-completion $(brew --prefix)/etc/bash_completion.d/docker
 # ln -s $etc/docker-compose.bash-completion $(brew --prefix)/etc/bash_completion.d/docker-compose
+
+
+#
+#
+#
+alias aw='awair --mac 70:88:6b:14:10:a1'
 
 
 #
@@ -319,6 +335,44 @@ function dns-exists {
 alias veg-attachment='curl -v http://veggietronic-zo.phils.io/static/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
 alias veg-attachment-no='curl -v http://veggietronic-zo.phils.io/static/asattachment/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
 
+function veg {
+    #
+    # veg ashburn-cf ashburn-cf-2020-10-19-12-42-31.mov
+    #
+    camera="$1"
+    filename="$2"
+    crf="$3"
+    threads="$4"
+    preset="$5"
+    profile="$6"
+    port=""
+
+    if [ -z "$crf" ]; then
+        crf="28"
+    fi
+    if [ -z "$threads" ]; then
+        threads="16"
+    fi
+    if [ -z "$preset" ]; then
+        preset="veryfast"
+    fi
+    if [ -z "$profile" ]; then
+        profile="main"
+    fi
+
+    if [ "$camera" == "zo" ]; then
+        port=":8000"
+    fi
+
+    url="http://phil:.lyweather@veggietronic-$camera.phils.io$port/static/mnt/sdcard/DCIM/$filename?crf=$crf&threads=$threads&preset=$preset&profile=$profile&nocompress=true"
+
+    echo "Camera: $camera"
+    echo "Filename: $filename"
+    echo "URL: $url"
+
+    curl -w "@$HOME/.curl_format" -s -o "$filename" "$url"
+}
+
 # VERSIONPING
 alias vp='cd ~/versionping/versionping-api'
 
@@ -434,12 +488,26 @@ mkdir -p $WHEELHOUSE
 alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
 # alias py='cat .ipython.py && ipython3 --no-banner --pprint -i --'
-alias py='ipython3 --no-banner --pprint -i --'
+alias py='ipython3 --no-banner --pprint --no-simple-prompt -i --'
 alias ac='. .env/bin/activate'
 alias ac3='. .py3env/bin/activate'
+alias pip='python3 -m pip'
 alias pi='pip install'
-alias pi3='pip3 install'
+alias pir='pi -r requirements.txt'
+alias pirv='virtualenv .env && ac && pir'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
+
+function pll {
+    local package="$1"
+    local cmd="pip list"
+    if [ -z "$hostname" ]
+    then
+        $cmd | grep "$package"
+    else
+        $cmd
+    fi
+}
+alias pl=pll
 
 _virtualenv_auto_activate() {
     if [ -d ".env" ]; then
@@ -480,7 +548,13 @@ export GOPATH=~/go
 alias vmrun="/Applications/VMware\ Fusion.app/Contents/Public/vmrun"
 
 
-# PHIL
+# EDGERTRONIC
+function edg-status-watch {
+    # from https://wiki.edgertronic.com/index.php/SDK_-_Developer_tricks
+    s="" ; while sleep 0.5 ; do t=`curl http://e/get_status_string 2>/dev/null` ; if [ "$s" != "$t" ] ; then s=$t ; echo $s ; fi ; done
+}
+
+# GCLOUD
 function bucket-logs {
     local dir="~/logs"
     local bucket="gs://phil-logs"
@@ -858,8 +932,8 @@ function crapsodo2 {
     ssh-mac dc:a6:32:38:8b:2a
 }
 function ssh-mac {
-    mac="$1"
-    ip=`arps | grep "$mac" | cut -f1`
+    local mac="$1"
+    local ip=`arps | grep "$mac" | head -1 | cut -f1`
     ssh $ip
 }
 alias arps='arp-scan -l --plain --ignoredups | sort -b -k3,3 -k2,2'
@@ -890,13 +964,14 @@ function phil-db {
 function phil-db-dev {
     mycli -h $PHIL_GCLOUD_DB_IP_DEV phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
+function phil-db-staging {
+    mycli -h 104.196.190.222 phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+}
 function phil-db-clone {
     mycli -h $PHIL_GCLOUD_DB_CLONE_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function phil-db-root {
-    echo Password copied
-    echo $PHIL_GCLOUD_DB_PW | pbcopy
-    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p
+    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p$PHIL_GCLOUD_DB_PW "$@"
 }
 function ls-backups {
     gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/
@@ -1061,6 +1136,7 @@ alias prod='co prod'
 alias master='prod'
 alias dev='co dev'
 alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
+alias got='git'
 
 function wip {
     COMMENT="$*"
@@ -1230,6 +1306,7 @@ alias rep='re'
 alias a='cd  $PHY/api'
 alias u='cd  $PHY/uploader'
 alias phy='cd  $PHY'
+alias phy.old='cd  /Users/zo/phillies/phillies.old/phy'
 alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
@@ -2201,3 +2278,7 @@ if [ -f '/Users/zo/Downloads/google-cloud-sdk/path.bash.inc' ]; then . '/Users/z
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/zo/Downloads/google-cloud-sdk/completion.bash.inc' ]; then . '/Users/zo/Downloads/google-cloud-sdk/completion.bash.inc'; fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
