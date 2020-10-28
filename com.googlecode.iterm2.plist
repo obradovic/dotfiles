@@ -937,7 +937,7 @@
 	<key>NSWindow Frame SUStatusFrame</key>
 	<string>2125 1146 400 129 1680 -122 2560 1417 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
-	<string>1854 703 620 392 1680 -122 2560 1417 </string>
+	<string>530 476 620 392 0 0 1680 1027 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
 	<string>346 190 606 469 0 0 1680 1027 </string>
 	<key>NSWindow Frame SharedPreferences</key>
@@ -945,9 +945,9 @@
 	<key>NSWindow Frame UKCrashReporter</key>
 	<string>127 443 592 584 0 0 1680 1027 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>3244 170 2272 1567 1680 140 3840 1597 </string>
+	<string>3183 400 2560 1523 1920 373 3840 1597 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
-	<string>212 101 490 507 0 0 1680 1027 </string>
+	<string>2277 383 490 467 1680 140 3840 1597 </string>
 	<key>New Bookmarks</key>
 	<array>
 		<dict>
@@ -1612,6 +1612,7 @@
 	<key>NoSyncAllAppVersions</key>
 	<array>
 		<string>3.3.6</string>
+		<string>3.3.11</string>
 		<string>3.3.1</string>
 		<string>3.3.3</string>
 		<string>3.3.5</string>
@@ -1635,9 +1636,9 @@
 	<key>NoSyncFrame_SharedPreferences</key>
 	<dict>
 		<key>screenFrame</key>
-		<string>{{1680, 140}, {3840, 1620}}</string>
+		<string>{{1920, 290}, {3840, 1620}}</string>
 		<key>topLeft</key>
-		<string>{3154, 800}</string>
+		<string>{2189, 972}</string>
 	</dict>
 	<key>NoSyncHaveRequestedFullDiskAccess</key>
 	<true/>
@@ -1646,7 +1647,7 @@
 	<key>NoSyncInstallationId</key>
 	<string>DF7FF2BA-915F-447B-9294-10BBC169AFD6</string>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>33</integer>
+	<integer>51</integer>
 	<key>NoSyncNeverAskAboutSettingAlternateMouseScroll</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
@@ -2423,9 +2424,13 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2020-05-25T16:26:17Z</date>
+	<date>2020-10-12T13:48:46Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
+	<key>SUSkippedVersion</key>
+	<string>3.3.12</string>
+	<key>SUUpdateGroupIdentifier</key>
+	<integer>3974749579</integer>
 	<key>SUUpdateRelaunchingMarker</key>
 	<false/>
 	<key>ShowBookmarkName</key>
@@ -2459,7 +2464,7 @@
 	<key>findRegex_iTerm</key>
 	<false/>
 	<key>iTerm Version</key>
-	<string>3.3.9</string>
+	<string>3.3.11</string>
 	<key>kCPKSelectionViewPreferredModeKey</key>
 	<integer>2</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>
