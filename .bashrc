@@ -376,6 +376,12 @@ function veg {
 # VERSIONPING
 alias vp='cd ~/versionping/versionping-api'
 
+# FFMPEG
+function ffp {
+    filename="$1"
+    ffprobe -v quiet -print_format json -show_format -show_streams $filename | jq .
+}
+
 # GSTREAMER
 export GSTREAMER_HOME=/Library/Frameworks/GStreamer.framework/Versions/1.0/
 export CPATH=$GSTREAMER_HOME/include
@@ -1306,7 +1312,7 @@ alias rep='re'
 alias a='cd  $PHY/api'
 alias u='cd  $PHY/uploader'
 alias phy='cd  $PHY'
-alias phy.old='cd  /Users/zo/phillies/phillies.old/phy'
+alias vid='phy && cd video'
 alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
