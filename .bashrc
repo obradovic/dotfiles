@@ -1218,7 +1218,8 @@ COLOR_NORMAL="\[\033[00m\]"
 COLOR_GREEN_A="\[\e[0;92m\]"
 COLOR_GREEN_B="\[\e[0;32m\]"
 COLOR_END="\[\e[0m\]"
-export PS1="${COLOR_GREEN_A}\T \$(__kube_ps1)${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${COLOR_END}"
+export PS1="${COLOR_GREEN_A}\T ${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${COLOR_END}"
+# export PS1="${COLOR_GREEN_A}\T \$(__kube_ps1)${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${COLOR_END}"
 # export PS1="${COLOR_GREEN_A}\T \$(__kube_ps1)${COLOR_END}$(__git_ps1 " (%s)") ${COLOR_GREEN_B}\W > ${COLOR_END}"
 # export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 # export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
@@ -1414,6 +1415,7 @@ add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
 add_to_PATH $SQLLINE_HOME/bin
 # add_to_PATH /Library/TeX/texbin
 add_to_PATH /usr/local/opt/mysql-client/bin
+add_to_PATH /opt/homebrew/bin
 add_to_PATH ~/bin
 
 # LUNCHY
