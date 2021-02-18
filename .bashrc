@@ -22,11 +22,6 @@ export EDITOR=vi
 export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
-function dv {
-    file="$1"
-    diff ~/video.prod/$file ~/video.dev/$file
-}
-
 #
 # GENERIC BASH ALIASES AND FUNCTIONS
 #
@@ -83,7 +78,6 @@ alias ports='netstat -tulan'
 alias .ale='make'
 alias utc='date -u'
 alias ut='utc'
-alias tp='make phy-typecheck && make phy-lint'
 
 function run() {
     # runs something n times
