@@ -1,9 +1,3 @@
-dotfiles
-========
-
-le dotfiles du zo
-
-
 # Quick Start
 
 First, paste the following into a terminal:
