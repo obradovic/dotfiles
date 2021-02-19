@@ -23,7 +23,10 @@ cd .dotfiles
 brew tap Homebrew/bundle
 brew bundle
 
-# Install VIM Plugins (from inside vi)
+# Install VIM Plugins
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
+# From inside vi
 :PlugInstall
 
 cd
