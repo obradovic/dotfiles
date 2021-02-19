@@ -112,6 +112,7 @@ brew 'handbrake'
 # brew 'heroku'     # doesnt exist anymore
 brew 'htop-osx'
 brew 'httpie'
+brew 'intel-power-gadget'  # Used with istat-menus
 brew 'iperf3'
 brew 'java'
 brew 'jq'
