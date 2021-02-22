@@ -9,6 +9,7 @@ umask 0022
 export SRC_HOME="$HOME/phillies"
 export PHILLIES_PATH=$SRC_HOME/phillies
 export PHY=$PHILLIES_PATH/phy
+export PIE=$SRC_HOME/pie
 export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export LESS="-XFR"
 
@@ -78,6 +79,7 @@ alias ports='netstat -tulan'
 alias .ale='make'
 alias utc='date -u'
 alias ut='utc'
+alias medicalbot='ENV=prod $PHY/.env/bin/python $PHY/uploader/draft_prospect_link/medicalbot.py'
 
 function run() {
     # runs something n times
@@ -485,6 +487,10 @@ export PIP_FIND_LINKS="file://${WHEELHOUSE}"
 export PIP_WHEEL_DIR="${WHEELHOUSE}"
 mkdir -p $WHEELHOUSE
 
+export PYTHON3_HOME=/usr/local/opt/python@3.7
+export PATH=$PYTHON3_HOME/bin/:$PATH
+alias python=python3
+
 alias e='source .env/bin/activate'
 alias rmp='find . -name \*.pyc | xargs rm'
 # alias py='cat .ipython.py && ipython3 --no-banner --pprint -i --'
@@ -844,13 +850,15 @@ function g-list2 {
     knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_2
 }
 function s {
-    . ~/.bashrc
-    local ip=`knife google server list  | grep -v terminated | grep $1 | tr -s ' ' | cut -d ' ' -f5`
+    # . ~/.bashrc
+    # local ip=`knife google server list  | grep -v terminated | grep $1 | tr -s ' ' | cut -d ' ' -f5`
+    local ip=`gcloud compute instances list  | grep -v TERMINATED | grep $1 | tr -s ' ' | cut -d ' ' -f5`
     ssh $ip
 }
 function p {
-    . ~/.bashrc
-    local ip=`knife google server list  | grep -v terminated | grep prod | grep $1 | tr -s ' ' | cut -d ' ' -f5`
+    # . ~/.bashrc
+    # local ip=`knife google server list  | grep -v TERMINATED | grep prod | grep $1 | tr -s ' ' | cut -d ' ' -f5`
+    local ip=`gcloud compute instances list  | grep -v TERMINATED | grep prod | grep $1 | tr -s ' ' | cut -d ' ' -f5`
     ssh $ip
 }
 alias tun='ssh 34.73.92.181'
@@ -1138,6 +1146,21 @@ alias dev='co dev'
 alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
 alias got='git'
 
+function gitclone {
+    #
+    # Usage: gitclone foo
+    #
+    local repo="$1"
+    local org="PhilliesAnalytics"
+    git clone "git@github.com:$org/$repo.git"
+    cd $1
+    git config pull.rebase false
+    git branch -r | grep -v '\->' | while read remote; do git branch --track "${remote#origin/}" "$remote"; done
+    git fetch --all
+    git pull --all
+    cd ..
+}
+
 function wip {
     COMMENT="$*"
     git status --untracked-files=no
@@ -1307,6 +1330,7 @@ alias rep='re'
 alias a='cd  $PHY/api'
 alias u='cd  $PHY/uploader'
 alias phy='cd  $PHY'
+alias pie='cd $PIE'
 alias vid='phy && cd video'
 alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
