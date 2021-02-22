@@ -11,7 +11,7 @@ cd ~
 git clone git@github.com:obradovic/dotfiles.git .dotfiles
 
 # Link the dotfiles
-dotfiles=( .bashrc .bash_profile .colors_bash .curl_format .dircolors .gemrc .git-completion.sh .git-prompt.sh .gitconfig .inputrc .irbrc .vim .vimrc )
+dotfiles=( .bashrc .bash_profile .colors_bash .curl_format .dircolors .gemrc .git-completion.sh .git-prompt.sh .gitconfig .inputrc .irbrc .myclirc .vim .vimrc )
 for dotfile in "${dotfiles[@]}"; do
     echo "Linking $dotfile"
     ln -s .dotfiles/$dotfile $dotfile
