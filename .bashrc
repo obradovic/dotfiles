@@ -80,6 +80,7 @@ alias .ale='make'
 alias utc='date -u'
 alias ut='utc'
 alias medicalbot='ENV=prod $PHY/.env/bin/python $PHY/uploader/draft_prospect_link/medicalbot.py'
+alias allowlist='ENV=prod $PHY/.env/bin/python $PHY/bin/allowlist.py'
 
 function run() {
     # runs something n times
@@ -384,7 +385,6 @@ export CPATH=$GSTREAMER_HOME/include
 export CPATH=$CPATH:$GSTREAMER_HOME/include/gstreamer-1.0/
 export CPATH=$CPATH:$GSTREAMER_HOME/Headers
 export LIBRARY_PATH=$GSTREAMER_HOME/lib
-export PATH=$PATH:$GSTREAMER_HOME/bin
 # export GST_DEBUG=2
 
 alias gst-basic='gst-launch-1.0 videotestsrc ! ximagesink'
@@ -488,7 +488,6 @@ export PIP_WHEEL_DIR="${WHEELHOUSE}"
 mkdir -p $WHEELHOUSE
 
 export PYTHON3_HOME=/usr/local/opt/python@3.7
-export PATH=$PYTHON3_HOME/bin/:$PATH
 alias python=python3
 
 alias e='source .env/bin/activate'
@@ -499,6 +498,7 @@ alias ac='. .env/bin/activate'
 alias ac3='. .py3env/bin/activate'
 alias pip='python3 -m pip'
 alias pi='pip install'
+alias pw='pip wheel'
 alias pir='pi -r requirements.txt'
 alias pirv='virtualenv .env && ac && pir'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
@@ -1067,16 +1067,6 @@ function lsv {
     lsg phil-videos/$1
 }
 
-# Updates PATH for the Google Cloud SDK.
-if [ -f $HOME/src/google-cloud-sdk/path.bash.inc ]; then
-  source $HOME/src/google-cloud-sdk/path.bash.inc
-fi
-
-# Enables shell command completion for gcloud.
-if [ -f $HOME/src/google-cloud-sdk/completion.bash.inc ]; then
-  source $HOME/src/google-cloud-sdk/completion.bash.inc
-fi
-
 
 
 #
@@ -1322,6 +1312,24 @@ function infield {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://infield.phils.io/$1" | jq .
 }
 
+function pie-copy {
+    local filename="$1"
+    local phy_root=$SRC_HOME/phillies/phy
+    local pie_root=$SRC_HOME/pie
+
+    filename=${filename#"phy"}
+    filename=${filename#"/"}
+    echo "filename: $filename"
+
+    cp $phy_root/$filename $pie_root/$filename
+
+    sed -i.bak 's/from phy./from pie./' $pie_root/$filename
+    sed -i.bak 's/import phy./import pie./' $pie_root/$filename
+
+    rm $pie_root/$filename.bak
+}
+
+
 
 # DIRS
 alias src='cd  $SRC_HOME'
@@ -1416,25 +1424,25 @@ add_to_CLASSPATH $HOME/jars-schema-registry/*
 add_to_CLASSPATH $MYSQL_CONNECTOR_HOME/mysql-connector-java-5.1.44-bin.jar
 add_to_CLASSPATH $HOME/phillies/kafka/sqlline/target/sqlline-1.4.0-SNAPSHOT-jar-with-dependencies.jar
 
-#export PATH="$(brew --prefix coreutils)/libexec/gnubin:/usr/local/bin:$PATH"
-export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+# export PATH="$(brew --prefix coreutils)/libexec/gnubin:/usr/local/bin:$PATH"
+# export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
-add_to_PATH /usr/local/opt/openssl/bin
+add_to_PATH $PYTHON3_HOME/bin/
+add_to_PATH $PYTHON3_HOME/libexec/bin/
 add_to_PATH /usr/local/bin
 add_to_PATH /usr/local/sbin
-# add_to_PATH $NPM_HOME/bin
-# add_to_PATH ~/bin
-add_to_PATH .
 add_to_PATH $NPM_RELATIVE
 add_to_PATH $GOPATH/bin
 add_to_PATH /usr/local/opt/openssl/bin
-add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
-# add_to_PATH $KAFKA_HOME/bin
-add_to_PATH $SQLLINE_HOME/bin
-# add_to_PATH /Library/TeX/texbin
 add_to_PATH /usr/local/opt/mysql-client/bin
 add_to_PATH /opt/homebrew/bin
+add_to_PATH $GSTREAMER_HOME/bin/
 add_to_PATH ~/bin
+add_to_PATH .
+# add_to_PATH $NPM_HOME/bin
+# add_to_PATH $KAFKA_HOME/bin
+# add_to_PATH $SQLLINE_HOME/bin
+# add_to_PATH /Library/TeX/texbin
 
 # LUNCHY
 # LUNCHY_DIR=$(dirname `gem which lunchy`)/../extras
@@ -2295,15 +2303,16 @@ function mac2unix {
 
 # Setting PATH for Python 3.7
 # The original version is saved in .bash_profile.pysave
-export PATH="/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
-export PATH=/usr/local/bin:$PATH
-export PATH="$HOME/.poetry/bin:$PATH"
+# export PATH="/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
+# export PATH=/usr/local/bin:$PATH
+# export PATH="$HOME/.poetry/bin:$PATH"
 
 # The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/zo/Downloads/google-cloud-sdk/path.bash.inc' ]; then . '/Users/zo/Downloads/google-cloud-sdk/path.bash.inc'; fi
+export GOOGLE_CLOUD_DIR="/Users/zo/src/google-cloud-sdk"
+if [ -f $GOOGLE_CLOUD_DIR/path.bash.inc ]; then . $GOOGLE_CLOUD_DIR/path.bash.inc; fi
 
 # The next line enables shell command completion for gcloud.
-if [ -f '/Users/zo/Downloads/google-cloud-sdk/completion.bash.inc' ]; then . '/Users/zo/Downloads/google-cloud-sdk/completion.bash.inc'; fi
+if [ -f $GOOGLE_CLOUD_DIR/completion.bash.inc ]; then . $GOOGLE_CLOUD_DIR/completion.bash.inc; fi
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
