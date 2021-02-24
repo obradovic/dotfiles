@@ -125,6 +125,7 @@ brew 'librtlsdr' # for kismet
 brew 'librdkafka'
 brew 'lunchy-go'
 brew 'openssl'
+brew 'macfuse'
 brew 'mas'
 brew 'maven'
 brew 'mediainfo'
