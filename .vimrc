@@ -69,7 +69,7 @@ set foldlevel=99
 nnoremap <space> za
 
 " Lets us share buffers outside vim
-set clipboard=unnamed
+" set clipboard=unnamed
 
 " set guioptions-=T
 " set guifont=Droid\ Sans\ Mono:h9
