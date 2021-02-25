@@ -503,6 +503,9 @@ alias pir='pi -r requirements.txt'
 alias pirv='virtualenv .env && ac && pir'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
 
+function findpy {
+    find . -name \*.py | grep -v \.env | xargs $*
+}
 function pll {
     local package="$1"
     local cmd="pip list"
@@ -836,7 +839,7 @@ function g-start {
 #
 # SSH
 #
-alias mega='p megacron-1'
+alias mega='ssh 35.196.21.140'
 alias meg='mega'
 alias lb="p lb-2"
 alias lbv='ssh 35.237.94.24'
@@ -1250,7 +1253,18 @@ function curles {
 }
 
 # DROPBOX
-alias edg='cd ~/Dropbox/Phillies/edger'
+export DROPBOX_HOME="/Users/zo/Dropbox"
+alias edg='cd $DROPBOX_HOME/Phillies/edger'
+alias phil='cd $DROPBOX_HOME/Phillies'
+
+# NOTES
+function notes {
+    if [ $# -eq 0 ]; then
+        ls -al $DROPBOX_HOME/Phillies/notes.*
+        return
+    fi
+    vi $DROPBOX_HOME/Phillies/notes.$1
+}
 
 
 # PAPERTRAIL
@@ -1312,6 +1326,12 @@ function infield {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://infield.phils.io/$1" | jq .
 }
 
+function pie-copys {
+    for file in "$@"
+    do
+        pie-copy $file
+    done
+}
 function pie-copy {
     local filename="$1"
     local phy_root=$SRC_HOME/phillies/phy
