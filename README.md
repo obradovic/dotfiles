@@ -27,8 +27,13 @@ brew bundle
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 # From inside vi
-:PlugInstall
+:PluginInstall (for Vundle) <- preferred?
+:PlugInstall (for Vim Plug)
 
-cd
+# Random osx stuff
+defaults write com.apple.finder AppleShowAllFiles YES
+
+# Ruby
+gem install bundler
+
 ```
-
