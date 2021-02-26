@@ -101,15 +101,16 @@ filetype plugin indent on    " required
 " Put your non-Plugin stuff after this line
 "
 " END VUNDLE
-"
 
+
+"
 " GRUVBOX-MATERIAL: https://github.com/sainnhe/gruvbox-material
-" Important!!
+"
 if has('termguicolors')
   set termguicolors
 endif
 
-" For dark or light version.
+" For dark / light version.
 set background=dark
 " set background=light
 
@@ -126,12 +127,17 @@ let &t_ZR="\e[23m"
 colorscheme gruvbox-material
 
 
+"
 " YouCompleteMe: https://github.com/ycm-core/YouCompleteMe#options
+"
 set completeopt=menu,popup,popuphidden
 " set completepopup=height:10,width:60,highlight:InfoPopup
 " let g:ycm_auto_hover=''  " https://stackoverflow.com/questions/64480651/youcompleteme-function-preview-popup-balloon-in-new-version
 
+
+"
 "  Syntastic: https://vimawesome.com/plugin/syntastic
+"
 " set statusline+=%#warningmsg#
 " set statusline+=%{SyntasticStatuslineFlag()}
 " set statusline+=%*
@@ -149,7 +155,9 @@ set completeopt=menu,popup,popuphidden
 
 
 
+"
 " Colors
+"
 " colorscheme solarized
 " colorscheme monrovia
 " colorscheme zenburn
@@ -194,7 +202,6 @@ set softtabstop=4
   " autocmd VimLeave * silent !echo -ne "\033]112\007"
   " use \003]12;gray\007 for gnome-terminal
 " endif
-
 
 " Enable folding
 " set foldmethod=indent
