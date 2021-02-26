@@ -328,6 +328,11 @@ function dns-exists {
 }
 
 
+# RCLONE
+alias rc='rclone'
+alias rcl='rc ls'
+
+
 # VEGGIETRONIC
 alias veg-attachment='curl -v http://veggietronic-zo.phils.io/static/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
 alias veg-attachment-no='curl -v http://veggietronic-zo.phils.io/static/asattachment/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
@@ -495,10 +500,11 @@ alias rmp='find . -name \*.pyc | xargs rm'
 # alias py='cat .ipython.py && ipython3 --no-banner --pprint -i --'
 alias py='ipython3 --no-banner --pprint --no-simple-prompt -i --'
 alias ac='. .env/bin/activate'
-alias ac3='. .py3env/bin/activate'
+alias acc='. .env.`uname -s`/bin/activate'
 alias pip='python3 -m pip'
 alias pi='pip install'
 alias pw='pip wheel'
+alias pis='pi `grep slack $PHY/requirements.txt`'
 alias pir='pi -r requirements.txt'
 alias pirv='virtualenv .env && ac && pir'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
@@ -506,6 +512,11 @@ alias env_create='pyenv virtualenv $PYENV_VERSION .env'
 function findpy {
     find . -name \*.py | grep -v \.env | xargs $*
 }
+
+function pvv {
+    pip install --use-deprecated=legacy-resolver $1==
+}
+
 function pll {
     local package="$1"
     local cmd="pip list"
@@ -1259,11 +1270,13 @@ alias phil='cd $DROPBOX_HOME/Phillies'
 
 # NOTES
 function notes {
+    local dir=$DROPBOX_HOME/Phillies
     if [ $# -eq 0 ]; then
-        ls -al $DROPBOX_HOME/Phillies/notes.*
+        ls -altr $dir/notes.* | sed -e "s/\/Users\/zo\/Dropbox\/Phillies\///"
+        # find $dir -maxdepth 1 -name notes\* -print0 | xargs -0 stat -f "%a"
         return
     fi
-    vi $DROPBOX_HOME/Phillies/notes.$1
+    vi $dir/notes.$1.txt
 }
 
 
