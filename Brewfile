@@ -91,6 +91,7 @@ brew 'bash-completion'
 brew 'bazel'
 brew 'bettercap'
 brew 'bfg'
+brew 'cmake'  # for vim youcompleteme plugin
 brew 'coreutils'
 brew 'cowsay'
 brew 'curl'
@@ -108,6 +109,7 @@ brew 'go'
 brew 'gnupg2'
 brew 'gpg'
 # brew 'gpg-agent'  # doesnt exist anymore
+brew 'graphviz'
 brew 'handbrake'
 # brew 'heroku'     # doesnt exist anymore
 brew 'htop-osx'
@@ -130,6 +132,7 @@ brew 'mas'
 brew 'maven'
 brew 'mediainfo'
 brew 'mitmproxy'
+brew 'mono'  # for vim youcompleteme plugin
 brew 'mosh'
 brew 'mtr'
 brew 'mycli'
