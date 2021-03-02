@@ -506,8 +506,14 @@ alias pi='pip install'
 alias pw='pip wheel'
 alias pis='pi `grep slack $PHY/requirements.txt`'
 alias pir='pi -r requirements.txt'
-alias pirv='virtualenv .env && ac && pir'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
+
+function pireq {
+    req=$1
+    cat requirements-prereq.txt requirements.txt > /tmp/foo
+    pi `grep $req /tmp/foo`
+    rm -f /tmp/foo
+}
 
 function findpy {
     find . -name \*.py | grep -v \.env | xargs $*
