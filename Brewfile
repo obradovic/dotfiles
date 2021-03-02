@@ -91,6 +91,7 @@ brew 'bash-completion'
 brew 'bazel'
 brew 'bettercap'
 brew 'bfg'
+brew 'bluetoothconnector'
 brew 'cmake'  # for vim youcompleteme plugin
 brew 'coreutils'
 brew 'cowsay'
