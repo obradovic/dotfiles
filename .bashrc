@@ -2,26 +2,27 @@
 # COMMON
 #
 shopt -s extglob
+shopt -s histappend
 set -o vi
 umask 0022
 
-# ENVS
+# GENERIC BASH
+export EDITOR=vi
+export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
+export CLICOLOR=1
+export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
+export LESS="-XFR"
 export SRC_HOME="$HOME/phillies"
 export PHILLIES_PATH=$SRC_HOME/phillies
 export PHY=$PHILLIES_PATH/phy
 export PIE=$SRC_HOME/pie
-export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
-export LESS="-XFR"
-
-# BASH
-export CLICOLOR=1
-export HISTFILE=~/.history_bash
-# export HISTSIZE=5000
-# export HISTFILESIZE=5000
-# export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
-export EDITOR=vi
-export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
+
+# HISTORY
+export HISTFILE=~/.history_bash
+export HISTFILESIZE=100000
+export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
+PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
 #
 # GENERIC BASH ALIASES AND FUNCTIONS
@@ -82,14 +83,6 @@ alias ut='utc'
 alias medicalbot='ENV=prod $PHY/.env/bin/python $PHY/uploader/draft_prospect_link/medicalbot.py'
 alias allowlist='ENV=prod $PHY/.env/bin/python $PHY/bin/allowlist.py'
 
-function run() {
-    # runs something n times
-    number=$1
-    shift
-    for n in $(seq $number); do
-      $@
-    done
-}
 function mcd {
     mkdir "$1"
     cd "$1"
@@ -1312,7 +1305,7 @@ function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
 }
 function apipost {
-    curl ${@:2} -v -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" -X POST
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" -X POST
 }
 function apih {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://$PHIL_API_SERVER/$1" | jq .
@@ -1360,12 +1353,29 @@ function pie-copy {
     filename=${filename#"/"}
     echo "filename: $filename"
 
+    # make the destination directory if it doesnt exist
+    dest_dir=`dirname $filename`
+    mkdir -p $pie_root/$dest_dir
+
     cp $phy_root/$filename $pie_root/$filename
 
-    sed -i.bak 's/from phy./from pie./' $pie_root/$filename
-    sed -i.bak 's/import phy./import pie./' $pie_root/$filename
+    file_ext="${filename#*.}"
+    ignore_this_file=false
+    declare -a arr=("p" "pkl" "xls" "xlsx")
+    for i in "${arr[@]}"
+    do
+        if [ "$file_ext" == "$i" ]; then
+            echo "ignoring extension: $i"
+            ignore_this_file=true
+        fi
+    done
 
-    rm $pie_root/$filename.bak
+    if [ "$ignore_this_file" = false ] ; then
+        echo "FOOBAR"
+        sed -i.bak 's/from phy./from pie./' $pie_root/$filename
+        sed -i.bak 's/import phy./import pie./' $pie_root/$filename
+        rm $pie_root/$filename.bak
+    fi
 }
 
 
