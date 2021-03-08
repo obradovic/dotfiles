@@ -1,46 +1,4 @@
 "
-" VIM PLUG: https://github.com/junegunn/vim-plug
-"
-" Specify a directory for plugins
-" call plug#begin('~/.vim/plugged')
-
-" Colors
-" Plug 'sainnhe/gruvbox-material'
-" Plug 'tomasr/molokai'
-" Plug 'AlessandroYorba/Monrovia'
-" Plug 'jnurmine/Zenburn'
-" Plug 'altercation/vim-colors-solarized', { 'set': 'all' }
-
-
-" Plug 'thiagoalessio/rainbow_levels.vim'
-
-" Editing
-" Plug 'junegunn/vim-easy-align'
-" Plug 'tpope/vim-surround'
-" Plug 'tmhedberg/SimpylFold'
-" Plug 'bronson/vim-trailing-whitespace'
-" Plug 'ConradIrwin/vim-bracketed-paste'
-
-" Lang
-" Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
-" Plug 'octol/vim-cpp-enhanced-highlight'
-
-" Lint
-" Plug 'scrooloose/syntastic', { 'on': 'SyntasticCheck' }
-" Plug 'nvie/vim-flake8'
-
-" Handy stuff
-" Plug 'wincent/terminus'
-
-" Autocomplete
-" Plug 'neoclide/coc.nvim', {'branch': 'release'}
-
-" Close the plugin system
-" call plug#end()
-
-
-
-"
 " VUNDLE https://github.com/VundleVim/Vundle.vim#about
 "
 set nocompatible              " be iMproved, required
@@ -49,9 +7,6 @@ filetype off                  " required
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
-" alternatively, pass a path where Vundle should install plugins
-"call vundle#begin('~/some/path/here')
-
     " let Vundle manage Vundle, required
     Plugin 'VundleVim/Vundle.vim'
 
@@ -60,32 +15,11 @@ call vundle#begin()
     Plugin 'bronson/vim-trailing-whitespace'
     Plugin 'ConradIrwin/vim-bracketed-paste'
     Plugin 'ycm-core/YouCompleteMe'
+    Plugin 'frazrepo/vim-rainbow'
+
     " Plugin 'scrooloose/syntastic'
     " Plugin 'itchyny/lightline.vim'
-
-    " The following are examples of different formats supported.
-    " Keep Plugin commands between vundle#begin/end.
-    " plugin on GitHub repo
-    " Plugin 'tpope/vim-fugitive'
-
-    " plugin from http://vim-scripts.org/vim/scripts.html
-    " Plugin 'L9'
-    " Git plugin not hosted on GitHub
-    " Plugin 'git://git.wincent.com/command-t.git'
-
-    " git repos on your local machine (i.e. when working on your own plugin)
-    " Plugin 'file:///home/gmarik/path/to/plugin'
-
-    " The sparkup vim script is in a subdirectory of this repo called vim.
-    " Pass the path to set the runtimepath properly.
-    " Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
-
-    " Install L9 and avoid a Naming conflict if you've already installed a
-    " different version somewhere else.
-    " Plugin 'ascenator/L9', {'name': 'newL9'}
-
-    " All of your Plugins must be added before the following line
-call vundle#end()            " required
+call vundle#end()
 
 filetype plugin indent on    " required
 " To ignore plugin indent changes, instead use:
@@ -96,11 +30,14 @@ filetype plugin indent on    " required
 " :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
 " :PluginSearch foo - searches for foo; append `!` to refresh local cache
 " :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
-"
-" see :h vundle for more details or wiki for FAQ
-" Put your non-Plugin stuff after this line
-"
 " END VUNDLE
+
+
+"
+" RAINBOW PARENS: https://github.com/frazrepo/vim-rainbow
+"
+let g:rainbow_active = 1
+
 
 
 "
@@ -112,7 +49,6 @@ endif
 
 " For dark / light version.
 set background=dark
-" set background=light
 
 " Set contrast.
 " This configuration option should be placed before `colorscheme gruvbox-material`.
@@ -241,3 +177,48 @@ set ruler
 " let g:kite_tab_complete=1
 " set statusline=%<%f\ %h%m%r%{kite#statusline()}%=%-14.(%l,%c%V%)\ %P
 " set laststatus=2  " always display the status line
+
+
+
+"
+" VIM PLUG: https://github.com/junegunn/vim-plug
+"
+" Specify a directory for plugins
+" call plug#begin('~/.vim/plugged')
+
+" Colors
+" Plug 'sainnhe/gruvbox-material'
+" Plug 'tomasr/molokai'
+" Plug 'AlessandroYorba/Monrovia'
+" Plug 'jnurmine/Zenburn'
+" Plug 'altercation/vim-colors-solarized', { 'set': 'all' }
+
+
+" Plug 'thiagoalessio/rainbow_levels.vim'
+
+" Editing
+" Plug 'junegunn/vim-easy-align'
+" Plug 'tpope/vim-surround'
+" Plug 'tmhedberg/SimpylFold'
+" Plug 'bronson/vim-trailing-whitespace'
+" Plug 'ConradIrwin/vim-bracketed-paste'
+
+" Lang
+" Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
+" Plug 'octol/vim-cpp-enhanced-highlight'
+
+" Lint
+" Plug 'scrooloose/syntastic', { 'on': 'SyntasticCheck' }
+" Plug 'nvie/vim-flake8'
+
+" Handy stuff
+" Plug 'wincent/terminus'
+
+" Autocomplete
+" Plug 'neoclide/coc.nvim', {'branch': 'release'}
+
+" Close the plugin system
+" call plug#end()
+
+
+
