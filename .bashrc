@@ -155,18 +155,37 @@ function ubuntu-R {
 }
 alias dr=ubuntu-R
 
-function ubuntu-bash {
-    run-in-container flex "/bin/bash"
+function dbash {
+    # run-in-container $1 /bin/bash
+    local image="$1"
+    local image_full="gcr.io/phil-new/$image"
+    if [[ "$image" == *"/"* ]]; then
+        image_full="$image"
+    fi
+
+    echo
+    echo "  Entering $image_full container $container_id"
+    echo
+    docker run -it --entrypoint /bin/bash "$image"
 }
-alias dbash=ubuntu-bash
+alias dbash-flex='dbash flex'
+alias dbash-composer='dbash composer'
+alias dbash-composer-r='dbash composer-r'
+alias dbash-r='dbash rocker/tidyverse:4.0.4'
+
 
 function run-in-container {
     local image="$1"
     local cmd="$2"
-    local image_full="gcr.io/phil-new/$image:latest"
-    local container_id=`docker ps | grep $image_full | cut -d' ' -f1`
+    local image_full="gcr.io/phil-new/$image"
+
+    if [[ "$image" == *"/"* ]]; then
+        image_full="$image"
+    fi
+    echo "image: $image_full"
 
     # start it, if its not running
+    local container_id=`docker ps | grep $image_full | cut -d' ' -f1`
     if [ -z "$container_id" ]; then
         # echo "Starting container $image_full"
         started_id=`docker container run -p 8000:80 -d --hostname $image --detach $image_full`
@@ -175,7 +194,7 @@ function run-in-container {
     container_id=`echo $container_id | cut -c-12`   # make it a short id
 
     echo
-    echo "  Entering $image container $container_id"
+    echo "  Entering $image_full container $container_id"
     echo
     docker container exec -it $container_id $cmd
 
@@ -882,6 +901,11 @@ function cpbig {
 }
 
 
+# LIBICU
+export PATH="/usr/local/opt/icu4c/bin:/usr/local/opt/icu4c/sbin:$PATH"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/icu4c/lib/pkgconfig"
+
+
 #
 # VIDEO
 #
@@ -957,7 +981,16 @@ function ssh-mac {
     local ip=`arps | grep "$mac" | head -1 | cut -f1`
     ssh $ip
 }
-alias arps='arp-scan -l --plain --ignoredups | sort -b -k3,3 -k2,2'
+function arpsx {
+    if [ $# -eq 0 ]; then
+        interface=""
+    else
+        interface=" --interface $1 "
+    fi
+
+    arp-scan -l --plain --ignoredups $interface | sort -b -k3,3 -k2,2
+}
+
 alias arps1='arps | sort -k1,1n'
 alias arps2='arps | sort -k2,2  -k1,1n'
 alias arps3='arps | sort -k3,3f -k1,1n'
@@ -1361,7 +1394,7 @@ function pie-copy {
 
     file_ext="${filename#*.}"
     ignore_this_file=false
-    declare -a arr=("p" "pkl" "xls" "xlsx")
+    declare -a arr=("p" "pkl" "rds" "xls" "xlsx")
     for i in "${arr[@]}"
     do
         if [ "$file_ext" == "$i" ]; then
@@ -1371,9 +1404,10 @@ function pie-copy {
     done
 
     if [ "$ignore_this_file" = false ] ; then
-        echo "FOOBAR"
         sed -i.bak 's/from phy./from pie./' $pie_root/$filename
         sed -i.bak 's/import phy./import pie./' $pie_root/$filename
+        sed -i.bak 's/.shared.slack /.shared.slack_utils /' $pie_root/$filename
+        sed -i.bak 's/ slack/ send_slack/' $pie_root/$filename
         rm $pie_root/$filename.bak
     fi
 }
@@ -1386,8 +1420,10 @@ alias re='cd  $PHY/reports'
 alias rep='re'
 alias a='cd  $PHY/api'
 alias u='cd  $PHY/uploader'
-alias phy='cd  $PHY'
+alias phy='cd $PHY'
 alias pie='cd $PIE'
+alias pso='cd $SRC_HOME/pitch_selection_optimization'
+alias pie-path='export PYTHONPATH=$SRC_HOME'
 alias vid='phy && cd video'
 alias c='cd  $SRC_HOME/chef'
 alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
