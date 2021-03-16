@@ -94,7 +94,13 @@ function pz {
   ps -aef | grep -i $1 | grep -v grep
 }
 function geo {
-    curl -s http://api.ipstack.com/$1?access_key=$IPSTACK_TOKEN | jq .continent_name,.country_name,.region_name,.city
+    ip="$1"
+    if [ -z "$ip" ]; then
+        ip=`ip`
+    fi
+    curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN" | jq -r -j .city,.region_code
+    echo
+    # curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN" | jq .continent_name,.country_name,.region_name,.city
 }
 function wildcard_csr {
     domain=$1
@@ -158,15 +164,17 @@ alias dr=ubuntu-R
 function dbash {
     # run-in-container $1 /bin/bash
     local image="$1"
-    local image_full="gcr.io/phil-new/$image"
+    # local image_full="gcr.io/phil-new/$image"
     if [[ "$image" == *"/"* ]]; then
-        image_full="$image"
+        local image_full="$image"
+    else
+        local image_full="gcr.io/phil-new/$image"
     fi
 
     echo
-    echo "  Entering $image_full container $container_id"
+    echo "  Entering $image_full"
     echo
-    docker run -it --entrypoint /bin/bash "$image"
+    docker run -it --entrypoint /bin/bash "$image_full"
 }
 alias dbash-flex='dbash flex'
 alias dbash-composer='dbash composer'
@@ -287,56 +295,22 @@ function h {
 
 
 #
-# GCLOUD
+# GOOGLE GCLOUD CONTAINER METADATA
 #
-export CLOUDSDK_PYTHON=/usr/local/bin/python3
-export DNS_ZONE='philsio-zone'
-alias dns='gcloud dns'
-alias dns-transaction='dns record-sets transaction'
-alias dns-list-all='dns record-sets list --zone $DNS_ZONE'
-function dns-list {
-    dns-list-all --name $1.phils.io.
+function metadata-query {
+    curl -s "http://metadata.google.internal/computeMetadata/v1/instance/$1" -H "Metadata-Flavor: Google"
 }
-function dns-create {
-    local name=$1.phils.io.
-    local ip=$2
-
-    rm -f transaction.yaml
-    dns-transaction start --zone=$DNS_ZONE
-
-    dns-transaction add \
-        --name $name \
-        --ttl 10 \
-        --type A \
-        $ip \
-        --zone=$DNS_ZONE
-
-    # dns-transaction describe --zone=$DNS_ZONE
-    dns-transaction execute --zone=$DNS_ZONE
+function metadata-tags {
+    metadata-query tags
 }
-function dns-delete {
-    local name=$1.phils.io.
-
-    local record=`dns-list $1 | grep -v DATA`
-    local type=`echo $record | cut -d' ' -f2`
-    local ttl=`echo $record | cut -d' ' -f3`
-    local ip=`echo $record | cut -d' ' -f4`
-
-    rm -f transaction.yaml
-    dns-transaction start --zone=$DNS_ZONE
-
-    dns-transaction remove \
-        --name $name \
-        --ttl $ttl \
-        --type $type \
-        $ip \
-        --zone=$DNS_ZONE
-
-    # dns-transaction describe --zone=$DNS_ZONE
-    dns-transaction execute --zone=$DNS_ZONE
+function metadata-disks {
+    metadata-query "disks/?recursive=true"
 }
-function dns-exists {
-    dns-list $1 > /dev/null 2>&1
+function metadata-env {
+    metadata-query attributes/ENV
+}
+function metadata-name {
+    metadata-query name
 }
 
 
@@ -1113,6 +1087,168 @@ function lsv {
     lsg phil-videos/$1
 }
 
+# GOOGLE GCLOUD DNS
+export CLOUDSDK_PYTHON=/usr/local/bin/python3
+export DNS_ZONE='philsio-zone'
+alias dns='gcloud dns'
+alias dns-transaction='dns record-sets transaction'
+alias dns-list-all='dns record-sets list --zone $DNS_ZONE'
+function dns-list {
+    dns-list-all --name $1.phils.io.
+}
+function dns-create {
+    local name=$1.phils.io.
+    local ip=$2
+
+    rm -f transaction.yaml
+    dns-transaction start --zone=$DNS_ZONE
+
+    dns-transaction add \
+        --name $name \
+        --ttl 10 \
+        --type A \
+        $ip \
+        --zone=$DNS_ZONE
+
+    # dns-transaction describe --zone=$DNS_ZONE
+    dns-transaction execute --zone=$DNS_ZONE
+}
+function dns-delete {
+    local name=$1.phils.io.
+
+    local record=`dns-list $1 | grep -v DATA`
+    local type=`echo $record | cut -d' ' -f2`
+    local ttl=`echo $record | cut -d' ' -f3`
+    local ip=`echo $record | cut -d' ' -f4`
+
+    rm -f transaction.yaml
+    dns-transaction start --zone=$DNS_ZONE
+
+    dns-transaction remove \
+        --name $name \
+        --ttl $ttl \
+        --type $type \
+        $ip \
+        --zone=$DNS_ZONE
+
+    # dns-transaction describe --zone=$DNS_ZONE
+    dns-transaction execute --zone=$DNS_ZONE
+}
+function dns-exists {
+    dns-list $1 > /dev/null 2>&1
+}
+
+
+# GOOGLE GCLOUD DNS (AGAIN?)
+function gdns-add-all {
+    #
+    # gdns-add-all a b c d foobar
+    #
+    target=" ${@: -1}"
+    echo "Target is $target"
+
+    unset "$@[-1]"
+
+    for var in "$@"
+    do
+        echo "ARG is $var"
+    done
+}
+function gdns-add {
+    #
+    # gdns-add veggietronic-tunnel 34.73.92.181
+    # gdns-add veggietronic-lhv-2 veggietronic-tunnel.phils.io. CNAME
+    #
+    local hostname="$1"       # "foobar.phils.io."
+    local target="$2"      # " 127.0.0.1"
+    local record_type="$3"    # "A" or "CNAME"
+
+    if [ -z "$hostname" ]; then
+        echo ""
+        echo "  gdns-add foo 127.0.0.1" # will make foo an A
+        echo "  gdns-add foo bar"       # will make foo a CNAME to bar
+        echo ""
+        return
+    fi
+
+    if [[ "$hostname" != *phils.io ]]; then
+        hostname="$hostname.phils.io."
+        echo "Defaulting hostname to $hostname"
+    fi
+
+    if [[ "$target" != *phils.io ]]; then
+        target="$target.phils.io."
+        echo "Defaulting target to $target"
+    fi
+
+    record_type="CNAME"
+    if [ -z "$record_type" ]; then
+        record_type="A"
+        echo "Defaulting record type to $record_type"
+    fi
+
+    if [[ "$target" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        record_type="A"
+        echo "Detected IP address for target. Defaulting record type to $record_type"
+    fi
+
+    local ttl="--ttl=5"
+    local gdns="gcloud dns record-sets transaction"
+    local zone="--zone=philsio-zone"
+    local project="--project=phil-new"
+    local tx="$gdns $project"
+
+    rm -f transaction.yaml
+    $tx start $zone
+    $tx add "$target" --name="$hostname" $ttl --type="$record_type" $zone
+    $tx execute $zone
+    rm -f transaction.yaml
+}
+
+function gdns-del {
+    #
+    # gdns-del veggietronic-tunnel
+    #
+    local hostname="$1"       # "foobar.phils.io."
+
+    if [ -z "$hostname" ]; then
+        echo ""
+        echo "  gdns-del foo"
+        echo ""
+        return
+    fi
+
+    if [[ "$hostname" != *phils.io ]]; then
+        hostname="$hostname.phils.io"
+        echo "Defaulting hostname to $hostname"
+    fi
+
+    local target="`gdns-ls ^$hostname | tr -s ' ' | cut -d' ' -f4`"
+    local record_type="`gdns-ls ^$hostname | tr -s ' ' | cut -d' ' -f2`"
+    local ttl="`gdns-ls ^$hostname | tr -s ' ' | cut -d' ' -f3`"
+
+    local gdns="gcloud dns record-sets transaction"
+    local zone="--zone=philsio-zone"
+    local project="--project=phil-new"
+    local tx="$gdns $project"
+
+    rm -f transaction.yaml
+    $tx start $zone
+    $tx remove "$target"  --name="$hostname" --type="$record_type" --ttl=$ttl $zone
+    $tx execute $zone
+    rm -f transaction.yaml
+}
+function gdns-ls {
+    hostname="$1"
+    local zone="--zone=philsio-zone"
+    local cmd="gcloud dns record-sets list $zone"
+    if [ -z "$hostname" ]
+    then
+        $cmd
+    else
+        $cmd | grep $hostname
+    fi
+}
 
 
 #
@@ -1384,31 +1520,43 @@ function pie-copy {
 
     filename=${filename#"phy"}
     filename=${filename#"/"}
-    echo "filename: $filename"
+
+    # set absolute file paths
+    phy_file="$phy_root/$filename"
+    pie_file="$pie_root/$filename"
 
     # make the destination directory if it doesnt exist
     dest_dir=`dirname $filename`
     mkdir -p $pie_root/$dest_dir
 
-    cp $phy_root/$filename $pie_root/$filename
+    # if the file isnt there, delete it
+    if [ ! -f "$phy_file" ]; then
+        echo "deleting: $filename"
+        rm -f $pie_file
+        return
+    fi
 
+    echo "copying: $filename"
+    cp $phy_file $pie_file
+
+    # should we ignore this file extension?
     file_ext="${filename#*.}"
     ignore_this_file=false
-    declare -a arr=("p" "pkl" "rds" "xls" "xlsx")
-    for i in "${arr[@]}"
-    do
-        if [ "$file_ext" == "$i" ]; then
-            echo "ignoring extension: $i"
+    declare -a ignored_exts=("mandrill" "p" "pkl" "rds" "xls" "xlsx")
+    for ext in "${ignored_exts[@]}"; do
+        if [ "$file_ext" == "$ext" ]; then
+            echo "ignoring extension: $ext"
             ignore_this_file=true
         fi
     done
 
+    # transform the file
     if [ "$ignore_this_file" = false ] ; then
-        sed -i.bak 's/from phy./from pie./' $pie_root/$filename
-        sed -i.bak 's/import phy./import pie./' $pie_root/$filename
-        sed -i.bak 's/.shared.slack /.shared.slack_utils /' $pie_root/$filename
-        sed -i.bak 's/ slack/ send_slack/' $pie_root/$filename
-        rm $pie_root/$filename.bak
+        sed -i.bak 's/from phy./from pie./' $pie_file
+        sed -i.bak 's/import phy./import pie./' $pie_file
+        sed -i.bak 's/.shared.slack /.shared.slack_utils /' $pie_file
+        sed -i.bak 's/ slack/ send_slack/' $pie_file
+        rm $pie_file.bak
     fi
 }
 
@@ -1430,6 +1578,7 @@ alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd  $SRC_HOME/chef/environments'
 alias r='cd  $SRC_HOME/chef/roles'
 alias dot='cd ~/.dotfiles'
+alias dag='cd $PHY/cloud_composer/dags'
 
 
 # ANDROID
