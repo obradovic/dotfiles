@@ -156,6 +156,7 @@ brew 'pv'
 brew 'r'
 brew 'rclone'
 brew 'ruby'
+# brew install hudochenkov/sshpass/sshpass
 brew 'slackcat'
 brew 'socat'
 brew 'sloccount'
