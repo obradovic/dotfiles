@@ -1,4 +1,4 @@
-#
+#{the_period}"
 # COMMON
 #
 shopt -s extglob
@@ -496,30 +496,34 @@ alias env_create='pyenv virtualenv $PYENV_VERSION .env'
 
 function pireq {
     req=$1
-    cat requirements-prereq.txt requirements.txt > /tmp/foo
-    pi `grep $req /tmp/foo`
-    rm -f /tmp/foo
+    local tmp=/tmp/foo
+    cat requirements-prereq.txt requirements.txt > $tmp
+    pi `grep $req $tmp`
+    rm -f $tmp
 }
 
 function findpy {
     find . -name \*.py | grep -v \.env | xargs $*
 }
 
-function pvv {
-    pip install --use-deprecated=legacy-resolver $1==
+function pii {
+    local package=$1
+    if [[ "$package" == *"=="* ]]; then
+        package=`echo $package | cut -d'=' -f1`
+    fi
+    pip install --use-deprecated=legacy-resolver $package==
 }
 
-function pll {
+function pl {
     local package="$1"
     local cmd="pip list"
     if [ -z "$hostname" ]
     then
-        $cmd | grep "$package"
+        $cmd | grep -i "$package"
     else
         $cmd
     fi
 }
-alias pl=pll
 
 _virtualenv_auto_activate() {
     if [ -d ".env" ]; then
@@ -955,17 +959,18 @@ function ssh-mac {
     local ip=`arps | grep "$mac" | head -1 | cut -f1`
     ssh $ip
 }
-function arpsx {
+function arps {
     if [ $# -eq 0 ]; then
         interface=""
     else
         interface=" --interface $1 "
     fi
 
-    arp-scan -l --plain --ignoredups $interface | sort -b -k3,3 -k2,2
+    # expand sets the tab stops to be at precise locations
+    arp-scan -l --plain --ignoredups $interface | sort -b -k3,3 -k2,2 | expand -t 16,36
 }
 
-alias arps1='arps | sort -k1,1n'
+alias arps1='arps | sort -t . -k1,1n '  # https://www.cyberciti.biz/faq/unix-linux-shell-script-sorting-ip-addresses/
 alias arps2='arps | sort -k2,2  -k1,1n'
 alias arps3='arps | sort -k3,3f -k1,1n'
 
@@ -1403,11 +1408,12 @@ export GIT_PS1_SHOWUPSTREAM="auto"
 . ~/.git-completion.sh
 . ~/.colors_bash
 
-COLOR_NORMAL="\[\033[00m\]"
+COLOR_NORMAL="\[\e[00m\]"
 COLOR_GREEN_A="\[\e[0;92m\]"
 COLOR_GREEN_B="\[\e[0;32m\]"
 COLOR_END="\[\e[0m\]"
 export PS1="${COLOR_GREEN_A}\T ${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${COLOR_END}"
+# export PS1="${COLOR_GREEN_A}\T ${COLOR_END}\$(__git_ps1 )\h ${COLOR_GREEN_B}\W > ${COLOR_END}"  # WITH HOSTNAME
 # export PS1="${COLOR_GREEN_A}\T \$(__kube_ps1)${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${COLOR_END}"
 # export PS1="${COLOR_GREEN_A}\T \$(__kube_ps1)${COLOR_END}$(__git_ps1 " (%s)") ${COLOR_GREEN_B}\W > ${COLOR_END}"
 # export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
@@ -1556,6 +1562,10 @@ function pie-copy {
         sed -i.bak 's/import phy./import pie./' $pie_file
         sed -i.bak 's/.shared.slack /.shared.slack_utils /' $pie_file
         sed -i.bak 's/ slack/ send_slack/' $pie_file
+
+        sed -i.bak 's/phy\/api/api/' $pie_file
+        sed -i.bak 's/phy\/shared/shared/' $pie_file
+        sed -i.bak 's/phy\/reports/reports/' $pie_file
         rm $pie_file.bak
     fi
 }
@@ -1571,6 +1581,7 @@ alias u='cd  $PHY/uploader'
 alias phy='cd $PHY'
 alias pie='cd $PIE'
 alias pso='cd $SRC_HOME/pitch_selection_optimization'
+alias carm='cd $SRC_HOME/carmelo_update'
 alias pie-path='export PYTHONPATH=$SRC_HOME'
 alias vid='phy && cd video'
 alias c='cd  $SRC_HOME/chef'
