@@ -954,10 +954,13 @@ function crapsodo {
 function crapsodo2 {
     ssh-mac dc:a6:32:38:8b:2a
 }
-function ssh-mac {
+function mac-ip {
     local mac="$1"
-    local ip=`arps | grep "$mac" | head -1 | cut -f1`
-    ssh $ip
+    ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
+    echo $ip
+}
+function ssh-mac {
+    ssh `mac-ip $mac`
 }
 function arps {
     if [ $# -eq 0 ]; then
