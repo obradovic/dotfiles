@@ -96,6 +96,7 @@ brew 'cmake'  # for vim youcompleteme plugin
 brew 'coreutils'
 brew 'cowsay'
 brew 'curl'
+brew 'dive'
 brew 'datamash'
 # brew 'elasticsearch' # brew services start elasticsearch to start now and restart at login
 brew 'entr'
@@ -121,6 +122,8 @@ brew 'iperf3'
 brew 'java'
 brew 'jq'
 brew 'kafkacat'
+brew 'kube-ps1'
+brew 'kubectx'
 # brew 'kibana'  # brew services start kibana
 brew 'lftp'
 brew 'libev'
