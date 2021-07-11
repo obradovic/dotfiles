@@ -66,8 +66,8 @@ alias ,,,,='....'
 alias .3='cd ../../..'
 alias .4='cd ../../../..'
 alias .5='cd ../../../../..'
-alias du1='du -h -d 1'
-alias du2='du -h -d 2'
+alias du1='du -h -d 1 | sort -h'
+alias du2='du -h -d 2 | sort -h'
 alias dfk='df -h -k'
 alias tl='tail -f'
 alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
@@ -82,6 +82,7 @@ alias utc='date -u'
 alias ut='utc'
 alias medicalbot='ENV=prod $PHY/.env/bin/python $PHY/uploader/draft_prospect_link/medicalbot.py'
 alias allowlist='ENV=prod $PHY/.env/bin/python $PHY/bin/allowlist.py'
+alias today='note today'
 
 function mcd {
     mkdir "$1"
@@ -227,8 +228,13 @@ alias aw='awair --mac 70:88:6b:14:10:a1'
 #
 alias k=kubectl
 alias kg='k get'
+alias kaf='k apply -f'
+alias kcf='k create --save-config -f'
 alias kall='k get all -A --show-labels'
-complete -F __start_kubectl k  # from https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+if [ -f $HOME/.bashrc_kubectl ]; then
+    source $HOME/.bashrc_kubectl
+    complete -F __start_kubectl k  # from https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+fi
 
 function kget {
     kubectl get $*
@@ -307,7 +313,7 @@ function metadata-disks {
     metadata-query "disks/?recursive=true"
 }
 function metadata-env {
-    metadata-query attributes/ENV
+    metadata-query attributes/kube-env
 }
 function metadata-name {
     metadata-query name
@@ -498,12 +504,18 @@ function pireq {
     req=$1
     local tmp=/tmp/foo
     cat requirements-prereq.txt requirements.txt > $tmp
-    pi `grep $req $tmp`
+    packages=`grep $req $tmp`
+    echo
+    echo
+    echo $packages
+    echo
+    echo
+    pi $packages
     rm -f $tmp
 }
 
 function findpy {
-    find . -name \*.py | grep -v \.env | xargs $*
+    find . -name \*.py | grep -v "\.env\|\.git" | xargs $*
 }
 
 function pii {
@@ -512,6 +524,7 @@ function pii {
         package=`echo $package | cut -d'=' -f1`
     fi
     pip install --use-deprecated=legacy-resolver $package==
+    # pip install $package==xxxxxx
 }
 
 function pl {
@@ -540,6 +553,17 @@ _virtualenv_auto_activate() {
     fi
 }
 export PROMPT_COMMAND=_virtualenv_auto_activate
+
+
+# R
+alias R='R --no-save'
+function rp {
+    Rscript -e 'ip <- as.data.frame(installed.packages()[,c(1,3:4)]); rownames(ip) <- NULL; ip <- ip[is.na(ip$Priority),1:2,drop=FALSE]; print(ip, row.names=FALSE)' | tail -n +2 | tr -s ' ' | cut -d' ' -f2- | sort -f
+}
+function rp-del {
+    # https://www.r-bloggers.com/how-to-remove-all-user-installed-packages-in-r/
+    Rscript -e 'ip <- as.data.frame(installed.packages()); ip <- subset(ip, !grepl("MRO", ip$LibPath)); ip <- ip[!(ip[,"Priority"] %in% c("base", "recommended")),]; path.lib <- unique(ip$LibPath); pkgs.to.remove <- ip[,1]; sapply(pkgs.to.remove, remove.packages, lib = path.lib)'
+}
 
 
 #
@@ -991,11 +1015,10 @@ function phil-db-local {
     mycli --port $PHIL_DOCKER_DB_PORT -h 127.0.0.1 -u$PHIL_DOCKER_DB_USER -p$PHIL_DOCKER_DB_PW phil_data
 }
 function phil-db {
-    # echo Password copied
-    # echo $PHIL_GCLOUD_DB_PW | pbcopy
-    # gcloud beta sql connect $PHIL_GCLOUD_DB_INSTANCE -u $PHIL_GCLOUD_DB_USER
-    # mysql -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
     mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
+}
+function phil-db-uploader {
+    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER_UP -p$PHIL_GCLOUD_DB_PW_UP "$@"
 }
 function phil-db-dev {
     mycli -h $PHIL_GCLOUD_DB_IP_DEV phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
@@ -1184,10 +1207,10 @@ function gdns-add {
         echo "Defaulting hostname to $hostname"
     fi
 
-    if [[ "$target" != *phils.io ]]; then
-        target="$target.phils.io."
-        echo "Defaulting target to $target"
-    fi
+    # if [[ "$target" != *phils.io ]]; then
+        # target="$target.phils.io."
+        # echo "Defaulting target to $target"
+    # fi
 
     record_type="CNAME"
     if [ -z "$record_type" ]; then
@@ -1447,14 +1470,26 @@ alias phil='cd $DROPBOX_HOME/Phillies'
 
 # NOTES
 function notes {
+    # shopt nullglob
+
     local dir=$DROPBOX_HOME/Phillies
     if [ $# -eq 0 ]; then
-        ls -altr $dir/notes.* | sed -e "s/\/Users\/zo\/Dropbox\/Phillies\///"
+        ls -alt $dir/notes.* | sed -e "s/\/Users\/zo\/Dropbox\/Phillies\///"
         # find $dir -maxdepth 1 -name notes\* -print0 | xargs -0 stat -f "%a"
         return
     fi
-    vi $dir/notes.$1.txt
+
+    # if [ -f "$dir/notes.$1*.txt" ]; then
+    if ls $dir/notes.$1*.txt > /dev/null 2>&1; then
+        # echo "File exists"
+        vi $dir/notes.$1*.txt
+    else
+        # echo "File DOES NOT exists"
+        vi $dir/notes.$1.txt
+    fi
 }
+alias note=notes
+alias ntoes=notes
 
 
 # PAPERTRAIL
@@ -1481,6 +1516,9 @@ function api-local {
 }
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
+}
+function apiv {
+    curl ${@:2} -v -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
 }
 function apipost {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" -X POST
@@ -1551,10 +1589,10 @@ function pie-copy {
     # should we ignore this file extension?
     file_ext="${filename#*.}"
     ignore_this_file=false
-    declare -a ignored_exts=("mandrill" "p" "pkl" "rds" "xls" "xlsx")
+    declare -a ignored_exts=("mandrill" "p" "pkl" "png" "rds" "xls" "xlsx")
     for ext in "${ignored_exts[@]}"; do
         if [ "$file_ext" == "$ext" ]; then
-            echo "ignoring extension: $ext"
+            echo "ignoring transform on extension: $ext"
             ignore_this_file=true
         fi
     done
@@ -1562,13 +1600,38 @@ function pie-copy {
     # transform the file
     if [ "$ignore_this_file" = false ] ; then
         sed -i.bak 's/from phy./from pie./' $pie_file
+        sed -i.bak 's/in phy./in pie./' $pie_file
         sed -i.bak 's/import phy./import pie./' $pie_file
+        # sed -i.bak 's/python phy/python pie/' $pie_file
+        sed -i.bak 's/"phy./"pie./' $pie_file
+        sed -i.bak "s/'phy./'pie./" $pie_file
+        sed -i.bak 's/phy-compose/pie-compose/' $pie_file
+        sed -i.bak 's/python phy\//python /' $pie_file
+
         sed -i.bak 's/.shared.slack /.shared.slack_utils /' $pie_file
         sed -i.bak 's/ slack/ send_slack/' $pie_file
 
         sed -i.bak 's/phy\/api/api/' $pie_file
         sed -i.bak 's/phy\/shared/shared/' $pie_file
         sed -i.bak 's/phy\/reports/reports/' $pie_file
+
+        sed -i.bak 's/Phillies_LHV/PHILLIES_LEHIGH_VALLEY/' $pie_file
+        sed -i.bak 's/Phillies_CLW/PHILLIES_BAY_CARE/' $pie_file
+        sed -i.bak 's/Venue\.Phillies/Venue\.PHILLIES/' $pie_file
+
+        sed -i.bak 's/import keras/import tensorflow.keras/' $pie_file
+        sed -i.bak 's/from keras/from tensorflow.keras/' $pie_file
+
+        sed -i.bak 's/from val_constants/from pie.reports.pitching_gameplan.validation.val_constants/' $pie_file
+
+        sed -i.bak 's/tf.logging/tf.compat.v1.logging/' $pie_file
+        sed -i.bak 's/tf.estimator/tf.compat.v1.estimator/' $pie_file
+        sed -i.bak 's/tf.placeholder/tf.compat.v1.placeholder/' $pie_file
+
+        sed -i.bak 's/T_PLAYER_TYPE/PlayerType/' $pie_file
+        sed -i.bak 's/PERMISSION_TYPE = /PermissionType = /' $pie_file
+        sed -i.bak 's/ PERMISSION_TYPE)/ PermissionType)/' $pie_file
+        sed -i.bak 's/(PERMISSION_TYPE)/(PermissionType)/' $pie_file
         rm $pie_file.bak
     fi
 }
@@ -1587,12 +1650,13 @@ alias pso='cd $SRC_HOME/pitch_selection_optimization'
 alias carm='cd $SRC_HOME/carmelo_update'
 alias pie-path='export PYTHONPATH=$SRC_HOME'
 alias vid='phy && cd video'
-alias c='cd  $SRC_HOME/chef'
-alias v='cd  $SRC_HOME/chef/cookbooks/phillies/recipes'
-alias e='cd  $SRC_HOME/chef/environments'
-alias r='cd  $SRC_HOME/chef/roles'
+alias c='cd $SRC_HOME/chef'
+alias v='cd $SRC_HOME/chef/cookbooks/phillies/recipes'
+alias e='cd $SRC_HOME/chef/environments'
+alias r='cd $SRC_HOME/chef/roles'
 alias dot='cd ~/.dotfiles'
 alias dag='cd $PHY/cloud_composer/dags'
+alias ib='cd $SRC_HOME/ibp-dashboards'
 
 
 # ANDROID
