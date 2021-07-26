@@ -177,6 +177,7 @@ brew 'tree'
 brew 'vim'
 brew 'wget'
 brew 'youtube-dl'
+brew 'yq'
 
 # brew 'curl', args:['with-nghttp2']
 
