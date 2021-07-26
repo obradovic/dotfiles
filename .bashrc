@@ -1,4 +1,4 @@
-#{the_period}"
+#
 # COMMON
 #
 shopt -s extglob
@@ -227,10 +227,12 @@ alias aw='awair --mac 70:88:6b:14:10:a1'
 # KUBE
 #
 alias k=kubectl
+alias kns=kubens
 alias kg='k get'
 alias kaf='k apply -f'
 alias kcf='k create --save-config -f'
 alias kall='k get all -A --show-labels'
+alias ke='k exec'
 if [ -f $HOME/.bashrc_kubectl ]; then
     source $HOME/.bashrc_kubectl
     complete -F __start_kubectl k  # from https://kubernetes.io/docs/reference/kubectl/cheatsheet/
@@ -326,8 +328,8 @@ alias rcl='rc ls'
 
 
 # VEGGIETRONIC
-alias veg-attachment='curl -v http://veggietronic-zo.phils.io/static/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
-alias veg-attachment-no='curl -v http://veggietronic-zo.phils.io/static/asattachment/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
+alias veg-attachment='curl -v http://veggietronic-zo.$DOMAIN/static/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
+alias veg-attachment-no='curl -v http://veggietronic-zo.$DOMAIN/static/asattachment/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
 
 function veg {
     #
@@ -581,6 +583,19 @@ alias be='bundle exec'
 #
 export GOPATH=~/go
 
+
+#
+# DATADOG
+#
+function dogtest {
+    # dogtest 10.88.0.48
+    agent_location="$1"
+    if [ -z "$agent_location" ]; then
+        agent_location="localhost"
+        echo "Defaulting agent_location to $agent_location"
+    fi
+    echo "pie.test:1|c" > /dev/udp/$agent_location/8125
+}
 
 #
 # VMWARE
@@ -1120,15 +1135,14 @@ function lsv {
 
 # GOOGLE GCLOUD DNS
 export CLOUDSDK_PYTHON=/usr/local/bin/python3
-export DNS_ZONE='philsio-zone'
 alias dns='gcloud dns'
 alias dns-transaction='dns record-sets transaction'
 alias dns-list-all='dns record-sets list --zone $DNS_ZONE'
 function dns-list {
-    dns-list-all --name $1.phils.io.
+    dns-list-all --name $1.$DOMAIN_FQ
 }
 function dns-create {
-    local name=$1.phils.io.
+    local name=$1.$DOMAIN_FQ
     local ip=$2
 
     rm -f transaction.yaml
@@ -1145,7 +1159,7 @@ function dns-create {
     dns-transaction execute --zone=$DNS_ZONE
 }
 function dns-delete {
-    local name=$1.phils.io.
+    local name=$1.$DOMAIN_FQ
 
     local record=`dns-list $1 | grep -v DATA`
     local type=`echo $record | cut -d' ' -f2`
@@ -1187,45 +1201,56 @@ function gdns-add-all {
 }
 function gdns-add {
     #
-    # gdns-add veggietronic-tunnel 34.73.92.181
-    # gdns-add veggietronic-lhv-2 veggietronic-tunnel.phils.io. CNAME
+    # gdns-add foo 34.73.92.181
+    # gdns-add foo bar 5
     #
-    local hostname="$1"       # "foobar.phils.io."
-    local target="$2"      # " 127.0.0.1"
-    local record_type="$3"    # "A" or "CNAME"
+    local hostname="$1"     # "foobar.$DOMAIN_FQ"
+    local target="$2"       # " 127.0.0.1"
+    local ttl="$3"          # in seconds
 
     if [ -z "$hostname" ]; then
-        echo ""
-        echo "  gdns-add foo 127.0.0.1" # will make foo an A
-        echo "  gdns-add foo bar"       # will make foo a CNAME to bar
-        echo ""
+        echo
+        echo "  gdns-add foo 127.0.0.1          # will make foo an A"
+        echo "  gdns-add foo 127.0.0.1 5        # will make foo an A with a TTL of 5 seconds"
+        echo "  gdns-add foo bar                # will make foo a CNAME to bar.$DOMAIN_FQ"
+        echo
         return
     fi
 
-    if [[ "$hostname" != *phils.io ]]; then
-        hostname="$hostname.phils.io."
-        echo "Defaulting hostname to $hostname"
+    if [ -z "$ttl" ]; then
+        ttl="60"
     fi
 
-    # if [[ "$target" != *phils.io ]]; then
-        # target="$target.phils.io."
-        # echo "Defaulting target to $target"
-    # fi
+    if [[ "$hostname" != *$DOMAIN ]]; then
+        hostname="$hostname.$DOMAIN_FQ"
+    fi
 
-    record_type="CNAME"
-    if [ -z "$record_type" ]; then
+
+    local target_no_dots=`echo $target | tr -d '.'`
+    if [[ "$target_no_dots" =~ ^[[:digit:]]*$ ]]; then
         record_type="A"
-        echo "Defaulting record type to $record_type"
+        echo "    DNS Detected IP address for target"
+    else
+        record_type="CNAME"
+
+        # Is the target a FQDN with a dot at the end? If so, dont append our domain
+        if [[ "$target" =~ \.$ ]]; then
+            echo "    DNS detected FQDN for target"
+        else
+            target="$target.$DOMAIN_FQ"
+        fi
     fi
 
-    if [[ "$target" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        record_type="A"
-        echo "Detected IP address for target. Defaulting record type to $record_type"
-    fi
+    echo
+    echo "    DNS hostname:       $hostname"
+    echo "    DNS target:         $target"
+    echo "    DNS ttl:            $ttl seconds"
+    echo "    DNS record type:    $record_type"
+    echo
 
-    local ttl="--ttl=5"
+    local ttl="--ttl=$ttl"
     local gdns="gcloud dns record-sets transaction"
-    local zone="--zone=philsio-zone"
+    local zone="--zone=$DNS_ZONE"
     local project="--project=phil-new"
     local tx="$gdns $project"
 
@@ -1236,30 +1261,82 @@ function gdns-add {
     rm -f transaction.yaml
 }
 
+function gdns-mv {
+    #
+    # gdns-mv foo 127.0.0.1     # move whatever it points to now, to this
+    #
+    gdns-del "$1"
+    gdns-add $*
+}
+
+function gdns-ttl {
+    local hostname="$1"
+    local ttl="$2"
+
+    if [ -z "$hostname" ]; then
+        echo
+        echo "  Usage:"
+        echo "    gdns-ttl foo 60"
+        echo
+        echo "  TTL is in seconds"
+        echo
+        return
+    fi
+
+    echo
+    echo "    Changing TTL for $hostname to: $ttl"
+
+    local data=`gdns-ls ^$hostname | tr -s ' '`
+    if [ -z "$data" ]; then
+        echo "    Not found: $hostname"
+        echo
+        return
+    fi
+
+    local target="`echo $data | cut -d' ' -f4`"
+    local record_type="`echo $data | cut -d' ' -f2`"
+    local old_ttl="`echo $data | cut -d' ' -f3`"
+    echo "    TTL is currently: $old_ttl"
+    echo "    Will delete the DNS record, then add a new one"
+
+    gdns-del $hostname
+    echo
+    gdns-add $hostname $target $ttl $record_type
+}
+
 function gdns-del {
     #
     # gdns-del veggietronic-tunnel
     #
-    local hostname="$1"       # "foobar.phils.io."
+    local hostname="$1"       # "foobar.$DOMAIN_FQ"
 
     if [ -z "$hostname" ]; then
-        echo ""
+        echo
         echo "  gdns-del foo"
-        echo ""
+        echo
         return
     fi
 
-    if [[ "$hostname" != *phils.io ]]; then
-        hostname="$hostname.phils.io"
-        echo "Defaulting hostname to $hostname"
+    if [[ "$hostname" != *$DOMAIN ]]; then
+        hostname="$hostname.$DOMAIN_FQ"
+        echo
+        echo "    Deleting hostname: $hostname"
     fi
 
-    local target="`gdns-ls ^$hostname | tr -s ' ' | cut -d' ' -f4`"
-    local record_type="`gdns-ls ^$hostname | tr -s ' ' | cut -d' ' -f2`"
-    local ttl="`gdns-ls ^$hostname | tr -s ' ' | cut -d' ' -f3`"
+    local data=`gdns-ls ^$hostname | tr -s ' '`
+    if [ -z "$data" ]; then
+        echo "    Not found: $hostname"
+        echo
+        return
+    fi
+    echo
+
+    local target="`echo $data | cut -d' ' -f4`"
+    local record_type="`echo $data | cut -d' ' -f2`"
+    local ttl="`echo $data | cut -d' ' -f3`"
 
     local gdns="gcloud dns record-sets transaction"
-    local zone="--zone=philsio-zone"
+    local zone="--zone=$DNS_ZONE"
     local project="--project=phil-new"
     local tx="$gdns $project"
 
@@ -1271,7 +1348,7 @@ function gdns-del {
 }
 function gdns-ls {
     hostname="$1"
-    local zone="--zone=philsio-zone"
+    local zone="--zone=$DNS_ZONE"
     local cmd="gcloud dns record-sets list $zone"
     if [ -z "$hostname" ]
     then
@@ -1290,7 +1367,7 @@ alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
 # alias k='knife'
 # alias kg='knife google'
-alias ke='knife ec2'
+# alias ke='knife ec2'
 alias kinst='knife cookbook site install'
 alias kservers='knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE'
 alias ks='knife status'
@@ -1346,6 +1423,7 @@ alias sta='stash'
 alias prod='co prod'
 alias master='prod'
 alias dev='co dev'
+alias devv='co dev-updates'
 alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
 alias got='git'
 
@@ -1551,7 +1629,7 @@ function api-localyz {
     curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
 }
 function infield {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://infield.phils.io/$1" | jq .
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://infield.$DOMAIN/$1" | jq .
 }
 
 function pie-copys {
@@ -1646,6 +1724,7 @@ alias a='cd  $PHY/api'
 alias u='cd  $PHY/uploader'
 alias phy='cd $PHY'
 alias pie='cd $PIE'
+alias pid='cd $PIE/.docker/pie'
 alias pso='cd $SRC_HOME/pitch_selection_optimization'
 alias carm='cd $SRC_HOME/carmelo_update'
 alias pie-path='export PYTHONPATH=$SRC_HOME'
@@ -2221,7 +2300,7 @@ function rs-wait {
         status=`rs-status $rs_location $rs_id`
         if [ $status == "ACTIVE" ]
         then 
-            echo ""
+            echo
             echo "Creating Server took `timestamp-diff $a `seconds"
             break
         fi
