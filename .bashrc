@@ -27,6 +27,7 @@ PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 #
 # GENERIC BASH ALIASES AND FUNCTIONS
 #
+alias ,='. ~/.bashrc'
 alias m='make'
 alias t='TIMEFORMAT="That took %1R seconds" && time'
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
@@ -97,11 +98,12 @@ function pz {
 function geo {
     ip="$1"
     if [ -z "$ip" ]; then
-        ip=`ip`
+        ip=check
     fi
-    curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN" | jq -r -j .city,.region_code
-    echo
-    # curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN" | jq .continent_name,.country_name,.region_name,.city
+    local info=`curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN"`
+    echo $info | jq -r '. | "\(.city) \(.region_name) \(.country_code)"'
+    # echo $info
+    # curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN" | jq -r '. | "\(.city) \(.region_name) \(.country_code)"'
 }
 function wildcard_csr {
     domain=$1
@@ -501,6 +503,7 @@ alias pw='pip wheel'
 alias pis='pi `grep slack $PHY/requirements.txt`'
 alias pir='pi -r requirements.txt'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
+alias phickle='python3 $PIE/shared/phickle.py'
 
 function pireq {
     req=$1
@@ -1027,7 +1030,7 @@ function macs {
 # DATABASE
 #
 function phil-db-local {
-    mycli --port $PHIL_DOCKER_DB_PORT -h 127.0.0.1 -u$PHIL_DOCKER_DB_USER -p$PHIL_DOCKER_DB_PW phil_data
+    mycli --port $PHIL_DOCKER_DB_PORT -h 127.0.0.1 -u$PHIL_DOCKER_DB_USER -p$PHIL_DOCKER_DB_PW "$@"
 }
 function phil-db {
     mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
@@ -1412,6 +1415,7 @@ alias gi='git'
 alias god='git'
 alias gd='git diff'
 alias gad='git add'
+alias gr='git restore'
 alias st='git status'
 alias co='git checkout'
 alias gpl='git pull origin `git rev-parse --abbrev-ref HEAD`'
@@ -1632,6 +1636,64 @@ function infield {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://infield.$DOMAIN/$1" | jq .
 }
 
+function lint-time-dir {
+    local dir="$1"
+    if [ -z "$dir" ]; then
+        dir=.
+    fi
+
+    # name this run
+    local run="$dir"-$RANDOM
+
+    # get all the python files
+    local python_files=`find $dir -name "*.py" | sort`
+
+    # filter out some files
+    local files=$python_files
+    files=`echo "$files" | grep -v "\\\.coverage"`
+    files=`echo "$files" | grep -v "\\\.env"`
+
+    for file in $files; do
+        lint-time-file "$file" "$run"
+    done
+}
+
+function lint-time-file {
+    local file="$1"
+    local run="$2"
+
+    local now=`date -u +"%F %T"`
+    echo $now: $file
+    local prefix="$now"
+    local output=$(make lint DIR="$file" 2> /dev/null)
+    local num_statements=`echo "$output" | grep "statements ana" | cut -d' ' -f1`
+    local rating=`echo "$output" | grep "rated at" | cut -d' ' -f7 | cut -d'/' -f1`
+    local timing=`echo "$output" | grep "lint took" | head -1 | cut -d' ' -f4`
+    local sloc=`sloccount "$file" | grep python: | tr -s ' ' | cut -d' ' -f2`
+    local hostname=`hostname`
+
+    if [[ -z "$sloc" ]]; then
+        sloc=0
+    fi
+
+    if [[ "$rating" == "10.00" ]]; then
+        echo $prefix: $file OK $timing $sloc $num_statements
+    elif [[ "$sloc" == "0" ]]; then
+        echo "$prefix: $file OK empty"
+    else
+        echo "$prefix: $file ERROR"
+        # echo "$output"
+    fi
+
+    csvline=\"$now\",\"$hostname\",$run,$file,$timing,$sloc,$num_statements
+    echo $csvline >> "$HOME/lint-times.csv"
+}
+
+function pie-copy-dir {
+    dir="$1"
+    export -f pie-copy
+    find "$dir" -type f | xargs -I{} bash -c 'pie-copy "{}"'
+}
 function pie-copys {
     for file in "$@"
     do
@@ -1667,7 +1729,7 @@ function pie-copy {
     # should we ignore this file extension?
     file_ext="${filename#*.}"
     ignore_this_file=false
-    declare -a ignored_exts=("mandrill" "p" "pkl" "png" "rds" "xls" "xlsx")
+    declare -a ignored_exts=("csv" "CSV" "h5" "json" "mandrill" "p" "pkl" "png" "pyc" "rds" "xls" "xlsx")
     for ext in "${ignored_exts[@]}"; do
         if [ "$file_ext" == "$ext" ]; then
             echo "ignoring transform on extension: $ext"
@@ -1675,8 +1737,17 @@ function pie-copy {
         fi
     done
 
+    declare -a ignored_substrings=("pytest_cache" "__pycache__")
+    for substring in "${ignored_substrings[@]}"; do
+        if [[ "$filename" == *"$substring"* ]]; then
+            echo "ignoring transform on substring: $substring"
+            ignore_this_file=true
+        fi
+    done
+
     # transform the file
     if [ "$ignore_this_file" = false ] ; then
+        sed -i.bak 's/from phy import/from pie import/' $pie_file
         sed -i.bak 's/from phy./from pie./' $pie_file
         sed -i.bak 's/in phy./in pie./' $pie_file
         sed -i.bak 's/import phy./import pie./' $pie_file
@@ -1689,6 +1760,7 @@ function pie-copy {
         sed -i.bak 's/.shared.slack /.shared.slack_utils /' $pie_file
         sed -i.bak 's/ slack/ send_slack/' $pie_file
 
+        sed -i.bak 's/phillies\/phy/pie/' $pie_file
         sed -i.bak 's/phy\/api/api/' $pie_file
         sed -i.bak 's/phy\/shared/shared/' $pie_file
         sed -i.bak 's/phy\/reports/reports/' $pie_file
