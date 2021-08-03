@@ -16,6 +16,7 @@ export SRC_HOME="$HOME/phillies"
 export PHILLIES_PATH=$SRC_HOME/phillies
 export PHY=$PHILLIES_PATH/phy
 export PIE=$SRC_HOME/pie
+export TERM=xterm
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
 # HISTORY
@@ -230,7 +231,6 @@ alias aw='awair --mac 70:88:6b:14:10:a1'
 #
 alias k=kubectl
 alias kns=kubens
-alias kg='k get'
 alias kaf='k apply -f'
 alias kcf='k create --save-config -f'
 alias kall='k get all -A --show-labels'
@@ -240,20 +240,20 @@ if [ -f $HOME/.bashrc_kubectl ]; then
     complete -F __start_kubectl k  # from https://kubernetes.io/docs/reference/kubectl/cheatsheet/
 fi
 
-function kget {
+function kg {
     kubectl get $*
 }
 function kj {
-    kget $* -o json | jq .
+    kg $* -o json | jq .
 }
 function ky {
-    kget $* -o yaml
+    kg $* -o yaml
 }
-alias deps='kget deployments'
+alias deps='kg deployments'
 alias dep='kj deployment'
-alias pods='kget pods'
+alias pods='kg pods'
 alias pod='kj pod'
-alias svcs='kget services'
+alias svcs='kg services'
 alias svc='kj service'
 alias clusters='gcloud container clusters list'
 function cluster {
@@ -1414,7 +1414,7 @@ alias bs='git branch' # list all branches
 alias gi='git'
 alias god='git'
 alias gd='git diff'
-alias gad='git add'
+alias ga='git add'
 alias gr='git restore'
 alias st='git status'
 alias co='git checkout'
@@ -1570,6 +1570,11 @@ function notes {
         vi $dir/notes.$1.txt
     fi
 }
+function notesgrep {
+    local arg="$1"
+    grep -i "$arg" $DROPBOX_HOME/Phillies/note*.txt
+}
+alias notesg=notesgrep
 alias note=notes
 alias ntoes=notes
 
@@ -1636,6 +1641,52 @@ function infield {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://infield.$DOMAIN/$1" | jq .
 }
 
+function pie-comp-dir {
+    local dir="$1"
+    if [ -z "$dir" ]; then
+        dir=.
+    fi
+
+    local dir1=$PHY/$dir
+    local dir2=$PIE/$dir
+
+    local pyfiles1=`find $dir1 -name "*.py" | sort | awk -F"phy" '{print $2}' | cut -d'/' -f2-`
+    local pyfiles2=`find $dir2 -name "*.py" | sort | awk -F"pie" '{print $2}' | cut -d'/' -f2-`
+
+    local file1="/tmp/pyfiles1"
+    local file2="/tmp/pyfiles2"
+
+    echo "$pyfiles1" > $file1
+    echo "$pyfiles2" > $file2
+
+    comm -1 $file1 $file2
+
+    # rm $file1 $file2
+}
+
+function pie-diff {
+    local filename="$1"
+
+    # get the relative path, no matter which repo were in
+    local abs=`pwd`/$filename   # the absolute path to the file
+    local rel=${abs#"$PIE/"}    # strip the PIE prefix
+    rel=${rel#"$PHY/"}          # strip the PHY prefix
+
+    # set absolute file paths
+    phy_file="$PHY/$rel"
+    pie_file="$PIE/$rel"
+
+    # echo "< $phy_file"
+    # echo "> $pie_file"
+    # echo
+    echo "Comparing:"
+    echo $phy_file
+    echo $pie_file
+    echo
+    echo
+    diff $phy_file $pie_file
+}
+
 function lint-time-dir {
     local dir="$1"
     if [ -z "$dir" ]; then
@@ -1677,7 +1728,7 @@ function lint-time-file {
     fi
 
     if [[ "$rating" == "10.00" ]]; then
-        echo $prefix: $file OK $timing $sloc $num_statements
+        echo $prefix: $file OK, $timing seconds, $sloc LOC, $num_statements analyzed
     elif [[ "$sloc" == "0" ]]; then
         echo "$prefix: $file OK empty"
     else
@@ -1702,19 +1753,17 @@ function pie-copys {
 }
 function pie-copy {
     local filename="$1"
-    local phy_root=$SRC_HOME/phillies/phy
-    local pie_root=$SRC_HOME/pie
 
     filename=${filename#"phy"}
     filename=${filename#"/"}
 
     # set absolute file paths
-    phy_file="$phy_root/$filename"
-    pie_file="$pie_root/$filename"
+    phy_file="$PHY/$filename"
+    pie_file="$PIE/$filename"
 
     # make the destination directory if it doesnt exist
     dest_dir=`dirname $filename`
-    mkdir -p $pie_root/$dest_dir
+    mkdir -p $PIE/$dest_dir
 
     # if the file isnt there, delete it
     if [ ! -f "$phy_file" ]; then
@@ -1729,11 +1778,13 @@ function pie-copy {
     # should we ignore this file extension?
     file_ext="${filename#*.}"
     ignore_this_file=false
-    declare -a ignored_exts=("csv" "CSV" "h5" "json" "mandrill" "p" "pkl" "png" "pyc" "rds" "xls" "xlsx")
-    for ext in "${ignored_exts[@]}"; do
+    # declare -a ignored_exts=("css" "csv" "CSV" "dcf" "gif" "gitkeep" "gz" "h5" "html" "ico" "ini" "jpg" "json" "lock" "mandrill" "md" "p" "pkl" "png" "pub" "pyc" "r" "rb" "rds" "scaler" "sql" "tex" "ttf" "txt" "xml" "xls" "xlsx" "yaml" "yml)
+    declare -a accepted_exts=("py" "sh")
+    for ext in "${accepted_exts[@]}"; do
+        ignore_this_file=true
         if [ "$file_ext" == "$ext" ]; then
-            echo "ignoring transform on extension: $ext"
-            ignore_this_file=true
+            ignore_this_file=false
+            break
         fi
     done
 
@@ -1748,7 +1799,7 @@ function pie-copy {
     # transform the file
     if [ "$ignore_this_file" = false ] ; then
         sed -i.bak 's/from phy import/from pie import/' $pie_file
-        sed -i.bak 's/from phy./from pie./' $pie_file
+        sed -i.bak 's/from phy\./from pie\./' $pie_file
         sed -i.bak 's/in phy./in pie./' $pie_file
         sed -i.bak 's/import phy./import pie./' $pie_file
         # sed -i.bak 's/python phy/python pie/' $pie_file
@@ -1756,6 +1807,14 @@ function pie-copy {
         sed -i.bak "s/'phy./'pie./" $pie_file
         sed -i.bak 's/phy-compose/pie-compose/' $pie_file
         sed -i.bak 's/python phy\//python /' $pie_file
+
+        # cause "phy." was already transformed into "pie." above
+        sed -i.bak 's/pie.research\//research\//' $pie_file
+        sed -i.bak 's/pie.uploader\//uploader\//' $pie_file
+        sed -i.bak 's/pie.shared\//shared\//' $pie_file
+
+        sed -i.bak 's/phy\/uploader\//uploader\//' $pie_file
+        sed -i.bak 's/PHILLIES_PATH/PIE_DIR/' $pie_file
 
         sed -i.bak 's/.shared.slack /.shared.slack_utils /' $pie_file
         sed -i.bak 's/ slack/ send_slack/' $pie_file
@@ -1782,8 +1841,13 @@ function pie-copy {
         sed -i.bak 's/PERMISSION_TYPE = /PermissionType = /' $pie_file
         sed -i.bak 's/ PERMISSION_TYPE)/ PermissionType)/' $pie_file
         sed -i.bak 's/(PERMISSION_TYPE)/(PermissionType)/' $pie_file
+
+        # add missing newline to end of file: https://unix.stackexchange.com/questions/31947/how-to-add-a-newline-to-the-end-of-a-file
+        # https://stackoverflow.com/questions/10082204/add-a-newline-only-if-it-doesnt-exist
+        # sed -i '' -e '$a\' $pie_file
         rm $pie_file.bak
     fi
+    tail -c1 $pie_file | read -r _ || echo >> $pie_file
 }
 
 
