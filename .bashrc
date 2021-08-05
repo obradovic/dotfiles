@@ -57,7 +57,7 @@ alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
 alias please='sudo'
 alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
-alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f3-)"
+alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f2-)"
 alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -235,6 +235,27 @@ alias kaf='k apply -f'
 alias kcf='k create --save-config -f'
 alias kall='k get all -A --show-labels'
 alias ke='k exec'
+alias kc='k config'
+function kcs {
+    local substring="$1"
+
+    if [ -z "$substring" ]; then
+        echo
+        echo "Please enter a partial context name:"
+        echo
+        kubectl config get-contexts | tr -s " " | sed -e "s/ /,/g" | cut -d',' -f1-2 | tr -s "," "\t" | grep -v CURRENT
+        echo
+        return
+    fi
+
+    local new_context=`kc get-contexts -o name | grep "$substring" | head -1`
+    # echo "Setting context to: $new_context"
+    echo
+    kc use-context $new_context
+    echo
+    kubectl config get-contexts | tr -s " " | sed -e "s/ /,/g" | cut -d',' -f1-2 | tr -s "," "\t" | grep -v CURRENT
+    echo
+}
 if [ -f $HOME/.bashrc_kubectl ]; then
     source $HOME/.bashrc_kubectl
     complete -F __start_kubectl k  # from https://kubernetes.io/docs/reference/kubectl/cheatsheet/
@@ -247,7 +268,7 @@ function kj {
     kg $* -o json | jq .
 }
 function ky {
-    kg $* -o yaml
+    kg $* -o yaml | yq .
 }
 alias deps='kg deployments'
 alias dep='kj deployment'
@@ -1861,6 +1882,7 @@ alias u='cd  $PHY/uploader'
 alias phy='cd $PHY'
 alias pie='cd $PIE'
 alias pid='cd $PIE/.docker/pie'
+alias pik='cd $PIE/.docker/kube'
 alias pso='cd $SRC_HOME/pitch_selection_optimization'
 alias carm='cd $SRC_HOME/carmelo_update'
 alias pie-path='export PYTHONPATH=$SRC_HOME'
