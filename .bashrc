@@ -16,7 +16,7 @@ export SRC_HOME="$HOME/phillies"
 export PHILLIES_PATH=$SRC_HOME/phillies
 export PHY=$PHILLIES_PATH/phy
 export PIE=$SRC_HOME/pie
-export TERM=xterm
+# export TERM=xterm
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
 # HISTORY
@@ -82,9 +82,10 @@ alias ports='netstat -tulan'
 alias .ale='make'
 alias utc='date -u'
 alias ut='utc'
-alias medicalbot='ENV=prod $PHY/.env/bin/python $PHY/uploader/draft_prospect_link/medicalbot.py'
-alias allowlist='ENV=prod $PHY/.env/bin/python $PHY/bin/allowlist.py'
+alias medicalbot='ENV=prod $PIE/.env.Darwin/bin/python $PIE/uploader/draft_prospect_link/medicalbot.py'
+alias allowlist='ENV=prod $PIE/.env.Darwin/bin/python $PIE/bin/allowlist.py'
 alias today='note today'
+alias x=exit
 
 function mcd {
     mkdir "$1"
@@ -138,6 +139,43 @@ function title {
 
 
 #
+# GITHUB
+#
+function pr {
+    title="$1"
+    # if [ -z "$title" ]; then
+        # echo
+        # echo "    Please set the title of the PR"
+        # echo
+        # return
+    # fi
+    output=`gh pr create --base main --fill 2>&1`
+    if [ $? -ne 0 ]; then
+        echo
+        echo "ERROR"
+        echo "ERROR"
+        echo
+        echo "$output"
+        echo
+        echo "ERROR"
+        echo "ERROR"
+        echo
+        return
+    fi
+    echo $output
+    url=`echo $output | grep https`
+    echo "$url is our URL"
+    open "$url"
+}
+
+function beeper {
+    runs=`gh run list --limit 30 --repo PhilliesAnalytics/pie`
+    in_progress_ids=`echo "$runs" | grep in_progress | tr -d ' ' | cut -d$'\t' -f7`
+}
+
+
+
+#
 # GITHUB ACTIONS
 #
 alias g='cd $PHY/../.github'
@@ -152,8 +190,7 @@ alias d='docker'
 alias dc='d container'
 alias di='d image'
 alias dps='d ps -a'
-alias doc='cd $PHILLIES_PATH/.docker/dash'
-alias ama='cd $PHY/dash/ama'
+alias doc='cd $PIE/etc/docker/pie'
 alias dc='docker-compose -f $PHILLIES_PATH/.docker/phy-compose/docker-compose.yml'
 alias drun='docker container run'
 alias pc-up="(cd $PHILLIES_PATH && make pc-up)"
@@ -236,6 +273,7 @@ alias kcf='k create --save-config -f'
 alias kall='k get all -A --show-labels'
 alias ke='k exec'
 alias kc='k config'
+alias kl='k logs --timestamps --prefix -f'
 function kcs {
     local substring="$1"
 
@@ -253,13 +291,9 @@ function kcs {
     echo
     kc use-context $new_context
     echo
-    kubectl config get-contexts | tr -s " " | sed -e "s/ /,/g" | cut -d',' -f1-2 | tr -s "," "\t" | grep -v CURRENT
+    kc get-contexts | tr -s " " | sed -e "s/ /,/g" | cut -d',' -f1-2 | tr -s "," "\t" | grep -v CURRENT
     echo
 }
-if [ -f $HOME/.bashrc_kubectl ]; then
-    source $HOME/.bashrc_kubectl
-    complete -F __start_kubectl k  # from https://kubernetes.io/docs/reference/kubectl/cheatsheet/
-fi
 
 function kg {
     kubectl get $*
@@ -270,12 +304,107 @@ function kj {
 function ky {
     kg $* -o yaml | yq .
 }
+
+function bp {
+    cd $PIE
+    make bash-pod POD=$1
+    cd -
+}
+
+function pod-bash {
+    local pod_pattern="$1"
+    local pod=`pods | grep "$pod_pattern" | tr -s ' ' | cut -d' ' -f1`
+    echo "Bashing into: $pod"
+    bp "$pod"
+}
+
+function pod-log {
+    local pod_pattern="$1"
+    local logfile="$2"
+    local pod=`pods | grep -v NAME | sort | grep "$pod_pattern" | head -1 | tr -s ' ' | cut -d' ' -f1`
+
+    echo "pod is $pod"
+    echo "logfile is $logfile"
+
+    if [ -n "$logfile" ]; then
+        echo "Tailing $pod "$logfile""
+        filename="/var/log/uwsgi-$logfile.log"
+        k exec "$pod" -- ls -al "$filename"
+        echo
+        sleep 1
+        k exec "$pod" -- tail -f "$filename"
+    else
+        echo "Tailing $pod"
+        kl "$pod"
+    fi
+}
+
+function pod-log-api-http {
+    pod-log api api-http
+}
+function pod-log-api-http-clean {
+    pod-log api api-http | grep -v "jello\|reset\|Permission\|Token\ user\|schedule\/near\/143"
+}
+function pod-log-api-ws {
+    pod-log api api-ws
+}
+function pod-log-api-ws-clean {
+    pod-log api api-ws | grep -v "jello\|reset\|\- \-\ 0\ "
+}
+function pod-log-api-ws {
+    pod-log api api-ws
+}
+function pod-log-hap {
+    pod-log hap
+}
+
+function pod-log-all {
+    kl -l org=phillies
+}
+
+function clients {
+    curl -s https://wapi.phils.io/clients | jq .
+}
+function clients-local {
+    curl -s http://localhost:81/clients | jq .
+}
+
+function node-pods {
+    local node="$1"
+    if [ -z "$node" ]; then
+        echo
+        echo "  I need a node name. Here are our nodes:"
+        echo
+        kg nodes
+        echo
+        return
+    fi
+    kg node "$node"  -o json | jq .status.images[].names | grep -v "gcr.io\|\]\|\[" | sort
+}
+
+function ingress-annotations {
+    local ingress_name=$1
+    if [ -z $ingress_name ]; then
+        ingress_name=ingress-phillies
+    fi
+
+    # echo "Ingress: $ingress_name"
+    # ret=`kubectl get ingress $ingress_name -o json`
+    ret=`kubectl get ingress $ingress_name -o json | jq .metadata.annotations`
+    echo "$ret" | jq -s .
+}
+function forwarding-rules {
+    annotations=`ingress-annotations | grep forwarding-rule`
+    echo "$annotations" | tr -s ' ' | cut -d' ' -f3 | tr -d '"' | tr -d ','
+}
+
 alias deps='kg deployments'
 alias dep='kj deployment'
 alias pods='kg pods'
 alias pod='kj pod'
 alias svcs='kg services'
 alias svc='kj service'
+alias cluster-dump='kubectl cluster-info dump'
 alias clusters='gcloud container clusters list'
 function cluster {
     gcloud container clusters describe --format json $1 | jq .
@@ -295,7 +424,7 @@ function kall-iterate {
 function kswitch {
     local new_context=$1
 
-    cd $PHILLIES_PATH/.docker/dash
+    cd $PHILLIES_PATH/etc/docker/dash
     make needs-credentials APP=$new_context
     cd -
 }
@@ -309,6 +438,11 @@ function __kube_ps1()
         echo "[kube:${CONTEXT}]"
     fi
 }
+
+if [ -f $HOME/.bashrc_kubectl ]; then
+    source $HOME/.bashrc_kubectl
+    complete -F __start_kubectl k  # from https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+fi
 
 
 #
@@ -509,7 +643,11 @@ export PIP_FIND_LINKS="file://${WHEELHOUSE}"
 export PIP_WHEEL_DIR="${WHEELHOUSE}"
 mkdir -p $WHEELHOUSE
 
-export PYTHON3_HOME=/usr/local/opt/python@3.7
+export PYTHON3_HOME=/usr/local/opt/python@3.8
+export PATH="$PYTHON3_HOME@3.8/bin:$PATH"
+export LDFLAGS="-L$PYTHON3_HOME@3.8/lib"
+export PKG_CONFIG_PATH="$PYTHON3_HOME@3.8/lib/pkgconfig"
+
 alias python=python3
 
 alias e='source .env/bin/activate'
@@ -633,7 +771,149 @@ function edg-status-watch {
     s="" ; while sleep 0.5 ; do t=`curl http://e/get_status_string 2>/dev/null` ; if [ "$s" != "$t" ] ; then s=$t ; echo $s ; fi ; done
 }
 
+
 # GCLOUD
+export CLOUDSDK_PYTHON_SITEPACKAGES=1
+alias gl='gcloud alpha logging'
+# alias glr='gcloud logging read'
+
+function images {
+    local image="$1"
+    local REPOSITORY="gcr.io/phil-new"
+    if [ -z "$image" ]; then
+        gcloud container images list --repository=$REPOSITORY
+        return
+    fi
+
+    if [[ "$image" != "$REPOSITORY"* ]]; then
+        image="$REPOSITORY/$image"
+    fi
+
+    gcloud container images list-tags $image
+}
+
+# Queries the loadbalancer logs
+function glog {
+
+    # BACKEND SERVICES
+    # gcloud compute backend-services list
+    # gcloud compute backend-services describe --global --format=json k8s1-18cca515-default-service-api-80-9719b3d2
+
+    # FORWARDING RULES
+    # gcloud compute forwarding-rules list
+    # gcloud compute forwarding-rules describe --global --format=json k8s2-fs-dh9u9nk2-default-ingress-phillies-9ye9weet | jq .
+
+    # HELPFUL DOCS
+    # https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#HttpRequest
+    # https://cloud.google.com/logging/docs/logs-views
+    # https://cloud.google.com/logging/docs/buckets
+
+    # EXAMPLE LOG ENTRY FROM THE LOAD BALANCER
+      # {
+        # "http_request": {
+          # "cache_fill_bytes": "0",
+          # "cache_hit": false,
+          # "cache_lookup": false,
+          # "cache_validated_with_origin_server": false,
+          # "latency": "0.025376s",
+          # "referer": "",
+          # "remote_ip": "35.196.21.140",
+          # "request_method": "GET",
+          # "request_size": "198",
+          # "request_url": "https://papi.phils.io/schedule/near/143",
+          # "response_size": "1355",
+          # "server_ip": "10.88.1.139",
+          # "status": 200,
+          # "user_agent": "python-requests/2.25.1"
+        # },
+        # "insert_id": "1oi2nmwf4wj376",
+        # "json_payload": {
+          # "@type": "type.googleapis.com/google.cloud.loadbalancing.type.LoadBalancerLogEntry",
+          # "statusDetails": "response_sent_by_backend"
+        # },
+        # "labels": {},
+        # "log_name": "projects/phil-new/logs/requests",
+        # "receive_timestamp": "2021-09-10T22:28:33.356191462Z",
+        # "resource": {
+          # "labels": {
+            # "backend_service_name": "k8s1-18cca515-default-service-api-80-9719b3d2",
+            # "forwarding_rule_name": "k8s2-fs-dh9u9nk2-default-ingress-phillies-9ye9weet",
+            # "project_id": "phil-new",
+            # "target_proxy_name": "k8s2-ts-dh9u9nk2-default-ingress-phillies-9ye9weet",
+            # "url_map_name": "k8s2-um-dh9u9nk2-default-ingress-phillies-9ye9weet",
+            # "zone": "global"
+          # },
+          # "type": "http_load_balancer"
+        # },
+        # "severity": 200,
+        # "span_id": "ad5ce504c108a19d",
+        # "timestamp": "2021-09-10T22:28:32.701888Z",
+        # "trace": "projects/phil-new/traces/0474a1e41cfb053be0fd9c422bc292ff",
+        # "trace_sampled": false
+      # }
+
+    local clause="$1"
+    if [ -z "$clause" ]; then
+        echo
+        echo "    Please supply a clause:"
+        echo '        glog tail                                          # live tail'
+        echo '        glog "http_request.status = 200"                   # http successes'
+        echo '        glog "http_request.status >= 400"                  # http errors'
+        echo '        glog "http_request.request_method=GET"             # GET requests'
+        echo '        glog "http_request.user_agent:Mozilla"             # hits by Mozilla'
+        echo '        glog "http_request.remote_ip=35.196.21.140"        # hits from megacron'
+        echo '        glog "http_request.request_url:schedule/near"  # hits to the schedule/near endpoint'
+        echo '        glog "NOT http_request.request_url:schedule/near"  # hits NOT to the schedule/near endpoint'
+        echo '        glog "timestamp <= \"2021-09-14T11:01:00.0Z\" AND timestamp >= \"2021-09-14T11:00:00.0Z\""'
+        echo
+        return
+    fi
+
+    local bucket=phil-log-lb
+    local location=us-east1
+    local resource=resource.type=http_load_balancer
+
+    local ts_begin=receive_timestamp:label=ts-begin
+    local ts_end=timestamp:label=ts-end
+    local status=http_request.status
+    local method=http_request.request_method:label=method
+    local ip=http_request.remote_ip:label=ip
+    local url=http_request.request_url:label=url
+    local user_agent=http_request.user_agent:label=user-agent
+    local duration=duration\(start=timestamp,end=receive_timestamp,precision=3\)
+    local backend=resource.labels.backend_service_name:label=backend-service
+    local forwarding=resource.labels.forwarding_rule_name:label=forwarding-rule
+    local items=$ts_begin,$ts_end,$duration,$status,$method,$backend,$forwarding,$ip,$url,$user_agent
+
+    local sep=','
+    # sep="\\t"
+    local format="csv[separator='$sep']"
+    local format_arg="$format($items)"
+
+    if [ "$clause" = "tail" ]; then
+
+        # Tails the live loadbalancer log from stackdriver
+        gcloud alpha logging tail \
+            $resource \
+            --format="$format_arg"
+            # --buffer-window=1s \
+
+        return
+    fi
+
+    # Reads the logging bucket
+    gcloud logging read \
+        --bucket=$bucket --location=$location \
+        --format="$format_arg" \
+        --view=lb-all \
+        "$resource AND $clause"
+}
+
+function glog-errors {
+    glog "http_request.status >= 400"
+}
+
+
 function bucket-logs {
     local dir="~/logs"
     local bucket="gs://phil-logs"
@@ -1056,8 +1336,11 @@ function phil-db-local {
 function phil-db {
     mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
+function phil-db-admin {
+    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_ADMIN_USER -p$PHIL_GCLOUD_DB_ADMIN_PW "$@"
+}
 function phil-db-uploader {
-    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER_UP -p$PHIL_GCLOUD_DB_PW_UP "$@"
+    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_UP_USER -p$PHIL_GCLOUD_DB_UP_PW "$@"
 }
 function phil-db-dev {
     mycli -h $PHIL_GCLOUD_DB_IP_DEV phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
@@ -1068,9 +1351,7 @@ function phil-db-staging {
 function phil-db-clone {
     mycli -h $PHIL_GCLOUD_DB_CLONE_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
 }
-function phil-db-root {
-    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u root -p$PHIL_GCLOUD_DB_PW "$@"
-}
+
 function ls-backups {
     gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/
 }
@@ -1209,6 +1490,27 @@ function dns-exists {
 
 
 # GOOGLE GCLOUD DNS (AGAIN?)
+function gdns {
+    arg="$1"
+    if [ -z "$arg" ]; then
+        echo
+        echo "  Please supply an arg:"
+        echo "    add - adds an entry"
+        echo "    del - deletes an entry"
+        echo "    ls - lists entries"
+        echo "    mv - moves an entry (deletes then adds)"
+        echo
+    fi
+    if [ "$arg" == "add" ]; then
+        gdns-add $*
+    elif [ "$arg" == "del" ]; then
+        gdns-del $*
+    elif [ "$arg" == "ls" ]; then
+        gdns-ls $*
+    elif [ "$arg" == "mv" ]; then
+        gdns-mv $*
+    fi
+}
 function gdns-add-all {
     #
     # gdns-add-all a b c d foobar
@@ -1430,7 +1732,7 @@ SQLLINE_HOME=$HOME/phillies/kafka/sqlline
 
 
 # GIT'R DONE!
-alias b='git co'  # b <branch_name>
+alias b='git co --track'  # b <branch_name>
 alias bs='git branch' # list all branches
 alias gi='git'
 alias god='git'
@@ -1440,17 +1742,19 @@ alias gr='git restore'
 alias st='git status'
 alias co='git checkout'
 alias gpl='git pull origin `git rev-parse --abbrev-ref HEAD`'
-alias merge='git merge'
+alias merge-main='co phy-merge && git merge main && git push'
 alias branch='co -b'
 alias stash='git stash'
 alias stahs='stash'
 alias sta='stash'
 alias prod='co prod'
 alias master='prod'
+alias main='co main'
 alias dev='co dev'
-alias devv='co dev-updates'
+alias devv='co phy-merge'
 alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
 alias got='git'
+alias gut='git'
 
 function gitclone {
     #
@@ -1620,10 +1924,13 @@ function l {
 # API
 #
 function api-local {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://private:81/$1" | jq .
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://localhost:80/$1" 
 }
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
+}
+function api-old {
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq .
 }
 function apiv {
     curl ${@:2} -v -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
@@ -1761,17 +2068,171 @@ function lint-time-file {
     echo $csvline >> "$HOME/lint-times.csv"
 }
 
+function phy-builds {
+    export GITHUB_SHA=`git rev-parse --short HEAD`
+    export GCLOUD_PROJECT=phil-new
+    export BRANCH=dev
+    # export PHILLIES_PATH=/Users/zo/phillies/phillies
+    export PHILLIES_PATH=/Users/zo/phillies/phillies
+    cd $PHILLIES_PATH
+
+    # BUILDS the pc-phy image
+    # INHERITS FROM: python:3.7.7-slim
+    # USES: Makefile
+    # USES: .docker/phy-compose/Dockerfile.phy
+    echo
+    echo
+    echo BUILDING pc-phy
+    echo
+    echo
+    make pc-phy-build
+
+    # BUILDS the pc-phy-bundle image. A thin layer over pc-phy that copies the code
+    # INHERITS FROM: pc-phy
+    # USES: .github/workflows/phy-deploy.yml
+    # USES: .docker/phy-compose/Dockerfile.phy-bundle
+    echo
+    echo
+    echo BUILDING pc-phy-bundle
+    echo
+    echo
+    export PHY_IMAGE_NAME=pc-phy-bundle
+    export SRC_HOME=$PHILLIES_PATH
+    export GITHUB_WORKSPACE=Users/zo/phillies/phillies
+    docker build \
+          --tag gcr.io/$GCLOUD_PROJECT/$PHY_IMAGE_NAME:latest \
+          --tag gcr.io/$GCLOUD_PROJECT/$PHY_IMAGE_NAME:$GITHUB_SHA \
+          --tag gcr.io/$GCLOUD_PROJECT/$PHY_IMAGE_NAME:$BRANCH \
+          -f /$GITHUB_WORKSPACE/.docker/phy-compose/Dockerfile.phy-bundle /$GITHUB_WORKSPACE/
+
+    if [ $? -ne 0 ]; then
+        echo "Building $PHY_IMAGE_NAME failed"
+        return
+    fi
+
+    # BUILDS the phy image. Installs uwsgi
+    # INHERITS FROM: python:3.7.5
+    # NOTE: .docker/phy/README.md
+    # USES: .github/scripts/phy-base-image-pull.sh
+    # USES: .docker/phy/Dockerfile
+    echo
+    echo
+    echo BUILDING phy
+    echo
+    echo
+    export IMAGE=gcr.io/$GCLOUD_PROJECT/phy 
+    export IMAGE_BRANCH=$IMAGE:$BRANCH-latest
+    export IMAGE_COMMIT=$IMAGE:$BRANCH-$GITHUB_SHA
+    export IMAGE_LATEST=$IMAGE:latest
+    docker build \
+        --tag $IMAGE_BRANCH \
+        --tag $IMAGE_COMMIT \
+        --tag $IMAGE_LATEST \
+        -f /$GITHUB_WORKSPACE/.docker/phy/Dockerfile /$GITHUB_WORKSPACE/
+
+
+    if [ $? -ne 0 ]; then
+        echo "Building $IMAGE failed"
+        return
+    fi
+
+
+    # BUILDS the api image
+    # INHERITS FROM: phy
+    # USES: .github/workflows/api-deploy.yml
+    # USES: .github/scripts/api-deploy.sh
+    # USES: .docker/api/DockerfileFromBase
+    echo
+    echo
+    echo BUILDING api
+    echo
+    echo
+    export IMAGE=gcr.io/$GCLOUD_PROJECT/api
+    export IMAGE_COMMIT=$IMAGE:$GITHUB_SHA
+    export IMAGE_BRANCH=$IMAGE:$BRANCH-latest
+    export IMAGE_LATEST=$IMAGE:latest
+    docker build \
+        --build-arg BRANCH=$BRANCH \
+        --tag $IMAGE_COMMIT \
+        --tag $IMAGE_BRANCH \
+        --tag $IMAGE_LATEST \
+        -f /$GITHUB_WORKSPACE/.docker/api/DockerfileFromBase /$GITHUB_WORKSPACE/
+}
+
+function rocky-pie-build {
+    cd $PHY/..
+
+    export COMMIT=`git rev-parse --short HEAD`
+    export IMAGE=gcr.io/$PHIL_GCLOUD_PROJECT/apps
+    export IMAGE_PIE=$IMAGE:pie-latest
+    export IMAGE_PIE_COMMIT=$IMAGE:pie-commit-$COMMIT
+    export IMAGE_PIE_PHY=$IMAGE:pie-phy
+
+    echo "Building docker image: $IMAGE_PIE"
+    docker build  \
+        --build-arg ENV="pie" \
+        --tag $IMAGE_PIE \
+        --tag $IMAGE_PIE_COMMIT \
+        --tag $IMAGE_PIE_PHY \
+        -f apps/Dockerfile apps/
+}
+
+function rocky-pie-start {
+    export IMAGE=gcr.io/$PHIL_GCLOUD_PROJECT/apps
+    export IMAGE_PIE_PHY=$IMAGE:pie-phy
+    docker run -p 3005:3005 $IMAGE_PIE_PHY
+}
+
+function rocky-pie-stop {
+    container=`docker ps | grep pie-phy | tr -s ' ' | cut -d' ' -f1`
+    echo "Stopping container: $container"
+    docker stop $container
+}
+
+function rocky-pie-shell {
+    container=`docker ps | grep pie-phy | tr -s ' ' | cut -d' ' -f1`
+    echo "Shelling into container: $container"
+    docker exec -it $container bash
+}
+
+
+function rocky-pie {
+    rocky-pie-build
+
+    echo "Pushing docker image: $IMAGE_PIE"
+    docker push $IMAGE_PIE
+    echo "Pushing docker image: $IMAGE_PIE_COMMIT"
+    docker push $IMAGE_PIE_COMMIT
+
+    echo "Deploying"
+    DEPLOYMENT=deployment/rocky-pie
+    CONTAINER=rocky-pie
+    kubectl set image $DEPLOYMENT $CONTAINER=$IMAGE_PIE_COMMIT --record
+    kubectl rollout status $DEPLOYMENT
+
+    # ROCKY_POD=`pods | grep rocky-pie | cut -d' ' -f1`
+    # kubectl delete pod $ROCKY_POD
+
+    # LOGS
+    sleep 3
+    ROCKY_POD=`pods | grep rocky-pie | cut -d' ' -f1`
+    kubectl logs -f $ROCKY_POD | grep -v "kube-probe\|GoogleHC"
+
+    # CONNECT TO SHELL
+    # kubectl exec -it $ROCKY_POD sh
+}
+
 function pie-copy-dir {
     dir="$1"
     export -f pie-copy
     find "$dir" -type f | xargs -I{} bash -c 'pie-copy "{}"'
 }
 function pie-copys {
-    for file in "$@"
-    do
+    for file in "$@"; do
         pie-copy $file
     done
 }
+export -a pie
 function pie-copy {
     local filename="$1"
 
@@ -1799,7 +2260,6 @@ function pie-copy {
     # should we ignore this file extension?
     file_ext="${filename#*.}"
     ignore_this_file=false
-    # declare -a ignored_exts=("css" "csv" "CSV" "dcf" "gif" "gitkeep" "gz" "h5" "html" "ico" "ini" "jpg" "json" "lock" "mandrill" "md" "p" "pkl" "png" "pub" "pyc" "r" "rb" "rds" "scaler" "sql" "tex" "ttf" "txt" "xml" "xls" "xlsx" "yaml" "yml)
     declare -a accepted_exts=("py" "sh")
     for ext in "${accepted_exts[@]}"; do
         ignore_this_file=true
@@ -1809,7 +2269,8 @@ function pie-copy {
         fi
     done
 
-    declare -a ignored_substrings=("pytest_cache" "__pycache__")
+    # declare -a ignored_substrings=("pytest_cache" "__pycache__" "uploader/blocking" "uploader/probabiilties_br" "research/defensive_evaluation" "uploader/defensive_evaluation")
+    declare -a ignored_substrings=("pytest_cache" "__pycache__" "uploader/blocking" "uploader/probabiilties_br" "uploader/defensive_evaluation")
     for substring in "${ignored_substrings[@]}"; do
         if [[ "$filename" == *"$substring"* ]]; then
             echo "ignoring transform on substring: $substring"
@@ -1828,6 +2289,7 @@ function pie-copy {
         sed -i.bak "s/'phy./'pie./" $pie_file
         sed -i.bak 's/phy-compose/pie-compose/' $pie_file
         sed -i.bak 's/python phy\//python /' $pie_file
+        sed -i.bak 's/python3 phy\//python3 /' $pie_file
 
         # cause "phy." was already transformed into "pie." above
         sed -i.bak 's/pie.research\//research\//' $pie_file
@@ -1847,6 +2309,8 @@ function pie-copy {
 
         sed -i.bak 's/Phillies_LHV/PHILLIES_LEHIGH_VALLEY/' $pie_file
         sed -i.bak 's/Phillies_CLW/PHILLIES_BAY_CARE/' $pie_file
+        sed -i.bak 's/Phillies_REA/PHILLIES_READING/' $pie_file
+        sed -i.bak 's/Phillies_JS/PHILLIES_JERSEY_SHORE/' $pie_file
         sed -i.bak 's/Venue\.Phillies/Venue\.PHILLIES/' $pie_file
 
         sed -i.bak 's/import keras/import tensorflow.keras/' $pie_file
@@ -1863,26 +2327,56 @@ function pie-copy {
         sed -i.bak 's/ PERMISSION_TYPE)/ PermissionType)/' $pie_file
         sed -i.bak 's/(PERMISSION_TYPE)/(PermissionType)/' $pie_file
 
+        sed -i.bak 's/usr\/src\/setup.py/var\/repos\/pie\/dataflow\/setup.py/' $pie_file
+
+        # black the file
+        (cd $PIE && make format DIR=$filename)
+
         # add missing newline to end of file: https://unix.stackexchange.com/questions/31947/how-to-add-a-newline-to-the-end-of-a-file
         # https://stackoverflow.com/questions/10082204/add-a-newline-only-if-it-doesnt-exist
         # sed -i '' -e '$a\' $pie_file
         rm $pie_file.bak
     fi
     tail -c1 $pie_file | read -r _ || echo >> $pie_file
+
+}
+
+function healths {
+    for file in "$@"; do
+        health $file
+    done
+}
+function health {
+    local filename="$1"
+    filename=${filename#"phy"}
+    filename=${filename#"/"}
+
+    cd $PIE
+
+    if [ -z "$filename" ]; then
+        echo
+        echo "$filename does not exist. Skipping."
+        echo
+        return
+    fi
+
+    make health DIR=$filename OPTIONS=-q
+    cd -
 }
 
 
-
 # DIRS
-alias src='cd  $SRC_HOME'
-alias re='cd  $PHY/reports'
+alias src='cd $SRC_HOME'
+alias re='cd $PIE/reports'
 alias rep='re'
-alias a='cd  $PHY/api'
-alias u='cd  $PHY/uploader'
+alias a='cd  $PIE/api'
+alias u='cd  $PIE/uploader'
+alias ro='cd $PHY/../apps'
 alias phy='cd $PHY'
 alias pie='cd $PIE'
-alias pid='cd $PIE/.docker/pie'
-alias pik='cd $PIE/.docker/kube'
+alias pid='cd $PIE/etc/docker/pie'
+alias pik='cd $PIE/etc/kubernetes'
+alias ku=pik
 alias pso='cd $SRC_HOME/pitch_selection_optimization'
 alias carm='cd $SRC_HOME/carmelo_update'
 alias pie-path='export PYTHONPATH=$SRC_HOME'
@@ -1892,7 +2386,7 @@ alias v='cd $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd $SRC_HOME/chef/environments'
 alias r='cd $SRC_HOME/chef/roles'
 alias dot='cd ~/.dotfiles'
-alias dag='cd $PHY/cloud_composer/dags'
+alias dag='cd $PIE/cloud_composer/dags'
 alias ib='cd $SRC_HOME/ibp-dashboards'
 
 
