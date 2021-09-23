@@ -71,7 +71,8 @@ colorscheme gruvbox-material
 "
 " YouCompleteMe: https://github.com/ycm-core/YouCompleteMe#options
 "
-set completeopt=menu,popup,popuphidden
+" set completeopt=menu,popup,popuphidden
+
 " set completepopup=height:10,width:60,highlight:InfoPopup
 " let g:ycm_auto_hover=''  " https://stackoverflow.com/questions/64480651/youcompleteme-function-preview-popup-balloon-in-new-version
 
@@ -111,7 +112,7 @@ highlight Cursor ctermbg=Green
 set incsearch	" incremental search
 set hlsearch 	" search highlighting
 set visualbell  " no beeping
-set encoding=utf-8
+set encoding=utf-8  " required by YouCompleteMe https://ycm-core.github.io/YouCompleteMe/#macos
 set cursorline
 " set lazyredraw
 let python_highlight_all=1
