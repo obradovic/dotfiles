@@ -1326,6 +1326,8 @@ function macs {
     sudo cp -f $file $file.bak
 }
 
+alias rosetta='arch -x86_64'
+
 
 #
 # DATABASE
