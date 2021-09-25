@@ -82,8 +82,6 @@ alias ports='netstat -tulan'
 alias .ale='make'
 alias utc='date -u'
 alias ut='utc'
-alias medicalbot='ENV=prod $PIE/.env.Darwin/bin/python $PIE/uploader/draft_prospect_link/medicalbot.py'
-alias allowlist='ENV=prod $PIE/.env.Darwin/bin/python $PIE/bin/allowlist.py'
 alias today='note today'
 alias x=exit
 
@@ -136,6 +134,14 @@ function title {
   echo "Title set to $1"
 }
 
+
+#
+# PHILS
+#
+alias python-prod='ENV=prod $PIE/.env.Darwin/bin/python'
+alias medicalbot='python-prod $PIE/uploader/draft_prospect_link/medicalbot.py'
+alias allowlist='python-prod $PIE/bin/allowlist.py'
+export APP=api
 
 
 #
