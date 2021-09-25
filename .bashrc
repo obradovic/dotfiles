@@ -84,6 +84,7 @@ alias utc='date -u'
 alias ut='utc'
 alias today='note today'
 alias x=exit
+alias mini='ssh 192.168.1.42'
 
 function mcd {
     mkdir "$1"
@@ -603,7 +604,7 @@ alias rube-local='screen /dev/cu.usbserial 115200'
 alias rube-eth='ssh pi@192.168.2.2'
 
 
-# OSX NOTIFICATIONS
+# OSX
 alias notifications-enable='launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist'
 alias notifications-disable='launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist; killall NotificationCenter'
 
@@ -1333,6 +1334,7 @@ function macs {
 }
 
 alias rosetta='arch -x86_64'
+alias rb='rosetta bash'
 
 
 #
