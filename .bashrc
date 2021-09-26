@@ -605,6 +605,8 @@ alias rube-eth='ssh pi@192.168.2.2'
 
 
 # OSX
+alias rosetta='arch -x86_64'
+alias rb='rosetta bash'
 alias notifications-enable='launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist'
 alias notifications-disable='launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist; killall NotificationCenter'
 
@@ -1333,8 +1335,6 @@ function macs {
     sudo cp -f $file $file.bak
 }
 
-alias rosetta='arch -x86_64'
-alias rb='rosetta bash'
 
 
 #
