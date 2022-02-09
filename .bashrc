@@ -85,6 +85,7 @@ alias ut='utc'
 alias today='note today'
 alias x=exit
 alias mini='ssh 192.168.1.42'
+alias hosts='sudo vi /etc/hosts'
 
 function mcd {
     mkdir "$1"
@@ -185,7 +186,7 @@ function beeper {
 #
 # GITHUB ACTIONS
 #
-alias g='cd $PHY/../.github'
+alias g='cd $PIE/../.github'
 alias w='g && cd workflows'
 alias sc='g && cd scripts'
 
@@ -198,6 +199,8 @@ alias dc='d container'
 alias di='d image'
 alias dps='d ps -a'
 alias doc='cd $PIE/etc/docker/pie'
+alias ama='cd $PIE/dash/ama'
+alias amad='cd $PIE/etc/docker/dash'
 alias dc='docker-compose -f $PHILLIES_PATH/.docker/phy-compose/docker-compose.yml'
 alias drun='docker container run'
 alias pc-up="(cd $PHILLIES_PATH && make pc-up)"
@@ -274,6 +277,7 @@ alias aw='awair --mac 70:88:6b:14:10:a1'
 # KUBE
 #
 alias k=kubectl
+alias desc='k describe'
 alias kns=kubens
 alias kaf='k apply -f'
 alias kcf='k create --save-config -f'
@@ -320,28 +324,46 @@ function bp {
 
 function pod-bash {
     local pod_pattern="$1"
-    local pod=`pods | grep "$pod_pattern" | tr -s ' ' | cut -d' ' -f1`
-    echo "Bashing into: $pod"
-    bp "$pod"
+    local pods=`podsa | grep "$pod_pattern" | tr -s ' '`
+    local namespace=`echo $pods | cut -d' ' -f1`
+    local pod_name=`echo $pods | cut -d' ' -f2`
+    echo "Bashing into: $pod_name"
+
+    local shell=/bin/bash
+    if [ "$namespace" != "default" ]; then
+        echo "Using /bin/sh instead..."
+        shell=/bin/sh
+    fi
+    if [[ "$pod_name" == *"rocky"* ]]; then
+        echo "Using /bin/sh instead..."
+        shell=/bin/sh
+    fi
+    if [[ "$pod_name" == *"haproxy"* ]]; then
+        echo "Using /bin/sh instead..."
+        shell=/bin/sh
+    fi
+
+    kubectl exec --namespace "$namespace" -it "$pod_name" -- "$shell"
+    # bp "$pod"
 }
 
 function pod-log {
     local pod_pattern="$1"
     local logfile="$2"
-    local pod=`pods | grep -v NAME | sort | grep "$pod_pattern" | head -1 | tr -s ' ' | cut -d' ' -f1`
+    local pod=`podsa | grep -v NAME | sort | grep "$pod_pattern" | grep Running | head -1 | tr -s ' ' | cut -d' ' -f2`
 
-    echo "pod is $pod"
-    echo "logfile is $logfile"
+    # echo "pod is $pod"
+    # echo "logfile is $logfile"
 
     if [ -n "$logfile" ]; then
-        echo "Tailing $pod "$logfile""
+        echo "Tailing pod: $pod logfile: "$logfile""
         filename="/var/log/uwsgi-$logfile.log"
         k exec "$pod" -- ls -al "$filename"
         echo
         sleep 1
         k exec "$pod" -- tail -f "$filename"
     else
-        echo "Tailing $pod"
+        echo "Tailing pod: $pod"
         kl "$pod"
     fi
 }
@@ -363,6 +385,12 @@ function pod-log-api-ws {
 }
 function pod-log-hap {
     pod-log hap
+}
+function pod-log-hap-clean {
+    pod-log hap | grep -v "STATS\|GET / \|NOSRV\|SSL handshake failure"
+}
+function pod-log-rocky {
+    pod-log rocky
 }
 
 function pod-log-all {
@@ -405,12 +433,27 @@ function forwarding-rules {
     echo "$annotations" | tr -s ' ' | cut -d' ' -f3 | tr -d '"' | tr -d ','
 }
 
+alias configmaps='kg configmaps -A'
+alias daemonsets='kg daemonsets -A -o wide'
+alias dms=daemonsets
 alias deps='kg deployments'
-alias dep='kj deployment'
-alias pods='kg pods'
-alias pod='kj pod'
-alias svcs='kg services'
-alias svc='kj service'
+alias depsa='deps -A'
+alias events='kg events -w --sort-by=.metadata.creationTimestamp'
+alias eventsa='events -A'
+alias nodes='kg nodes -o wide'
+alias nodesa='nodes -A'
+alias pods='kg pods -o wide | grep -v Evicted'
+alias podsa='kg pods -o wide -A | grep -v Evicted'
+alias podsc='pods | grep "Running\|Creat" | grep -v "^airflow\|composer-fluentd" | grep -v Error'
+alias pod-nodes=node-pods
+alias ingress='kg ingress -A'
+alias ingresses=ingress
+alias services='kg services -o wide'
+alias servicesa='services -A'
+alias secrets='kg secrets'
+alias secretsa='secrets -A'
+alias replicasets='kg replicasets -o wide -A'
+alias replicasetsa='replicasets -A'
 alias cluster-dump='kubectl cluster-info dump'
 alias clusters='gcloud container clusters list'
 function cluster {
@@ -575,12 +618,12 @@ function tp {
 function tpl {
     tp 127.0.0.1 $1
 }
-alias my='mypy --config-file $PHY/setup.cfg'
+alias my='mypy --config-file $PIE/etc/setup.cfg'
 function mypylint {
     filename="$1"
     pycodestyle --count --max-line-length=160 "$filename"
-    mypy --config-file $PHY/setup.cfg "$filename"
-    pylint --rcfile $PHY/.pylintrc "$filename"
+    mypy --config-file $PIE/etc/setup.cfg "$filename"
+    pylint --rcfile $PIE/etc/.pylintrc "$filename"
 }
 function i {
     touch `dirname $1`/__init__.py
@@ -590,8 +633,8 @@ if [ -f $HOME/.bashrc_private ]; then
     source $HOME/.bashrc_private
 fi
 
-if [ -f $PHY/bin/gcp-shared.sh ]; then
-    source $PHY/bin/gcp-shared.sh
+if [ -f $PIE/bin/gcp-shared.sh ]; then
+    source $PIE/bin/gcp-shared.sh
 fi
 
 
@@ -668,7 +711,7 @@ alias acc='. .env.`uname -s`/bin/activate'
 alias pip='python3 -m pip'
 alias pi='pip install'
 alias pw='pip wheel'
-alias pis='pi `grep slack $PHY/requirements.txt`'
+alias pis='pi `grep slack $PIE/etc/requirements.txt`'
 alias pir='pi -r requirements.txt'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
 alias phickle='python3 $PIE/shared/phickle.py'
@@ -955,6 +998,26 @@ function bucket-logs {
     rm -f output.csv
     cat header $file_prefix* > output.csv
 }
+
+function check-cluster-ips {
+    local clusters=`gcloud container clusters list | grep -v MASTER_IP`
+    echo
+    echo "$clusters"
+    echo
+    local ips=`echo "$clusters" | tr -s ' ' | cut -d' ' -f4`
+    for ip in $ips; do
+        echo "Checking $ip"
+        local url="https://$ip/api/v1/pods"
+        local response=`curl -s -k $url | jq .code` 
+        if [ "$response" == "403" ]; then
+            echo "Got a 403 response. Good!"
+        else
+            echo "Got a $code response. NOT GOOD!"
+        fi
+        echo
+    done
+}
+
 function datalab {
   gcloud compute ssh --quiet \
   --project $PHIL_GCLOUD_PROJECT \
@@ -1450,6 +1513,8 @@ function lsv {
 
 # GOOGLE GCLOUD DNS
 export CLOUDSDK_PYTHON=/usr/local/bin/python3
+alias dnsrecon='python3 ~/phillies/dnsrecon/dnsrecon.py'
+alias dnsenum='docker run -it -v "$PWD":/tmp -w /tmp perl:5.34 perl dnsenum.sh'
 alias dns='gcloud dns'
 alias dns-transaction='dns record-sets transaction'
 alias dns-list-all='dns record-sets list --zone $DNS_ZONE'
@@ -1499,7 +1564,9 @@ function dns-exists {
 }
 
 
-# GOOGLE GCLOUD DNS (AGAIN?)
+#
+# GOOGLE GCLOUD DNS
+#
 function gdns {
     arg="$1"
     if [ -z "$arg" ]; then
@@ -1541,7 +1608,7 @@ function gdns-add {
     # gdns-add foo bar 5
     #
     local hostname="$1"     # "foobar.$DOMAIN_FQ"
-    local target="$2"       # " 127.0.0.1"
+    local target="$2"       # "127.0.0.1"
     local ttl="$3"          # in seconds
 
     if [ -z "$hostname" ]; then
@@ -1603,6 +1670,28 @@ function gdns-mv {
     #
     gdns-del "$1"
     gdns-add $*
+}
+
+function gdns-mv-cluster {
+    #
+    # gdns-mv-cluster ingress-phillies-aaron    # move our DNS entries to point to a new cluster CNAME
+    #
+    local ingress_cname="$1"     # "ingress-phillies-aaron"
+    declare -a names=("api" "rocky" "hitting")
+
+    if [ -z "$ingress_cname" ]; then
+        echo
+        echo "  gdns-mv-cluster ingress-phillies-aaron         # points everything to ingress-phillies-aaron"
+        echo
+        echo "  \"everything\" here means \"${names[@]}\""
+        echo
+        return
+    fi
+
+    for name in "${names[@]}"; do
+        echo "Moving $name to $ingress_cname"
+        gdns-mv $name $ingress_cname
+    done
 }
 
 function gdns-ttl {
@@ -1744,6 +1833,7 @@ SQLLINE_HOME=$HOME/phillies/kafka/sqlline
 # GIT'R DONE!
 alias b='git co --track'  # b <branch_name>
 alias bs='git branch' # list all branches
+alias bs-dates="git for-each-ref --sort=committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)'"
 alias gi='git'
 alias god='git'
 alias gd='git diff'
@@ -1757,14 +1847,14 @@ alias branch='co -b'
 alias stash='git stash'
 alias stahs='stash'
 alias sta='stash'
-alias prod='co prod'
-alias master='prod'
+alias master='co master'
 alias main='co main'
 alias dev='co dev'
 alias devv='co phy-merge'
 alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
 alias got='git'
 alias gut='git'
+alias bfg='/usr/local/opt/openjdk/bin/java -jar /usr/local/Cellar/bfg/1.14.0/libexec/bfg-1.14.0.jar'
 
 function gitclone {
     #
@@ -2384,7 +2474,9 @@ alias u='cd  $PIE/uploader'
 alias ro='cd $PHY/../apps'
 alias phy='cd $PHY'
 alias pie='cd $PIE'
+alias ts='cd ~/phillies/ts'
 alias pid='cd $PIE/etc/docker/pie'
+alias pig='cd $PIE/.github/workflows'
 alias pik='cd $PIE/etc/kubernetes'
 alias ku=pik
 alias pso='cd $SRC_HOME/pitch_selection_optimization'
