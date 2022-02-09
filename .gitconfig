@@ -19,7 +19,6 @@
 [web]
     browser = google-chrome
 [push]
-    default = simple
 [alias]
     lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
     lol = log --pretty=oneline --abbrev-commit --graph --decorate
@@ -36,7 +35,7 @@
     repush = !git pull --rebase && git push
     wip = !git commit -am "WIP" && git push
 [push]
-    default = matching
+	default = current
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
