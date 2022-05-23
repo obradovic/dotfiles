@@ -182,9 +182,9 @@ brew 'yq'
 # brew 'curl', args:['with-nghttp2']
 
 mas 'Microsoft-365', id: 1450038993
-mas 'Skitch', id: 425955336
+# mas 'Skitch', id: 425955336
 mas 'Slack', id: 803453959
-mas 'Xcode', id: 497799835
+# mas 'Xcode', id: 497799835
 mas 'Docs for Xcode', id: 688199928
 # mas 'Wunderlist', id: 410628904
 
