@@ -1,9 +1,9 @@
 #
-# COMMON
+# GENERIC BASH OPTIONS
 #
+set -o vi
 shopt -s extglob
 shopt -s histappend
-set -o vi
 umask 0022
 
 # GENERIC BASH
@@ -107,6 +107,13 @@ function geo {
     # echo $info
     # curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN" | jq -r '. | "\(.city) \(.region_name) \(.country_code)"'
 }
+function who {
+    ip="$1"
+    if [ -z "$ip" ]; then
+        ip=`ip`
+    fi
+    whois $ip | grep OrgName | tr -s ' ' | cut -d' ' -f2-
+}
 function wildcard_csr {
     domain=$1
     openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
@@ -143,7 +150,16 @@ function title {
 alias python-prod='ENV=prod $PIE/.env.Darwin/bin/python'
 alias medicalbot='python-prod $PIE/uploader/draft_prospect_link/medicalbot.py'
 alias allowlist='python-prod $PIE/bin/allowlist.py'
-export APP=api
+alias adrian-db='t python3 $PIE/biomech/adrian_db.py'
+alias adrian-db-write='t python3 $PIE/biomech/adrian_db.py --write-db --adrian-filename'
+alias adrian-process='t python3 $PIE/biomech/adrian_process.py --hawkeye-filename'
+alias adrian='t python3 $PIE/biomech/adrian.py --hawkeye-filename'
+function biohealth {
+    DIR=biomech make health
+    # (pie && DIR=biomech make health)
+}
+
+export APP=db
 
 
 #
@@ -398,7 +414,7 @@ function pod-log-all {
 }
 
 function clients {
-    curl -s https://wapi.phils.io/clients | jq .
+    curl -s https://ws.phils.io/clients | jq .
 }
 function clients-local {
     curl -s http://localhost:81/clients | jq .
@@ -649,10 +665,16 @@ alias rube-eth='ssh pi@192.168.2.2'
 
 # OSX
 alias rosetta='arch -x86_64'
-alias rb='rosetta bash'
+alias rb='rosetta /bin/bash'
 alias notifications-enable='launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist'
 alias notifications-disable='launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist; killall NotificationCenter'
 
+
+# TMUX
+alias tnew='tmux new -s'
+alias tls='tmux ls'
+alias tdet='tmux detach'
+alias tat='tmux a -t'
 
 #
 # WIFI
@@ -686,7 +708,7 @@ function wifi-me {
 export FLASK_APP=main.py
 export FLASK_DEBUG=1
 export PYENV_VERSION=2.7.13
-export PYTHONPATH=$SRC_HOME/phillies
+export PYTHONPATH=$SRC_HOME
 export PYTHONDONTWRITEBYTECODE=true
 export MYPYPATH=$PYTHONPATH
 
@@ -696,9 +718,9 @@ export PIP_WHEEL_DIR="${WHEELHOUSE}"
 mkdir -p $WHEELHOUSE
 
 export PYTHON3_HOME=/usr/local/opt/python@3.8
-export PATH="$PYTHON3_HOME@3.8/bin:$PATH"
-export LDFLAGS="-L$PYTHON3_HOME@3.8/lib"
-export PKG_CONFIG_PATH="$PYTHON3_HOME@3.8/lib/pkgconfig"
+export PATH="$PYTHON3_HOME/bin:$PATH"
+export LDFLAGS="-L$PYTHON3_HOME/lib"
+export PKG_CONFIG_PATH="$PYTHON3_HOME/lib/pkgconfig"
 
 alias python=python3
 
@@ -789,6 +811,9 @@ alias be='bundle exec'
 # alias bcap='bundle exec cap'
 # alias dep='bundle exec cap prod deploy'
 # source ~/.rvm/scripts/rvm
+# echo 'export PATH="/usr/local/opt/ruby/bin:/usr/local/lib/ruby/gems/2.7.0/bin:$PATH"' >> ~/.zshrc
+export RUBY_HOME=/opt/homebrew/opt/ruby
+export PATH=$RUBY_HOME/bin:$PATH
 
 
 
@@ -804,11 +829,19 @@ export GOPATH=~/go
 function dogtest {
     # dogtest 10.88.0.48
     agent_location="$1"
+    value="$2"
+
     if [ -z "$agent_location" ]; then
         agent_location="localhost"
-        echo "Defaulting agent_location to $agent_location"
     fi
-    echo "pie.test:1|c" > /dev/udp/$agent_location/8125
+    if [ -z "$value" ]; then
+        value="1"
+    fi
+
+    statsd_line="pie.test:$value|c"
+    echo "Sending $statsd_line to $agent_location"
+    echo $statsd_line > /dev/udp/$agent_location/8125
+    echo $?
 }
 
 #
@@ -826,7 +859,7 @@ function edg-status-watch {
 
 # GCLOUD
 export CLOUDSDK_PYTHON_SITEPACKAGES=1
-alias gl='gcloud alpha logging'
+alias gl='gcloud beta logging'
 # alias glr='gcloud logging read'
 
 function images {
@@ -914,9 +947,9 @@ function glog {
         echo '        glog "http_request.request_method=GET"             # GET requests'
         echo '        glog "http_request.user_agent:Mozilla"             # hits by Mozilla'
         echo '        glog "http_request.remote_ip=35.196.21.140"        # hits from megacron'
-        echo '        glog "http_request.request_url:schedule/near"  # hits to the schedule/near endpoint'
+        echo '        glog "http_request.request_url:schedule/near"      # hits to the schedule/near endpoint'
         echo '        glog "NOT http_request.request_url:schedule/near"  # hits NOT to the schedule/near endpoint'
-        echo '        glog "timestamp <= \"2021-09-14T11:01:00.0Z\" AND timestamp >= \"2021-09-14T11:00:00.0Z\""'
+        echo '        glog "timestamp <= \"2021-09-14T11:01:00.0Z\" AND timestamp >= \"2021-09-14T11:00:00.0Z\""'  # hits during a timeperiod
         echo
         return
     fi
@@ -963,6 +996,219 @@ function glog {
 
 function glog-errors {
     glog "http_request.status >= 400"
+}
+
+function glog-net {
+    # glog-net 10.142.0.55
+    # Tails the log, looking for australia connections to prod-lb-2
+
+    # NOTE: Not all log entries are identical - they vary in their json_payload!
+    # A couple examples are below:
+
+    #
+    # EXAMPLE LOG ENTRY FROM THE VPC FLOW LOG:
+    #
+    # insert_id: lnfc9wfsnlqnr
+    # json_payload:
+        # bytes_sent: '0'
+        # connection:
+            # dest_ip: 10.142.0.55
+            # dest_port: 59748.0
+            # protocol: 6.0
+            # src_ip: 10.142.0.14
+            # src_port: 81.0
+        # dest_instance:
+            # project_id: phil-new
+            # region: us-east1
+            # vm_name: prod-lb-2
+            # zone: us-east1-b
+        # dest_vpc:
+            # project_id: phil-new
+            # subnetwork_name: default
+            # vpc_name: default
+        # end_time: '2022-02-26T00:38:56.801628410Z'
+        # packets_sent: '32'
+        # reporter: SRC
+        # src_instance:
+            # project_id: phil-new
+            # region: us-east1
+            # vm_name: prod-box-1
+            # zone: us-east1-b
+        # src_vpc:
+            # project_id: phil-new
+            # subnetwork_name: default
+            # vpc_name: default
+        # start_time: '2022-02-26T00:38:56.801628410Z'
+    # labels: {}
+    # log_name: projects/phil-new/logs/compute.googleapis.com%2Fvpc_flows
+    # receive_timestamp: '2022-02-26T00:39:06.260415192Z'
+    # resource:
+        # labels:
+            # location: us-east1-b
+            # project_id: phil-new
+            # subnetwork_id: '2966778331651493890'
+            # subnetwork_name: default
+        # type: gce_subnetwork
+    # severity: 0
+    # span_id: ''
+    # timestamp: '2022-02-26T00:39:06.260415192Z'
+    # trace: ''
+    # trace_sampled: false
+
+    #
+    # THIS EXAMPLE HAS DEST_GKE_DETAILS:
+    #
+    # insert_id: v32pezfspm26f
+    # json_payload:
+        # bytes_sent: '12672'
+        # connection:
+            # dest_ip: 10.48.10.7
+            # dest_port: 53.0
+            # protocol: 17.0
+            # src_ip: 10.48.14.4
+            # src_port: 37597.0
+        # dest_gke_details:
+            # cluster:
+            # cluster_location: us-east1-b
+            # cluster_name: us-east1-pie-d40432e2-gke
+            # pod:
+            # pod_name: kube-dns-7f4d6f474d-xzfnt
+            # pod_namespace: kube-system
+            # service:
+            # - service_name: kube-dns
+            # service_namespace: kube-system
+        # dest_instance:
+            # project_id: phil-new
+            # region: us-east1
+            # vm_name: gke-us-east1-pie-d40-nodepool-airflow-15e689e0-00sg
+            # zone: us-east1-b
+        # dest_vpc:
+            # project_id: phil-new
+            # subnetwork_name: default
+            # vpc_name: default
+        # end_time: '2022-02-26T00:39:02.801958676Z'
+        # packets_sent: '128'
+        # reporter: DEST
+        # src_gke_details:
+            # cluster:
+            # cluster_location: us-east1-b
+            # cluster_name: us-east1-pie-d40432e2-gke
+            # pod:
+            # pod_name: airflow-scheduler-6d9f76664f-gppx2
+            # pod_namespace: composer-1-16-15-airflow-1-10-15-d40432e2
+        # src_instance:
+            # project_id: phil-new
+            # region: us-east1
+            # vm_name: gke-us-east1-pie-d40432e-default-pool-8e49d417-yx6c
+            # zone: us-east1-b
+        # src_vpc:
+            # project_id: phil-new
+            # subnetwork_name: default
+            # vpc_name: default
+        # start_time: '2022-02-26T00:39:02.801958676Z'
+    # labels: {}
+    # log_name: projects/phil-new/logs/compute.googleapis.com%2Fvpc_flows
+    # receive_timestamp: '2022-02-26T00:39:06.591510802Z'
+    # resource:
+        # labels:
+            # location: us-east1-b
+            # project_id: phil-new
+            # subnetwork_id: '2966778331651493890'
+            # subnetwork_name: default
+        # type: gce_subnetwork
+    # severity: 0
+    # span_id: ''
+    # timestamp: '2022-02-26T00:39:06.591510802Z'
+    # trace: ''
+    # trace_sampled: false`
+
+    # THIS EXAMPLE HAS DEST_LOCATION:
+    # insert_id: tosr7afjhafxr
+    # json_payload:
+        # bytes_sent: '1300'
+        # connection:
+            # dest_ip: 34.73.91.160
+            # dest_port: 443.0
+            # protocol: 6.0
+            # src_ip: 10.142.0.8
+            # src_port: 51748.0
+        # dest_location:
+            # asn: 15169.0
+            # continent: America
+            # country: usa
+        # end_time: '2022-02-26T00:39:04.334656719Z'
+        # packets_sent: '8'
+        # reporter: SRC
+        # rtt_msec: '11'
+        # src_gke_details:
+            # cluster:
+            # cluster_location: us-east1-b
+            # cluster_name: blockhead-cluster
+        # src_instance:
+            # project_id: phil-new
+            # region: us-east1
+            # vm_name: gke-blockhead-cluster-default-pool-09d3a8c5-ifnp
+            # zone: us-east1-b
+        # src_vpc:
+            # project_id: phil-new
+            # subnetwork_name: default
+            # vpc_name: default
+        # start_time: '2022-02-26T00:39:02.476456466Z'
+    # labels: {}
+    # log_name: projects/phil-new/logs/compute.googleapis.com%2Fvpc_flows
+    # receive_timestamp: '2022-02-26T00:39:14.250142254Z'
+    # resource:
+        # labels:
+            # location: us-east1-b
+            # project_id: phil-new
+            # subnetwork_id: '2966778331651493890'
+            # subnetwork_name: default
+        # type: gce_subnetwork
+    # severity: 0
+    # span_id: ''
+    # timestamp: '2022-02-26T00:39:14.250142254Z'
+    # trace: ''
+    # trace_sampled: false
+
+    ip="$1"
+
+    local sep=','
+    local format="csv[separator='$sep']"
+
+    local insert_id=insert_id
+    local bytes_sent=json_payload.bytes_sent
+    local src_ip=json_payload.connection.src_ip
+    local src_port=json_payload.connection.src_port
+    local dest_ip=json_payload.connection.dest_ip
+    local dest_port=json_payload.connection.dest_port
+    local protocol=json_payload.connection.protocol
+    local timestamp=timestamp
+    local dest_country=json_payload.dest_location.country
+    local src_vm=json_payload.src_instance.vm_name
+    local dest_vm=json_payload.dest_instance.vm_name
+
+    local items=$timestamp,$bytes_sent,$src_ip,$src_port,$dest_ip,$dest_port,$protocol,$src_vm,dest_vm,$dest_country,$insert_id
+
+    local format_arg="$format($items)"
+    local resource="resource.type=gce_subnetwork"
+
+    if [ -z $ip ]; then
+        echo
+        echo Tailing ALL ip addresses!
+        echo To tail a single box, run 'glog-net 10.142.0.55'
+        echo Use the internal IP address of the box
+        echo To get a list of internal IPs, run 'gcloud compute instances list'
+        echo
+    else
+        echo
+        echo Tailing traffic to/from $ip
+        echo
+        resource="$resource AND (json_payload.connection.src_ip=$ip OR json_payload.connection.dest_ip=$ip)"
+    fi
+
+    gcloud beta logging tail \
+        "$resource" \
+        --format="$format_arg"
 }
 
 
@@ -1081,7 +1327,7 @@ function g-create-lbvideo {
     gcloud compute instances add-tags $1-$2 --tags http-server,https-server,allow-rtsp,allow-vnc-lb
 }
 function g-create-shiny {
-    g-create $1 $1-$2 shiny 150 n1-standard-2
+    g-create $1 $1-$2 shiny 250 n1-standard-2
 }
 function g-create-datalab {
     g-create $1 $1-$2 datalab 100 n1-standard-2
@@ -1269,7 +1515,8 @@ function g-ssh {
     gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
 }
 function g-list {
-    knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_1
+    # knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_1
+    gcloud compute instances list | grep RUNNING | sort
 }
 function g-list2 {
     knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_2
@@ -1281,9 +1528,7 @@ function s {
     ssh $ip
 }
 function p {
-    # . ~/.bashrc
-    # local ip=`knife google server list  | grep -v TERMINATED | grep prod | grep $1 | tr -s ' ' | cut -d ' ' -f5`
-    local ip=`gcloud compute instances list  | grep -v TERMINATED | grep prod | grep $1 | tr -s ' ' | cut -d ' ' -f5`
+    local ip=`gcloud compute instances list  | grep -v TERMINATED  | grep prod | tr -s ' ' | cut -d' ' -f1,5 | grep $1 | cut -d' ' -f2`
     ssh $ip
 }
 alias tun='ssh 34.73.92.181'
@@ -1403,8 +1648,15 @@ function macs {
 #
 # DATABASE
 #
+function phil-db-setadmin {
+    export PHIL_GCLOUD_DB_UP_USER=$PHIL_GCLOUD_DB_ADMIN_USER
+    export PHIL_GCLOUD_DB_UP_PW=$PHIL_GCLOUD_DB_ADMIN_PW
+}
 function phil-db-local {
-    mycli --port $PHIL_DOCKER_DB_PORT -h 127.0.0.1 -u$PHIL_DOCKER_DB_USER -p$PHIL_DOCKER_DB_PW "$@"
+    mycli --port 3306 -h 127.0.0.1 -u$PHIL_DOCKER_DB_USER -p$PHIL_DOCKER_DB_PW "$@"
+}
+function phil-db-proxy {
+    mycli --port 3406 -h 127.0.0.1 -u$PHIL_GCLOUD_DB_UP_USER -p$PHIL_GCLOUD_DB_UP_PW "$@"
 }
 function phil-db {
     mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
@@ -1832,6 +2084,7 @@ SQLLINE_HOME=$HOME/phillies/kafka/sqlline
 
 # GIT'R DONE!
 alias b='git co --track'  # b <branch_name>
+alias bis='git bisect'
 alias bs='git branch' # list all branches
 alias bs-dates="git for-each-ref --sort=committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)'"
 alias gi='git'
@@ -1981,7 +2234,7 @@ function notes {
 
     local dir=$DROPBOX_HOME/Phillies
     if [ $# -eq 0 ]; then
-        ls -alt $dir/notes.* | sed -e "s/\/Users\/zo\/Dropbox\/Phillies\///"
+        ls -altr $dir/notes.* | sed -e "s/\/Users\/zo\/Dropbox\/Phillies\///"
         # find $dir -maxdepth 1 -name notes\* -print0 | xargs -0 stat -f "%a"
         return
     fi
@@ -2024,49 +2277,22 @@ function l {
 # API
 #
 function api-local {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://localhost:80/$1" 
+    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://localhost:5001/$1"
 }
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
 }
-function api-old {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://api.phils.io/$1" | jq .
-}
-function apiv {
-    curl ${@:2} -v -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
-}
 function apipost {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" -X POST
 }
-function apih {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://$PHIL_API_SERVER/$1" | jq .
-}
 function apio {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1"
-}
-function apioh {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://$PHIL_API_SERVER/$1"
 }
 function apiy {
     curly -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1"
 }
 function apiyz {
     curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1"
-}
-function api-local {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http:/localhost:5000/$1" | jq .
-}
-function api-localo {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1" 
-}
-function api-localy {
-    curly ${@:2} -s -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
-}
-function api-localyz {
-    curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "http://localhost:5000/$1"
-}
-function infield {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://infield.$DOMAIN/$1" | jq .
 }
 
 function pie-comp-dir {
@@ -2469,17 +2695,16 @@ function health {
 alias src='cd $SRC_HOME'
 alias re='cd $PIE/reports'
 alias rep='re'
-alias a='cd  $PIE/api'
-alias u='cd  $PIE/uploader'
-alias ro='cd $PHY/../apps'
-alias phy='cd $PHY'
+alias a='cd $PIE/api'
+alias u='cd $PIE/uploader'
+alias bio='cd $PIE/biomech'
 alias pie='cd $PIE'
 alias ts='cd ~/phillies/ts'
 alias pid='cd $PIE/etc/docker/pie'
 alias pig='cd $PIE/.github/workflows'
 alias pik='cd $PIE/etc/kubernetes'
 alias ku=pik
-alias pso='cd $SRC_HOME/pitch_selection_optimization'
+alias pso='cd $SRC_HOME/pitch-selection-optimization'
 alias carm='cd $SRC_HOME/carmelo_update'
 alias pie-path='export PYTHONPATH=$SRC_HOME'
 alias vid='phy && cd video'
@@ -2578,7 +2803,7 @@ add_to_PATH /usr/local/bin
 add_to_PATH /usr/local/sbin
 add_to_PATH $NPM_RELATIVE
 add_to_PATH $GOPATH/bin
-add_to_PATH /usr/local/opt/openssl/bin
+# add_to_PATH /usr/local/opt/openssl/bin
 add_to_PATH /usr/local/opt/mysql-client/bin
 add_to_PATH /opt/homebrew/bin
 add_to_PATH $GSTREAMER_HOME/bin/
