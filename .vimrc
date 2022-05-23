@@ -19,7 +19,7 @@ call vundle#begin()
     Plugin 'sainnhe/gruvbox-material'   " https://github.com/sainnhe/gruvbox-material
     Plugin 'bronson/vim-trailing-whitespace'
     Plugin 'ConradIrwin/vim-bracketed-paste'
-    Plugin 'ycm-core/YouCompleteMe'
+    " Plugin 'ycm-core/YouCompleteMe'
     Plugin 'frazrepo/vim-rainbow'
 
     " Plugin 'scrooloose/syntastic'
