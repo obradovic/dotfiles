@@ -14,7 +14,6 @@ export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export LESS="-XFR"
 export SRC_HOME="$HOME/phillies"
 export PHILLIES_PATH=$SRC_HOME/phillies
-export PHY=$PHILLIES_PATH/phy
 export PIE=$SRC_HOME/pie
 # export TERM=xterm
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
@@ -80,12 +79,14 @@ alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
 alias ports='netstat -tulan'
 alias .ale='make'
+alias make=gmake
 alias utc='date -u'
 alias ut='utc'
 alias today='note today'
 alias x=exit
 alias mini='ssh 192.168.1.42'
 alias hosts='sudo vi /etc/hosts'
+alias teep='pmset sleepnow'
 
 function mcd {
     mkdir "$1"
@@ -219,9 +220,9 @@ alias ama='cd $PIE/dash/ama'
 alias amad='cd $PIE/etc/docker/dash'
 alias dc='docker-compose -f $PHILLIES_PATH/.docker/phy-compose/docker-compose.yml'
 alias drun='docker container run'
-alias pc-up="(cd $PHILLIES_PATH && make pc-up)"
-alias pc-down="(cd $PHILLIES_PATH && make pc-down)"
-alias pc-enter="(cd $PHILLIES_PATH && make pc-enter)"
+# alias pc-up="(pie && make pc-up)"
+# alias pc-down="(pie && make pc-down)"
+alias enter="(pie && make enter)"
 
 function ubuntu-R {
     run-in-container flex "/usr/bin/R --no-save -q"
@@ -292,6 +293,7 @@ alias aw='awair --mac 70:88:6b:14:10:a1'
 #
 # KUBE
 #
+export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 alias k=kubectl
 alias desc='k describe'
 alias kns=kubens
@@ -472,6 +474,7 @@ alias replicasets='kg replicasets -o wide -A'
 alias replicasetsa='replicasets -A'
 alias cluster-dump='kubectl cluster-info dump'
 alias clusters='gcloud container clusters list'
+alias gcompute='gcloud compute'
 function cluster {
     gcloud container clusters describe --format json $1 | jq .
 }
@@ -851,11 +854,40 @@ alias vmrun="/Applications/VMware\ Fusion.app/Contents/Public/vmrun"
 
 
 # EDGERTRONIC
+function edgers {
+    (cd $PIE && vi video/edgertronics.yaml && cp video/edgertronics.yaml $SRC_HOME/chef/cookbooks/phillies/files/default/. )
+    echo "yaml file copied to chef files"
+}
 function edg-status-watch {
     # from https://wiki.edgertronic.com/index.php/SDK_-_Developer_tricks
     s="" ; while sleep 0.5 ; do t=`curl http://e/get_status_string 2>/dev/null` ; if [ "$s" != "$t" ] ; then s=$t ; echo $s ; fi ; done
 }
 
+function cams {
+    grep SCI $SRC_HOME/chef/cookbooks/phillies/attributes/default.rb | grep lab | tr -s ' ' | tr -d "'" | tr -d ','
+}
+
+function cam_status {
+    curl -s https://phil:.lyroastporque@lab-$1.phils.io/get_camstatus | jq .
+}
+
+function cam0 {
+    cam_status 0
+}
+function cam00 {
+    cam_status 00
+}
+
+function le {
+    path="$1"
+    options="${@:2:10}"
+    rclone lsf "gcs:phil-videos/edgertronic/lab/$path" $options
+}
+function lc {
+    path="$1"
+    options="${@:2:10}"
+    le "compressed/$path" $options
+}
 
 # GCLOUD
 export CLOUDSDK_PYTHON_SITEPACKAGES=1
@@ -949,7 +981,7 @@ function glog {
         echo '        glog "http_request.remote_ip=35.196.21.140"        # hits from megacron'
         echo '        glog "http_request.request_url:schedule/near"      # hits to the schedule/near endpoint'
         echo '        glog "NOT http_request.request_url:schedule/near"  # hits NOT to the schedule/near endpoint'
-        echo '        glog "timestamp <= \"2021-09-14T11:01:00.0Z\" AND timestamp >= \"2021-09-14T11:00:00.0Z\""'  # hits during a timeperiod
+        echo '        glog "timestamp <= \"2021-09-14T11:01:00.0Z\" AND timestamp >= \"2021-09-14T11:00:00.0Z\""  '  # hits during a timeperiod
         echo
         return
     fi
@@ -1301,7 +1333,7 @@ function g-create-ghealey {
     g-create2 $1 $1-$2 base 100 n1-standard-8
 }
 function g-create-tunnel {
-    g-create $1 $1-$2 tunnel 50 n1-standard-1
+    g-create-3 $1 $1-$2 tunnel 50 n2-standard-1
 }
 function g-create-db {
     g-create $1 $1-$2 db 500 n1-standard-2
@@ -1319,11 +1351,11 @@ function g-create-infield {
     g-create $1 $1-$2 infield 100 n1-standard-2
 }
 function g-create-lb {
-    g-create2 $1 $1-$2 lb 100 n1-standard-2
+    g-create2 $1 $1-$2 lb 100 n2-standard-2
     gcloud compute instances add-tags $1-$2 --tags http-server,https-server
 }
 function g-create-lbvideo {
-    g-create2 $1 $1-$2 lbvideo 100 n1-standard-2
+    g-create-3 $1 $1-$2 lbvideo 100 n2-standard-2
     gcloud compute instances add-tags $1-$2 --tags http-server,https-server,allow-rtsp,allow-vnc-lb
 }
 function g-create-shiny {
@@ -1338,14 +1370,20 @@ function g-create-jupyter {
 function g-create-megacron {
     g-create2 $1 $1-$2 megacron 1000 n1-highmem-16
 }
-function g-create-generic {
-    g-create2 $1 $1-$2 generic 100 n1-standard-16
+function g-create-generic-4 {
+    g-create2 $1 $1-$2 generic 100 n2-standard-4
 }
 function g-create-ftp {
     g-create2 $1 $1-$2 ftp 200 n1-standard-1
 }
 function g-create-elephant {
     g-create2 $1 $1-$2 elephant 200GB c2-standard-60
+}
+function g-create-cpu-3 {
+    g-create2 $1 $1-$2 cpu 200GB c2-standard-16
+}
+function g-create-fonnesbeck {
+    g-create2 $1 $1-$2 edger-gpu 100GB a2-highgpu-1g
 }
 function g-create {
     echo ARGS are $*
@@ -1362,6 +1400,7 @@ function g-create {
     --environment $1 \
     --request-timeout 6000 \
     --auth-timeout 300 \
+    --tags=deny-aws \
     --run-list "role[$3]"
 }
 
@@ -1373,7 +1412,8 @@ function g-create2 {
     machine_type=$5
 
     boot_disk_type=pd-ssd
-    min_cpu_platform="skylake"
+    # min_cpu_platform="skylake"
+    min_cpu_platform="cascadelake"
 
     # when you add an accelerator, you can only have 16 cpus max
     # T4 only in us-east1-c, see: gcloud compute accelerator-types list | grep nvidia-tesla-t4
@@ -1404,6 +1444,10 @@ function g-create2 {
         gpu="--accelerator type=nvidia-tesla-v100,count=1 "
         zone="us-central1-c"
     fi
+    if [[ "$name" == *"fonnesbeck"* ]]; then
+        gpu="--accelerator type=nvidia-tesla-a100,count=1 "
+        zone="us-east1-b"
+    fi
 
     # Cascade Lake CPUs are only available in this DC for now
     # CORRECT INFO: gcloud compute machine-types list
@@ -1414,11 +1458,16 @@ function g-create2 {
     fi
 
     if [[ "$machine_type" == "n2-standard-"* ]]; then
-        zone="us-central1-f"
+        # zone="us-central1-f"
+        zone="us-east1-b"
         min_cpu_platform="cascadelake"
     fi
 
-    image=`get-latest-image`
+    # gcloud compute images list
+    # image=`get-latest-image`
+    # image="ubuntu-2004-lts"
+    # image="ubuntu-2004-focal-v20220712"
+    image="ubuntu-2004-focal-v20230302"
     # image="ubuntu-1604-lts"
     # image="ubuntu-1604-xenial-v20190628"
     # image="ubuntu-1604-xenial-v20191204"
@@ -1434,19 +1483,21 @@ function g-create2 {
     echo "PHIL_GCLOUD_PROJECT: $PHIL_GCLOUD_PROJECT"
     echo "GPU: $gpu"
 
-    command="$compute instances create $name \
-        --boot-disk-size $disk_size \
-        --boot-disk-type $boot_disk_type \
+    command="gcloud compute instances create $name \
         --labels env=$env,name=$name \
         --machine-type $machine_type \
         --maintenance-policy TERMINATE --restart-on-failure \
         --restart-on-failure \
         --min-cpu-platform $min_cpu_platform \
-        --image $image \
+        --create-disk=auto-delete=yes,boot=yes,device-name=$name,image=projects/ubuntu-os-cloud/global/images/$image,mode=rw,size=$disk_size,type=projects/phil-new/zones/$zone/diskTypes/$boot_disk_type \
         --project $PHIL_GCLOUD_PROJECT \
         --zone $zone \
+        --tags=deny-aws \
         $gpu \
         --format json"
+        # --image $image \
+        # --boot-disk-size $disk_size \
+        # --boot-disk-type $boot_disk_type \
 
     echo "COMMAND: $command"
     response=`$command`
@@ -1462,9 +1513,82 @@ function g-create2 {
     ip=`echo $response | jq -r .[0].networkInterfaces[0].accessConfigs[0].natIP`
 
     ssh-keygen -R $ip
-    whitelist $name $ip
+    # whitelist $name $ip
     g-bootstrap $env $chef_role $name $ip $zone
 }
+
+function g-create-3 {
+
+    name=$1
+    disk_gb=100
+    zone=us-east1-b
+    machine_type=n2-standard-4
+    min_cpu_platform=icelake
+
+    # gcloud compute images list --filter ubuntu-os-cloud
+    # image=projects/phil-new/global/images/template-image-2022-08-07-07-53-46
+    # image=ubuntu-1804-bionic-v20220712
+    # image=ubuntu-2004-focal-v20220712
+    # image=ubuntu-2204-jammy-v20220712a
+    image=projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20230214
+
+    command="gcloud compute instances create $name \
+        --project=phil-new \
+        --zone=$zone \
+        --machine-type=$machine_type \
+        --network-interface=network-tier=PREMIUM,subnet=default \
+        --metadata=enable-oslogin=true \
+        --maintenance-policy=MIGRATE \
+        --provisioning-model=STANDARD \
+        --service-account=123271122746-compute@developer.gserviceaccount.com \
+        --scopes=https://www.googleapis.com/auth/cloud-platform \
+        --min-cpu-platform=$min_cpu_platform \
+        --tags=allow-aws,deny-aws \
+        --create-disk=auto-delete=yes,boot=yes,device-name=$name,image=$image,mode=rw,size=$disk_gb,type=projects/phil-new/zones/$zone/diskTypes/pd-balanced \
+        --no-shielded-secure-boot \
+        --shielded-vtpm \
+        --shielded-integrity-monitoring \
+        --format json"
+
+    echo "COMMAND: $command"
+    response=`$command`
+    echo $response
+
+    # --create-disk=auto-delete=yes,boot=yes,device-name=$name,image=projects/ubuntu-os-cloud/global/images/$image,mode=rw,size=100,type=projects/phil-new/zones/us-east1-b/diskTypes/pd-ssd \
+    # --create-disk=auto-delete=yes,boot=yes,device-name=prod-cpu-3,image=projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20220610,mode=rw,size=200,type=projects/phil-new/zones/us-east1-b/diskTypes/pd-ssd \
+
+    status=`echo $response | jq -r .[0].status`
+    if [ "$status" != "RUNNING" ]; then
+        echo $response | jq
+        echo "ERROR: $name is NOT RUNNING"
+        return
+    fi
+
+    ip=`echo $response | jq -r .[0].networkInterfaces[0].accessConfigs[0].natIP`
+
+    env=prod
+    chef_role=generic
+    echo "IP is: $ip"
+    ssh-keygen -R $ip
+
+    #
+    # PAUSE HERE:
+    #       gcloud compute ssh prod-gpu-cfonnesbeck-1
+    #       go into another computer and: cat ~zo/.ssh/authorized_keys
+    #       paste that into: ~ubuntu/.ssh/authorized_keys
+    #
+
+    knife bootstrap $ip \
+        --bootstrap-version 13.12.14 \
+        -E $env \
+        -N $name \
+        -i ~/.ssh/id_rsa \
+        -V \
+        -x ubuntu \
+        -r "role[$chef_role]" \
+        --sudo
+}
+
 
 function g-bootstrap {
     env=$1
@@ -1478,10 +1602,11 @@ function g-bootstrap {
         -E $env \
         -N $name \
         -i ~/.ssh/id_rsa \
-        -x zo \
         -V \
+        -x ubuntu \
         -r "role[$chef_role]" \
         --sudo
+        # -x zo \
 }
 
 function g-delete {
@@ -1496,27 +1621,51 @@ function g-delete {
 
 function g-stop {
     name=$1
-    $compute instances stop $name --zone $PHIL_GCLOUD_ZONE
+    gcompute instances stop $name --zone $PHIL_GCLOUD_ZONE
 }
 function g-start {
     name=$1
-    $compute instances start $name --zone $PHIL_GCLOUD_ZONE
+    gcompute instances start $name --zone $PHIL_GCLOUD_ZONE
+}
+function g-start-ssh {
+    name=$1
+    echo "$name starting"
+    cmd=`g-start $name`
+    echo "$name started"
+
+    ip=`echo $cmd | grep "external IP" | cut -d' ' -f5`
+    echo "$name IP is: $ip"
+
+    ssh-keygen -R $ip
+
+    while true; do
+        sleep 1
+        echo -n "."
+        ssh $ip exit
+        if [ $? == "0" ]; then
+            echo
+            echo "$ip is ready"
+            break
+        fi
+    done
+
+    ssh $ip
 }
 
 
 #
 # SSH
 #
-alias mega='ssh 35.196.21.140'
+alias mega='ssh 34.148.49.88'
 alias meg='mega'
 alias lb="p lb-2"
 alias lbv='ssh 35.237.94.24'
 function g-ssh {
-    gcloud compute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
+    gcompute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
 }
 function g-list {
     # knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_1
-    gcloud compute instances list | grep RUNNING | sort
+    gcompute instances list | grep RUNNING | sort
 }
 function g-list2 {
     knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_2
@@ -1528,7 +1677,7 @@ function s {
     ssh $ip
 }
 function p {
-    local ip=`gcloud compute instances list  | grep -v TERMINATED  | grep prod | tr -s ' ' | cut -d' ' -f1,5 | grep $1 | cut -d' ' -f2`
+    local ip=`gcloud compute instances list  | grep -v TERMINATED  | grep prod | tr -s ' ' | cut -d' ' -f1,5 | grep $1 | sort -n | head -1 | cut -d' ' -f2`
     ssh $ip
 }
 alias tun='ssh 34.73.92.181'
@@ -1602,6 +1751,10 @@ function vid-compress-handbrake {
 function tele {
     telnet `arp-scan -l | grep "00:1b:c5:09:65:94" | cut -f1`
 }
+function bp1 {
+    ssh 192.168.1.56
+    # ssh-mac dc:a6:32:38:8b:fd
+}
 function pihole {
     ssh-mac b8:27:eb:8f:90:0c
 }
@@ -1615,32 +1768,357 @@ function crapsodo2 {
     ssh-mac dc:a6:32:38:8b:2a
 }
 function mac-ip {
-    local mac="$1"
+    local mac=$1
     ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
     echo $ip
 }
 function ssh-mac {
+    local mac=$1
+    echo "SSHing into MAC: $mac"
+    local ip=`mac-ip $mac`
+    echo "SSHing into IP:  $ip"
+    echo ""
     ssh `mac-ip $mac`
 }
 function arps {
     if [ $# -eq 0 ]; then
-        interface=""
+        interface="en0"
     else
-        interface=" --interface $1 "
+        interface="$1"
     fi
 
     # expand sets the tab stops to be at precise locations
-    arp-scan -l --plain --ignoredups $interface | sort -b -k3,3 -k2,2 | expand -t 16,36
+    output=`sudo arp-scan -l --plain --ignoredups --interface $interface | sort -b -k3,3 -k2,2`
+    echo "$output" | expand -t 16,36
 }
 
-alias arps1='arps | sort -t . -k1,1n '  # https://www.cyberciti.biz/faq/unix-linux-shell-script-sorting-ip-addresses/
-alias arps2='arps | sort -k2,2  -k1,1n'
-alias arps3='arps | sort -k3,3f -k1,1n'
+alias arps1='arps | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n '  # -t is the separator, treat all 4 octets as numbers
+alias arps2='arps | sort -b -k2,2'  # -b meaans to ignore leading blanks
+alias arps3='arps | sort -k3,3f -k4,4f -k5,5f -k1,1n'
 
 function macs {
     local file=/usr/local/share/arp-scan/mac-override.txt
-    sudo vi $file
-    sudo cp -f $file $file.bak
+    vi $file
+    echo
+    echo "  MACs: https://docs.google.com/spreadsheets/d/13ZjWn1mXnx0M_FC2YFWNiV8Aw9hC4Ewh5sLn92ePG9k/edit"
+    echo "  Orbi: http://192.168.1.1/start.htm"
+    echo
+    cp -f $file $file.bak
+    cp $file ~/Dropbox/arp-scan/.
+}
+
+function mac-name {
+    # Returns the "name" of the computer with the passed-in MAC
+    local file=/usr/local/share/arp-scan/mac-override.txt
+    local mac="$1"
+    mac=`echo $mac | tr -d ':'`
+
+    # if we dont have a mac addr
+    if [ -z "$mac" ]; then
+        echo "Unknown MAC"
+        return
+    fi
+
+    name=`grep -i $mac $file | tr '\t' ' ' | tr -s ' ' | cut -d' ' -f2-`
+    if [ -z "$name" ]; then
+        echo "Unknown MAC"
+        return
+    fi
+
+    echo $name
+}
+
+function orbi {
+    stuff=`curl -s \
+        'http://192.168.1.1/ajax/get_attached_devices?id=03862d09757eb7bc9259d47149338f6bfbf07d58a6e46b759a9a0d28d7280c14' \
+        -X POST \
+        -H 'Accept: */*' \
+        -H 'Accept-Language: en-US,en;q=0.5' \
+        -H 'Accept-Encoding: gzip, deflate' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H 'X-Requested-With: XMLHttpRequest' \
+        -H 'Origin: http://192.168.1.1' \
+        -H 'DNT: 1' \
+        -H 'Authorization: Basic YWRtaW46WDM2cm5obGs5' \
+        -H 'Connection: keep-alive' \
+        -H 'Referer: http://192.168.1.1/DEV_device2.htm' \
+        -H 'Cookie: XSRF_TOKEN=2691825794' \
+        -H 'Sec-GPC: 1' \
+        --data-raw 'count=1'`
+
+    # echo "$stuff" | jq .devices
+    stuff=`echo "$stuff" | sed "s/5 GHz/5GHz/g" | sed "s/2.4 GHz/2.4GHz/g"`
+    # echo "$stuff" | jq -r '.devices[] | [.ip, .mac, .connectionType, .name] | @tsv' | expand -t 16,36,44
+    echo "$stuff" | jq -r '.devices[] | [.ip, .mac, .connectionType, .name] | @tsv' | tabulate --format plain
+}
+
+alias orbi1='orbi | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n '  # -t is the separator, treat all 4 octets as numbers
+alias orbi2='orbi | sort -b -k2,2'  # -b meaans to ignore leading blanks
+alias orbi3='orbi | sort -k3,3f -k4,4f -k5,5f -k1,1n'
+alias orbi4='orbi | sort -k4,4f -k3,3f'
+
+
+function arps-all {
+    arps_output=`arps1`
+    orbi_output=`orbi1`
+
+    echo
+    echo "ARP scan:"
+    echo "$arps_output"
+    echo
+    echo "ORBI router scan:"
+    echo "$orbi_output"
+    echo
+
+    # get the MAC addresses from both lists
+    macs_arps=`echo "$arps_output" | tr -s ' ' | cut -d' ' -f2 | sort | tr '[:upper:]' '[:lower:]'`
+    macs_orbi=`echo "$orbi_output" | tr -s ' ' | cut -d' ' -f2 | sort | tr '[:upper:]' '[:lower:]'`
+
+    # see which MACS are in orbi that ARENT in arps output
+    echo "$macs_arps" > /tmp/macs_arps.txt
+    echo "$macs_orbi" > /tmp/macs_orbi.txt
+
+    echo
+    echo "Only found in arps:"
+    only_in_arps=`comm -23 /tmp/macs_arps.txt /tmp/macs_orbi.txt`
+    for mac in $only_in_arps; do
+        echo "$arps_output" | grep -i "$mac"
+    done
+    echo
+
+    echo "Only found in Orbi:"
+    only_in_orbi=`comm -13 /tmp/macs_arps.txt /tmp/macs_orbi.txt`
+    for mac in $only_in_orbi; do
+        known_name=`mac-name $mac`
+
+        orbi_line=`echo "$orbi_output" | grep -i "$mac" | tr -s ' '`
+
+        ip=`echo $orbi_line | cut -d' ' -f1`
+        conn=`echo $orbi_line | cut -d' ' -f3`
+        orbi_name=`echo $orbi_line | cut -d' ' -f4`
+
+        echo -e "$ip\t$mac\t$conn\t$known_name ($orbi_name)" | expand -t 16,36,44
+    done
+
+    echo
+}
+
+
+
+#
+# PIHOLE
+#
+
+function pihole-ip {
+    # Gets the IP address of the pihole
+    local mac="b8:27:eb:8f:90:0c"
+    # ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
+    local ip=192.168.1.2
+    echo $ip
+}
+
+function pihole-cmd {
+    # Runs a command on the pihole
+    # echo "Getting IP..."
+    local ip=`pihole-ip`
+    # echo "IP is: $ip"
+    local cmd="$1"
+    ssh -o LogLevel=QUIET -t $ip "sudo su -c '$cmd'"
+}
+
+function pihole-cmd-piholer {
+    # Runs the piholer.sh script on the box, which does stuff
+    local ip=`pihole-ip`
+    ssh -o LogLevel=QUIET -t $ip "./piholer.sh $*"
+}
+
+function pihole-tail {
+    # Tails the pihole log
+    local cmd="pihole tail"
+    pihole-cmd "$cmd"
+}
+
+function pihole-history {
+    # Gets the history of an IP address
+    local ip=$1
+    pihole-cmd-piholer history $ip
+    echo
+    echo "It is now: `utc`"
+    echo
+}
+
+function pihole-history-and-tail {
+    # MAC: C8:58:C0:ED:91:DA
+    local ip=$1
+
+    # make an array of domains to ignore in the output. Internet detritus, just dont want to see it
+    declare -a ignored_domains
+    ignored_domains=()
+    ignored_domains+=("clients6.google.com" "googleusercontent.com" "googleapis.com" "gstatic.com" "pki.goog")
+    ignored_domains+=("cloudfront.net" "amazonaws.com")
+    ignored_domains+=("icloud.com" "apple.com" "apple-dns.net" "icloud-content.com" "mzstatic.com" "aaplimg.com" "apple.news")
+    ignored_domains+=("akamaiedge.net" "akadns.net" "sc-cdn.net")
+    ignored_domains+=("twimg.com" "firebaseio.com")
+    ignored_domains+=("HTTPS")
+
+    # get length of an array
+    length=${#ignored_domains[@]}
+
+    # add each item in the array to the ignored_string
+    ignored_string=""
+    for (( i=0; i<length; i++ )); do
+        domain="${ignored_domains[$i]}"
+        # printf "Current index %d with value %s\n" $i "$domain"
+        ignored_string+="$domain"
+        # echo "xxx 1: $ignored_string"
+
+        # if its not the last item, add the separator
+        if [[ $i -lt $(($length-1)) ]]; then
+            # echo "adding sep"
+            ignored_string+="\|"
+            # echo "xxx 2: $ignored_string"
+        fi
+    done
+
+    # escape the periods
+    escaped_ignored_string=${ignored_string/\./\\\.}
+
+    # run the command, grep out the ignored domains
+    pihole-history $ip | grep -v "$escaped_ignored_string"
+
+    echo "Tailing log"
+    pihole-tail | grep --line-buffered $ip
+}
+
+function pihole-chromebook {
+    pihole-history-and-tail 192.168.1.234  # MAC: C8:58:C0:ED:91:DA
+}
+
+function pihole-quicyphone {
+    pihole-history-and-tail 192.168.1.235  # MAC: 9a:5c:74:f9:9f:b7
+}
+
+function pihole-ipad {
+    pihole-history-and-tail 192.168.1.170  # MAC: ca:16:ad:48:20:97
+}
+
+function pihole-appletv {
+    pihole-history-and-tail 192.168.1.109  # MAC: f0:b3:ec:48:06:10
+}
+
+function pihole-tonal {
+    pihole-history-and-tail 192.168.1.143  # MAC: 10:59:17:03:09:a7
+}
+
+function pihole-domains {
+    limit="$1"
+    if [ -z "$limit" ]; then
+        limit=100
+    fi
+    pihole-cmd-piholer domains $limit
+}
+
+function pihole-up {
+    pihole-cmd-piholer up
+}
+
+
+
+
+function dev {
+    #
+    # Either tails or looks in history for a device
+    #
+    if [ -z "$1" ]; then
+        arps
+        echo
+        echo "  Please choose a device!"
+        echo
+        return
+    fi
+
+    pattern="$1"
+    echo "Discovering '$pattern'"
+
+    devices=`arps | grep "$pattern"`
+    if [ -z "$devices" ]; then
+        arps
+        echo
+        echo "  No matching devices found. Bailing"
+        echo
+        return
+    fi
+
+    count=`echo "$devices" | wc -l`
+    echo "Discovered "$count" device(s):"
+    echo "$devices"
+
+    device=`echo "$devices" | head -1 | tr -s '\t' ' '`
+    name=`echo "$device" | cut -d' ' -f3-`
+    echo "Choosing first: '$name'"
+
+    mac=`echo "$device" | cut -d' ' -f2`
+    echo "'$name' MAC: $mac"
+
+    ip=`echo "$device" | cut -d' ' -f1`
+    echo "'$name' IP:  $ip"
+
+
+    # get historical info
+    # SQLITE SCHEMA: https://docs.pi-hole.net/database/ftl/
+    # SQLITE CLI: https://www.sqlite.org/cli.html
+    echo
+    echo "Querying sqlite..."
+
+    #
+    # This is the SQL in human-readable form
+    #
+    #  SELECT datetime(timestamp, 'unixepoch') AS datetime,
+    #  CASE status
+    #    WHEN '2'  THEN 'ok'
+    #    WHEN '3'  THEN 'ok'
+    #    WHEN '12' THEN 'ok'
+    #    WHEN '13' THEN 'ok'
+    #    WHEN '14' THEN 'ok'
+    #    ELSE 'blocked'
+    #    END blocked,
+    # domain,
+    # CASE type
+    #     WHEN 1  THEN 'A'
+    #     WHEN 2  THEN 'AAAA'
+    #     WHEN 3  THEN 'ANY'
+    #     WHEN 4  THEN 'SRV'
+    #     WHEN 5  THEN 'SOA'
+    #     WHEN 6  THEN 'PTR'
+    #     WHEN 7  THEN 'TXT'
+    #     WHEN 8  THEN 'NAPTR'
+    #     WHEN 9  THEN 'MX'
+    #     WHEN 10 THEN 'DS'
+    #     WHEN 11 THEN 'RRSIG'
+    #     WHEN 12 THEN 'DNSKEY'
+    #     WHEN 13 THEN 'NS'
+    #     WHEN 14 THEN 'OTHER (any query type not covered elsewhere)'
+    #     WHEN 15 THEN 'SVCB'
+    #     WHEN 16 THEN 'HTTPS'
+    #     ELSE 'Unknown'
+    #     END type_string
+    # FROM queries
+    # WHERE client = '192.168.1.151'
+    # ORDER BY datetime ASC
+    # LIMIT 10;
+
+    #
+    # This is the SQL all on one line. Took too long to get a HEREDOC working in bash, so this is what it is
+    #
+    sql="SELECT datetime(timestamp, 'unixepoch') AS datetime, CASE status WHEN '2' THEN 'ok' WHEN '3' THEN 'ok' WHEN '12' THEN 'ok' WHEN '13' THEN 'ok' WHEN '14' THEN 'ok' ELSE 'blocked' END blocked, domain, type FROM queries WHERE client = '$ip' ORDER BY datetime DESC;"
+
+    sqlite3 -header -cmd ".mode box" /etc/pihole/pihole-FTL.db "$sql"
+
+    # then tail
+    echo
+    echo "Tailing log file..."
+    # tail -10000f /var/log/pihole.log | grep "$ip"
+    pihole tail | grep --line-buffered "$ip"
 }
 
 
@@ -1656,7 +2134,7 @@ function phil-db-local {
     mycli --port 3306 -h 127.0.0.1 -u$PHIL_DOCKER_DB_USER -p$PHIL_DOCKER_DB_PW "$@"
 }
 function phil-db-proxy {
-    mycli --port 3406 -h 127.0.0.1 -u$PHIL_GCLOUD_DB_UP_USER -p$PHIL_GCLOUD_DB_UP_PW "$@"
+    mycli --port 3406 -h 127.0.0.1 -u$PHIL_GCLOUD_DB_UP_USER -p$PHIL_GCLOUD_DB_UP_PW $@
 }
 function phil-db {
     mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
@@ -2057,8 +2535,8 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
-alias chef-all='phy && ROLES=all bundle exec cap prod chef && cd -'
-alias chef-api='phy && ROLES=api bundle exec cap prod chef && cd -'
+alias chef-all='pie && ROLES=all bundle exec cap prod chef && cd -'
+alias chef-api='pie && ROLES=api bundle exec cap prod chef && cd -'
 function ksearch {
     knife search node "roles:$1"
 }
@@ -2095,7 +2573,7 @@ alias gr='git restore'
 alias st='git status'
 alias co='git checkout'
 alias gpl='git pull origin `git rev-parse --abbrev-ref HEAD`'
-alias merge-main='co phy-merge && git merge main && git push'
+# alias merge-main='co phy-merge && git merge main && git push'
 alias branch='co -b'
 alias stash='git stash'
 alias stahs='stash'
@@ -2103,7 +2581,7 @@ alias sta='stash'
 alias master='co master'
 alias main='co main'
 alias dev='co dev'
-alias devv='co phy-merge'
+# alias devv='co phy-merge'
 alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
 alias got='git'
 alias gut='git'
@@ -2160,7 +2638,7 @@ function branchm {
         echo "No branch specified. Exiting."
         return
     fi
-    cd ~/phillies/uploader
+    # cd ~/phillies/uploader
     git checkout -b $1
     git push origin $1
     cd -
@@ -2698,6 +3176,7 @@ alias rep='re'
 alias a='cd $PIE/api'
 alias u='cd $PIE/uploader'
 alias bio='cd $PIE/biomech'
+alias vid='cd $PIE/video'
 alias pie='cd $PIE'
 alias ts='cd ~/phillies/ts'
 alias pid='cd $PIE/etc/docker/pie'
@@ -2707,7 +3186,6 @@ alias ku=pik
 alias pso='cd $SRC_HOME/pitch-selection-optimization'
 alias carm='cd $SRC_HOME/carmelo_update'
 alias pie-path='export PYTHONPATH=$SRC_HOME'
-alias vid='phy && cd video'
 alias c='cd $SRC_HOME/chef'
 alias v='cd $SRC_HOME/chef/cookbooks/phillies/recipes'
 alias e='cd $SRC_HOME/chef/environments'
@@ -2751,7 +3229,7 @@ export GSUTIL_HOME=~/bin/gsutil
 # BREW
 function brew-update() {
     pushd .
-    cd ~/.dotfiles
+    dot
     brew update
     brew bundle
     popd
@@ -3218,7 +3696,7 @@ function rs-create {
       else
         rs_flavor=$5
       fi
-        
+
     rs-default-image $rs_location
 
       fullname=$env-$rs_location-$name
@@ -3257,7 +3735,7 @@ function rs-create {
 
     # get the IP address
     ip=`rs-ip $rs_location $rs_server_id`
-    
+ 
     # Chef Bootstrap
     echo "Bootstrapping $ip with $rs_pw"
     a=`timestamp`
@@ -3273,12 +3751,12 @@ function rs-wait {
 
     a=`timestamp`
     while true
-    do 
+    do
         sleep 1
         echo -n "."
         status=`rs-status $rs_location $rs_id`
         if [ $status == "ACTIVE" ]
-        then 
+        then
             echo
             echo "Creating Server took `timestamp-diff $a `seconds"
             break
