@@ -878,10 +878,14 @@ function cam00 {
     cam_status 00
 }
 
+function els-all {
+    path="$1"
+    options="${@:2:10}"
+    rclone lsf $EDGER_LAB_HOME/$path --csv --format "tsp" $options | column -t -s ' ,'
+}
 function els {
     path="$1"
     options="${@:2:10}"
-
     rclone lsf $EDGER_LAB_HOME/$path --csv --format "tsp" --include "*.mp4" $options | column -t -s ' ,'
 }
 function elsc {
@@ -1845,7 +1849,7 @@ function mac-name {
 
 function orbi {
     stuff=`curl -s \
-        'http://192.168.1.1/ajax/get_attached_devices?id=03862d09757eb7bc9259d47149338f6bfbf07d58a6e46b759a9a0d28d7280c14' \
+        '$ORBI_DEVICES' \
         -X POST \
         -H 'Accept: */*' \
         -H 'Accept-Language: en-US,en;q=0.5' \
@@ -1854,10 +1858,10 @@ function orbi {
         -H 'X-Requested-With: XMLHttpRequest' \
         -H 'Origin: http://192.168.1.1' \
         -H 'DNT: 1' \
-        -H 'Authorization: Basic YWRtaW46WDM2cm5obGs5' \
+        -H '$ORBI_AUTH' \
         -H 'Connection: keep-alive' \
         -H 'Referer: http://192.168.1.1/DEV_device2.htm' \
-        -H 'Cookie: XSRF_TOKEN=2691825794' \
+        -H '$ORBI_COOKIE' \
         -H 'Sec-GPC: 1' \
         --data-raw 'count=1'`
 
