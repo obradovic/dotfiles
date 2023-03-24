@@ -878,15 +878,30 @@ function cam00 {
     cam_status 00
 }
 
-function le {
+function els {
     path="$1"
     options="${@:2:10}"
-    rclone lsf "gcs:phil-videos/edgertronic/lab/$path" $options
+
+    rclone lsf $EDGER_LAB_HOME/$path --csv --format "tsp" --include "*.mp4" $options | column -t -s ' ,'
 }
-function lc {
+function elsc {
     path="$1"
     options="${@:2:10}"
-    le "compressed/$path" $options
+    els compressed/$path $options
+}
+function ecat {
+    path="$1"
+    arr=(${path//-/ })
+    camera="${arr[0]}-${arr[1]}"
+    json=${path//mp4/json}
+    rclone cat $EDGER_LAB_HOME/compressed/$camera/$json | jq .
+}
+function eplay {
+    path="$1"
+    arr=(${path//-/ })
+    camera="${arr[0]}-${arr[1]}"
+    rclone copy $EDGER_LAB_HOME/compressed/$camera/$path /tmp/.
+    open /tmp/$path
 }
 
 # GCLOUD
