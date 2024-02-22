@@ -54,6 +54,7 @@ alias copy='cp'
 alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
+alias basss='vi ~/phillies/dotfiles/.bashrc; sleep 0.1; . ~/phillies/dotfiles/.bashrc'
 alias please='sudo'
 alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
 alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f2-)"
@@ -79,7 +80,7 @@ alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
 alias ports='netstat -tulan'
 alias .ale='make'
-alias make=gmake
+# alias make=gmake
 alias utc='date -u'
 alias ut='utc'
 alias today='note today'
@@ -609,7 +610,7 @@ export GSTREAMER_HOME=/Library/Frameworks/GStreamer.framework/Versions/1.0/
 export CPATH=$GSTREAMER_HOME/include
 export CPATH=$CPATH:$GSTREAMER_HOME/include/gstreamer-1.0/
 export CPATH=$CPATH:$GSTREAMER_HOME/Headers
-export LIBRARY_PATH=$GSTREAMER_HOME/lib
+# export LIBRARY_PATH=$GSTREAMER_HOME/lib
 # export GST_DEBUG=2
 
 alias gst-basic='gst-launch-1.0 videotestsrc ! ximagesink'
@@ -648,9 +649,12 @@ function i {
     touch `dirname $1`/__init__.py
 }
 
-if [ -f $HOME/.bashrc_private ]; then
-    source $HOME/.bashrc_private
-fi
+# Source
+export DOTFILES_PHILLIES=~/phillies/dotfiles
+[ -f $DOTFILES_PHILLIES/.bashrc ] && . $DOTFILES_PHILLIES/.bashrc
+
+# This is included from phillies dotfiles
+# [ -f $HOME/.bashrc_private ] && source $HOME/.bashrc_private
 
 if [ -f $PIE/bin/gcp-shared.sh ]; then
     source $PIE/bin/gcp-shared.sh
@@ -757,6 +761,10 @@ function pireq {
 
 function findpy {
     find . -name \*.py | grep -v "\.env\|\.git" | xargs $*
+}
+
+function findgo {
+    find . -name \*.go | grep -v "\.env\|\.git" | xargs $*
 }
 
 function pii {
@@ -1324,106 +1332,7 @@ function datalab {
   --ssh-flag="localhost:8081:localhost:8080" \
   "zo@prod-datalab-1"
 }
-function g-create-template {
-    g-create2 $1 $1-$2 template 30 n1-standard-1
-}
-function g-create-edger-4 {
-    g-create2 $1 $1-$2 edger 100 c2-standard-4
-}
-function g-create-edger-8 {
-    g-create2 $1 $1-$2 edger 100 c2-standard-8
-}
-function g-create-edger-16 {
-    g-create2 $1 $1-$2 edger 100 c2-standard-16
-}
-function g-create-edger-30 {
-    g-create2 $1 $1-$2 edger 100 c2-standard-30
-}
-function g-create-edger-60 {
-    g-create2 $1 $1-$2 edger 100 c2-standard-60
-}
-function g-create-edger-n2 {
-    g-create2 $1 $1-$2 edger 100 n2-standard-80
-}
-function g-create-edger-gpu {
-    g-create2 $1 $1-$2 edger-gpu 100 n1-highmem-16  # same as megacron
-}
-function g-create-ghealey {
-    g-create2 $1 $1-$2 base 100 n1-standard-8
-}
-function g-create-tunnel {
-    g-create-3 $1 $1-$2 tunnel 50 n2-standard-1
-}
-function g-create-db {
-    g-create $1 $1-$2 db 500 n1-standard-2
-}
-function g-create-draft {
-    g-create $1 $1-$2 draft 50 n1-standard-1
-}
-function g-create-api {
-    g-create $1 $1-$2 api 200 n1-standard-4
-}
-function g-create-box {
-    g-create $1 $1-$2 box 200 n1-standard-4
-}
-function g-create-infield {
-    g-create $1 $1-$2 infield 100 n1-standard-2
-}
-function g-create-lb {
-    g-create2 $1 $1-$2 lb 100 n2-standard-2
-    gcloud compute instances add-tags $1-$2 --tags http-server,https-server
-}
-function g-create-lbvideo {
-    g-create-3 $1 $1-$2 lbvideo 100 n2-standard-2
-    gcloud compute instances add-tags $1-$2 --tags http-server,https-server,allow-rtsp,allow-vnc-lb
-}
-function g-create-shiny {
-    g-create $1 $1-$2 shiny 250 n1-standard-2
-}
-function g-create-datalab {
-    g-create $1 $1-$2 datalab 100 n1-standard-2
-}
-function g-create-jupyter {
-    g-create $1 $1-$2 jupyter 100 n1-standard-16
-}
-function g-create-megacron {
-    g-create2 $1 $1-$2 megacron 1000 n1-highmem-16
-}
-function g-create-generic-4 {
-    g-create2 $1 $1-$2 generic 100 n2-standard-4
-}
-function g-create-ftp {
-    g-create2 $1 $1-$2 ftp 200 n1-standard-1
-}
-function g-create-elephant {
-    g-create2 $1 $1-$2 elephant 200GB c2-standard-60
-}
-function g-create-cpu-3 {
-    g-create2 $1 $1-$2 cpu 200GB c2-standard-16
-}
-function g-create-fonnesbeck {
-    g-create2 $1 $1-$2 edger-gpu 100GB a2-highgpu-1g
-}
-function g-create {
-    echo ARGS are $*
-    knife google server create $2 \
-    --bootstrap-version 13.12.14 \
-    --gce-machine-type $5 \
-    --gce-boot-disk-size $4 \
-    --gce-boot-disk-ssd true \
-    --gce-image ubuntu-1604-lts \
-    --gce-project $PHIL_GCLOUD_PROJECT \
-    --gce-zone $PHIL_GCLOUD_ZONE_1 \
-    --ssh-user $CHEF_USERNAME \
-    --identity-file ~/.ssh/id_rsa \
-    --environment $1 \
-    --request-timeout 6000 \
-    --auth-timeout 300 \
-    --tags=deny-aws \
-    --run-list "role[$3]"
-}
-
-function g-create2 {
+function g-create-old-2 {
     env=$1
     name=$2
     chef_role=$3
@@ -1536,12 +1445,12 @@ function g-create2 {
     g-bootstrap $env $chef_role $name $ip $zone
 }
 
-function g-create-3 {
+function g-create-old-3 {
 
     name=$1
     disk_gb=100
     zone=us-east1-b
-    machine_type=n2-standard-4
+    machine_type=c3-standard-4
     min_cpu_platform=icelake
 
     # gcloud compute images list --filter ubuntu-os-cloud
@@ -1609,7 +1518,7 @@ function g-create-3 {
 }
 
 
-function g-bootstrap {
+function g-bootstrap-old {
     env=$1
     chef_role=$2
     name=$3
@@ -1628,57 +1537,57 @@ function g-bootstrap {
         # -x zo \
 }
 
-function g-delete {
-    name="$1"
-    zone="$PHIL_GCLOUD_ZONE"
-    if [[ "$name" =~ "elephant" ]]; then
-        zone="us-east1-c"
-    fi
+# function g-delete {
+    # name="$1"
+    # zone="$PHIL_GCLOUD_ZONE"
+    # if [[ "$name" =~ "elephant" ]]; then
+        # zone="us-east1-c"
+    # fi
 
-    knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $zone -P $name
-}
+    # knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $zone -P $name
+# }
 
-function g-stop {
-    name=$1
-    gcompute instances stop $name --zone $PHIL_GCLOUD_ZONE
-}
-function g-start {
-    name=$1
-    gcompute instances start $name --zone $PHIL_GCLOUD_ZONE
-}
-function g-start-ssh {
-    name=$1
-    echo "$name starting"
-    cmd=`g-start $name`
-    echo "$name started"
+# function g-stop {
+    # name=$1
+    # gcompute instances stop $name --zone $PHIL_GCLOUD_ZONE
+# }
+# function g-start {
+    # name=$1
+    # gcompute instances start $name --zone $PHIL_GCLOUD_ZONE
+# }
+# function g-start-ssh {
+    # name=$1
+    # echo "$name starting"
+    # cmd=`g-start $name`
+    # echo "$name started"
 
-    ip=`echo $cmd | grep "external IP" | cut -d' ' -f5`
-    echo "$name IP is: $ip"
+    # ip=`echo $cmd | grep "external IP" | cut -d' ' -f5`
+    # echo "$name IP is: $ip"
 
-    ssh-keygen -R $ip
+    # ssh-keygen -R $ip
 
-    while true; do
-        sleep 1
-        echo -n "."
-        ssh $ip exit
-        if [ $? == "0" ]; then
-            echo
-            echo "$ip is ready"
-            break
-        fi
-    done
+    # while true; do
+        # sleep 1
+        # echo -n "."
+        # ssh $ip exit
+        # if [ $? == "0" ]; then
+            # echo
+            # echo "$ip is ready"
+            # break
+        # fi
+    # done
 
-    ssh $ip
-}
+    # ssh $ip
+# }
 
 
 #
 # SSH
 #
-alias mega='ssh 34.148.49.88'
-alias meg='mega'
+# alias mega='ssh megacron.phils.io'
+# alias meg='mega'
 alias lb="p lb-2"
-alias lbv='ssh 35.237.94.24'
+alias lbv='ssh lbvideo.phils.io'
 function g-ssh {
     gcompute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
 }
@@ -1699,7 +1608,7 @@ function p {
     local ip=`gcloud compute instances list  | grep -v TERMINATED  | grep prod | tr -s ' ' | cut -d' ' -f1,5 | grep $1 | sort -n | head -1 | cut -d' ' -f2`
     ssh $ip
 }
-alias tun='ssh 34.73.92.181'
+alias tun='ssh bastion.phils.io'
 function cpbig {
     file="$1"
     ip="34.74.182.158"
@@ -1807,7 +1716,7 @@ function arps {
     fi
 
     # expand sets the tab stops to be at precise locations
-    output=`sudo arp-scan -l --plain --ignoredups --interface $interface | sort -b -k3,3 -k2,2`
+    output=`arp-scan --macfile=/usr/local/share/arp-scan/mac-override.txt -l --plain --ignoredups --interface $interface | sort -b -k3,3 -k2,2`
     echo "$output" | expand -t 16,36
 }
 
@@ -2602,7 +2511,7 @@ alias main='co main'
 alias dev='co dev'
 # alias devv='co phy-merge'
 alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
-alias got='git'
+# alias got='git'
 alias gut='git'
 alias bfg='/usr/local/opt/openjdk/bin/java -jar /usr/local/Cellar/bfg/1.14.0/libexec/bfg-1.14.0.jar'
 
