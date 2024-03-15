@@ -13,7 +13,6 @@ export CLICOLOR=1
 export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export LESS="-XFR"
 export SRC_HOME="$HOME/phillies"
-export PHILLIES_PATH=$SRC_HOME/phillies
 export PIE=$SRC_HOME/pie
 # export TERM=xterm
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
@@ -219,7 +218,6 @@ alias dps='d ps -a'
 alias doc='cd $PIE/etc/docker/pie'
 alias ama='cd $PIE/dash/ama'
 alias amad='cd $PIE/etc/docker/dash'
-alias dc='docker-compose -f $PHILLIES_PATH/.docker/phy-compose/docker-compose.yml'
 alias drun='docker container run'
 # alias pc-up="(pie && make pc-up)"
 # alias pc-down="(pie && make pc-down)"
@@ -286,7 +284,7 @@ function run-in-container {
 
 
 #
-#
+# AWAIR
 #
 alias aw='awair --mac 70:88:6b:14:10:a1'
 
@@ -494,7 +492,7 @@ function kall-iterate {
 function kswitch {
     local new_context=$1
 
-    cd $PHILLIES_PATH/etc/docker/dash
+    cd $PIE/etc/docker/dash
     make needs-credentials APP=$new_context
     cd -
 }
@@ -521,7 +519,7 @@ fi
 alias hls='helm ls --all -A'
 function h {
     if [ -z "$*" ]; then
-        cd $PHILLIES_PATH/.helm
+        cd $PIE/.helm
         return
     fi
     helm $*
@@ -684,6 +682,7 @@ alias tdet='tmux detach'
 alias tat='tmux a -t'
 
 #
+#
 # WIFI
 #
 function wifi-init {
@@ -714,7 +713,6 @@ function wifi-me {
 #
 export FLASK_APP=main.py
 export FLASK_DEBUG=1
-export PYENV_VERSION=2.7.13
 export PYTHONPATH=$SRC_HOME
 export PYTHONDONTWRITEBYTECODE=true
 export MYPYPATH=$PYTHONPATH
@@ -724,10 +722,10 @@ export PIP_FIND_LINKS="file://${WHEELHOUSE}"
 export PIP_WHEEL_DIR="${WHEELHOUSE}"
 mkdir -p $WHEELHOUSE
 
-export PYTHON3_HOME=/usr/local/opt/python@3.8
-export PATH="$PYTHON3_HOME/bin:$PATH"
-export LDFLAGS="-L$PYTHON3_HOME/lib"
-export PKG_CONFIG_PATH="$PYTHON3_HOME/lib/pkgconfig"
+# export PYTHON3_HOME=/usr/local/opt/python@3.8
+# export PATH="$PYTHON3_HOME/bin:$PATH"
+# export LDFLAGS="-L$PYTHON3_HOME/lib"
+# export PKG_CONFIG_PATH="$PYTHON3_HOME/lib/pkgconfig"
 
 alias python=python3
 
@@ -761,10 +759,6 @@ function pireq {
 
 function findpy {
     find . -name \*.py | grep -v "\.env\|\.git" | xargs $*
-}
-
-function findgo {
-    find . -name \*.go | grep -v "\.env\|\.git" | xargs $*
 }
 
 function pii {
@@ -832,6 +826,11 @@ export PATH=$RUBY_HOME/bin:$PATH
 # GO
 #
 export GOPATH=~/go
+
+function findgo {
+    find . -name \*.go | grep -v "\.env\|\.git" | xargs $*
+}
+
 
 
 #
@@ -1332,253 +1331,6 @@ function datalab {
   --ssh-flag="localhost:8081:localhost:8080" \
   "zo@prod-datalab-1"
 }
-function g-create-old-2 {
-    env=$1
-    name=$2
-    chef_role=$3
-    disk_size=$4
-    machine_type=$5
-
-    boot_disk_type=pd-ssd
-    # min_cpu_platform="skylake"
-    min_cpu_platform="cascadelake"
-
-    # when you add an accelerator, you can only have 16 cpus max
-    # T4 only in us-east1-c, see: gcloud compute accelerator-types list | grep nvidia-tesla-t4
-    gpu=""
-    zone="$PHIL_GCLOUD_ZONE_1"
-    if [ "$chef_role" == "elephant" ]; then
-        # gpu="--accelerator type=nvidia-tesla-t4,count=1 "
-        zone="us-east1-b"
-    fi
-
-    if [[ "$name" == *"t4"* ]]; then
-        gpu="--accelerator type=nvidia-tesla-t4,count=1 "
-        zone="us-east1-c"
-    fi
-    if [[ "$name" == *"p100"* ]]; then
-        gpu="--accelerator type=nvidia-tesla-p100,count=1 "
-        zone="us-east1-c"
-    fi
-    if [[ "$name" == *"k80"* ]]; then
-        gpu="--accelerator type=nvidia-tesla-k80,count=1 "
-        zone="us-east1-c"
-    fi
-    if [[ "$name" == *"p4"* ]]; then
-        gpu="--accelerator type=nvidia-tesla-p4,count=1 "
-        zone="us-east4-a"
-    fi
-    if [[ "$name" == *"v100"* ]]; then
-        gpu="--accelerator type=nvidia-tesla-v100,count=1 "
-        zone="us-central1-c"
-    fi
-    if [[ "$name" == *"fonnesbeck"* ]]; then
-        gpu="--accelerator type=nvidia-tesla-a100,count=1 "
-        zone="us-east1-b"
-    fi
-
-    # Cascade Lake CPUs are only available in this DC for now
-    # CORRECT INFO: gcloud compute machine-types list
-    # BAD INFO: https://cloud.google.com/compute/docs/regions-zones/#available
-    if [[ "$machine_type" == "c2-standard-"* ]]; then
-        # zone="us-central1-c"
-        min_cpu_platform="cascadelake"
-    fi
-
-    if [[ "$machine_type" == "n2-standard-"* ]]; then
-        # zone="us-central1-f"
-        zone="us-east1-b"
-        min_cpu_platform="cascadelake"
-    fi
-
-    # gcloud compute images list
-    # image=`get-latest-image`
-    # image="ubuntu-2004-lts"
-    # image="ubuntu-2004-focal-v20220712"
-    image="ubuntu-2004-focal-v20230302"
-    # image="ubuntu-1604-lts"
-    # image="ubuntu-1604-xenial-v20190628"
-    # image="ubuntu-1604-xenial-v20191204"
-    # image="ubuntu-1804-bionic-v20191211"
-    # image="ubuntu-os-cloud"
-
-    echo "IMAGE: $image"
-    echo "ZONE: $zone"
-    echo "NAME: $name"
-    echo "BOOT DISK: $boot_disk_type"
-    echo "MACHINE TYPE: $machine_type"
-    echo "MIN CPU PLATFORM: $min_cpu_platform"
-    echo "PHIL_GCLOUD_PROJECT: $PHIL_GCLOUD_PROJECT"
-    echo "GPU: $gpu"
-
-    command="gcloud compute instances create $name \
-        --labels env=$env,name=$name \
-        --machine-type $machine_type \
-        --maintenance-policy TERMINATE --restart-on-failure \
-        --restart-on-failure \
-        --min-cpu-platform $min_cpu_platform \
-        --create-disk=auto-delete=yes,boot=yes,device-name=$name,image=projects/ubuntu-os-cloud/global/images/$image,mode=rw,size=$disk_size,type=projects/phil-new/zones/$zone/diskTypes/$boot_disk_type \
-        --project $PHIL_GCLOUD_PROJECT \
-        --zone $zone \
-        --tags=deny-aws \
-        $gpu \
-        --format json"
-        # --image $image \
-        # --boot-disk-size $disk_size \
-        # --boot-disk-type $boot_disk_type \
-
-    echo "COMMAND: $command"
-    response=`$command`
-    echo $response
-
-    status=`echo $response | jq -r .[0].status`
-    if [ "$status" != "RUNNING" ]; then
-        echo $response | jq
-        echo "ERROR: $name is NOT RUNNING"
-        return
-    fi
-
-    ip=`echo $response | jq -r .[0].networkInterfaces[0].accessConfigs[0].natIP`
-
-    ssh-keygen -R $ip
-    # whitelist $name $ip
-    g-bootstrap $env $chef_role $name $ip $zone
-}
-
-function g-create-old-3 {
-
-    name=$1
-    disk_gb=100
-    zone=us-east1-b
-    machine_type=c3-standard-4
-    min_cpu_platform=icelake
-
-    # gcloud compute images list --filter ubuntu-os-cloud
-    # image=projects/phil-new/global/images/template-image-2022-08-07-07-53-46
-    # image=ubuntu-1804-bionic-v20220712
-    # image=ubuntu-2004-focal-v20220712
-    # image=ubuntu-2204-jammy-v20220712a
-    image=projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20230214
-
-    command="gcloud compute instances create $name \
-        --project=phil-new \
-        --zone=$zone \
-        --machine-type=$machine_type \
-        --network-interface=network-tier=PREMIUM,subnet=default \
-        --metadata=enable-oslogin=true \
-        --maintenance-policy=MIGRATE \
-        --provisioning-model=STANDARD \
-        --service-account=123271122746-compute@developer.gserviceaccount.com \
-        --scopes=https://www.googleapis.com/auth/cloud-platform \
-        --min-cpu-platform=$min_cpu_platform \
-        --tags=allow-aws,deny-aws \
-        --create-disk=auto-delete=yes,boot=yes,device-name=$name,image=$image,mode=rw,size=$disk_gb,type=projects/phil-new/zones/$zone/diskTypes/pd-balanced \
-        --no-shielded-secure-boot \
-        --shielded-vtpm \
-        --shielded-integrity-monitoring \
-        --format json"
-
-    echo "COMMAND: $command"
-    response=`$command`
-    echo $response
-
-    # --create-disk=auto-delete=yes,boot=yes,device-name=$name,image=projects/ubuntu-os-cloud/global/images/$image,mode=rw,size=100,type=projects/phil-new/zones/us-east1-b/diskTypes/pd-ssd \
-    # --create-disk=auto-delete=yes,boot=yes,device-name=prod-cpu-3,image=projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20220610,mode=rw,size=200,type=projects/phil-new/zones/us-east1-b/diskTypes/pd-ssd \
-
-    status=`echo $response | jq -r .[0].status`
-    if [ "$status" != "RUNNING" ]; then
-        echo $response | jq
-        echo "ERROR: $name is NOT RUNNING"
-        return
-    fi
-
-    ip=`echo $response | jq -r .[0].networkInterfaces[0].accessConfigs[0].natIP`
-
-    env=prod
-    chef_role=generic
-    echo "IP is: $ip"
-    ssh-keygen -R $ip
-
-    #
-    # PAUSE HERE:
-    #       gcloud compute ssh prod-gpu-cfonnesbeck-1
-    #       go into another computer and: cat ~zo/.ssh/authorized_keys
-    #       paste that into: ~ubuntu/.ssh/authorized_keys
-    #
-
-    knife bootstrap $ip \
-        --bootstrap-version 13.12.14 \
-        -E $env \
-        -N $name \
-        -i ~/.ssh/id_rsa \
-        -V \
-        -x ubuntu \
-        -r "role[$chef_role]" \
-        --sudo
-}
-
-
-function g-bootstrap-old {
-    env=$1
-    chef_role=$2
-    name=$3
-    ip=$4
-    zone=$5  # unused rn
-
-    knife bootstrap $ip \
-        --bootstrap-version 13.12.14 \
-        -E $env \
-        -N $name \
-        -i ~/.ssh/id_rsa \
-        -V \
-        -x ubuntu \
-        -r "role[$chef_role]" \
-        --sudo
-        # -x zo \
-}
-
-# function g-delete {
-    # name="$1"
-    # zone="$PHIL_GCLOUD_ZONE"
-    # if [[ "$name" =~ "elephant" ]]; then
-        # zone="us-east1-c"
-    # fi
-
-    # knife google server delete --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $zone -P $name
-# }
-
-# function g-stop {
-    # name=$1
-    # gcompute instances stop $name --zone $PHIL_GCLOUD_ZONE
-# }
-# function g-start {
-    # name=$1
-    # gcompute instances start $name --zone $PHIL_GCLOUD_ZONE
-# }
-# function g-start-ssh {
-    # name=$1
-    # echo "$name starting"
-    # cmd=`g-start $name`
-    # echo "$name started"
-
-    # ip=`echo $cmd | grep "external IP" | cut -d' ' -f5`
-    # echo "$name IP is: $ip"
-
-    # ssh-keygen -R $ip
-
-    # while true; do
-        # sleep 1
-        # echo -n "."
-        # ssh $ip exit
-        # if [ $? == "0" ]; then
-            # echo
-            # echo "$ip is ready"
-            # break
-        # fi
-    # done
-
-    # ssh $ip
-# }
 
 
 #
@@ -1607,12 +1359,6 @@ function s {
 function p {
     local ip=`gcloud compute instances list  | grep -v TERMINATED  | grep prod | tr -s ' ' | cut -d' ' -f1,5 | grep $1 | sort -n | head -1 | cut -d' ' -f2`
     ssh $ip
-}
-alias tun='ssh bastion.phils.io'
-function cpbig {
-    file="$1"
-    ip="34.74.182.158"
-    scp zo@$ip:/tmp/$file $file
 }
 
 
@@ -2798,279 +2544,6 @@ function lint-time-file {
 
     csvline=\"$now\",\"$hostname\",$run,$file,$timing,$sloc,$num_statements
     echo $csvline >> "$HOME/lint-times.csv"
-}
-
-function phy-builds {
-    export GITHUB_SHA=`git rev-parse --short HEAD`
-    export GCLOUD_PROJECT=phil-new
-    export BRANCH=dev
-    # export PHILLIES_PATH=/Users/zo/phillies/phillies
-    export PHILLIES_PATH=/Users/zo/phillies/phillies
-    cd $PHILLIES_PATH
-
-    # BUILDS the pc-phy image
-    # INHERITS FROM: python:3.7.7-slim
-    # USES: Makefile
-    # USES: .docker/phy-compose/Dockerfile.phy
-    echo
-    echo
-    echo BUILDING pc-phy
-    echo
-    echo
-    make pc-phy-build
-
-    # BUILDS the pc-phy-bundle image. A thin layer over pc-phy that copies the code
-    # INHERITS FROM: pc-phy
-    # USES: .github/workflows/phy-deploy.yml
-    # USES: .docker/phy-compose/Dockerfile.phy-bundle
-    echo
-    echo
-    echo BUILDING pc-phy-bundle
-    echo
-    echo
-    export PHY_IMAGE_NAME=pc-phy-bundle
-    export SRC_HOME=$PHILLIES_PATH
-    export GITHUB_WORKSPACE=Users/zo/phillies/phillies
-    docker build \
-          --tag gcr.io/$GCLOUD_PROJECT/$PHY_IMAGE_NAME:latest \
-          --tag gcr.io/$GCLOUD_PROJECT/$PHY_IMAGE_NAME:$GITHUB_SHA \
-          --tag gcr.io/$GCLOUD_PROJECT/$PHY_IMAGE_NAME:$BRANCH \
-          -f /$GITHUB_WORKSPACE/.docker/phy-compose/Dockerfile.phy-bundle /$GITHUB_WORKSPACE/
-
-    if [ $? -ne 0 ]; then
-        echo "Building $PHY_IMAGE_NAME failed"
-        return
-    fi
-
-    # BUILDS the phy image. Installs uwsgi
-    # INHERITS FROM: python:3.7.5
-    # NOTE: .docker/phy/README.md
-    # USES: .github/scripts/phy-base-image-pull.sh
-    # USES: .docker/phy/Dockerfile
-    echo
-    echo
-    echo BUILDING phy
-    echo
-    echo
-    export IMAGE=gcr.io/$GCLOUD_PROJECT/phy 
-    export IMAGE_BRANCH=$IMAGE:$BRANCH-latest
-    export IMAGE_COMMIT=$IMAGE:$BRANCH-$GITHUB_SHA
-    export IMAGE_LATEST=$IMAGE:latest
-    docker build \
-        --tag $IMAGE_BRANCH \
-        --tag $IMAGE_COMMIT \
-        --tag $IMAGE_LATEST \
-        -f /$GITHUB_WORKSPACE/.docker/phy/Dockerfile /$GITHUB_WORKSPACE/
-
-
-    if [ $? -ne 0 ]; then
-        echo "Building $IMAGE failed"
-        return
-    fi
-
-
-    # BUILDS the api image
-    # INHERITS FROM: phy
-    # USES: .github/workflows/api-deploy.yml
-    # USES: .github/scripts/api-deploy.sh
-    # USES: .docker/api/DockerfileFromBase
-    echo
-    echo
-    echo BUILDING api
-    echo
-    echo
-    export IMAGE=gcr.io/$GCLOUD_PROJECT/api
-    export IMAGE_COMMIT=$IMAGE:$GITHUB_SHA
-    export IMAGE_BRANCH=$IMAGE:$BRANCH-latest
-    export IMAGE_LATEST=$IMAGE:latest
-    docker build \
-        --build-arg BRANCH=$BRANCH \
-        --tag $IMAGE_COMMIT \
-        --tag $IMAGE_BRANCH \
-        --tag $IMAGE_LATEST \
-        -f /$GITHUB_WORKSPACE/.docker/api/DockerfileFromBase /$GITHUB_WORKSPACE/
-}
-
-function rocky-pie-build {
-    cd $PHY/..
-
-    export COMMIT=`git rev-parse --short HEAD`
-    export IMAGE=gcr.io/$PHIL_GCLOUD_PROJECT/apps
-    export IMAGE_PIE=$IMAGE:pie-latest
-    export IMAGE_PIE_COMMIT=$IMAGE:pie-commit-$COMMIT
-    export IMAGE_PIE_PHY=$IMAGE:pie-phy
-
-    echo "Building docker image: $IMAGE_PIE"
-    docker build  \
-        --build-arg ENV="pie" \
-        --tag $IMAGE_PIE \
-        --tag $IMAGE_PIE_COMMIT \
-        --tag $IMAGE_PIE_PHY \
-        -f apps/Dockerfile apps/
-}
-
-function rocky-pie-start {
-    export IMAGE=gcr.io/$PHIL_GCLOUD_PROJECT/apps
-    export IMAGE_PIE_PHY=$IMAGE:pie-phy
-    docker run -p 3005:3005 $IMAGE_PIE_PHY
-}
-
-function rocky-pie-stop {
-    container=`docker ps | grep pie-phy | tr -s ' ' | cut -d' ' -f1`
-    echo "Stopping container: $container"
-    docker stop $container
-}
-
-function rocky-pie-shell {
-    container=`docker ps | grep pie-phy | tr -s ' ' | cut -d' ' -f1`
-    echo "Shelling into container: $container"
-    docker exec -it $container bash
-}
-
-
-function rocky-pie {
-    rocky-pie-build
-
-    echo "Pushing docker image: $IMAGE_PIE"
-    docker push $IMAGE_PIE
-    echo "Pushing docker image: $IMAGE_PIE_COMMIT"
-    docker push $IMAGE_PIE_COMMIT
-
-    echo "Deploying"
-    DEPLOYMENT=deployment/rocky-pie
-    CONTAINER=rocky-pie
-    kubectl set image $DEPLOYMENT $CONTAINER=$IMAGE_PIE_COMMIT --record
-    kubectl rollout status $DEPLOYMENT
-
-    # ROCKY_POD=`pods | grep rocky-pie | cut -d' ' -f1`
-    # kubectl delete pod $ROCKY_POD
-
-    # LOGS
-    sleep 3
-    ROCKY_POD=`pods | grep rocky-pie | cut -d' ' -f1`
-    kubectl logs -f $ROCKY_POD | grep -v "kube-probe\|GoogleHC"
-
-    # CONNECT TO SHELL
-    # kubectl exec -it $ROCKY_POD sh
-}
-
-function pie-copy-dir {
-    dir="$1"
-    export -f pie-copy
-    find "$dir" -type f | xargs -I{} bash -c 'pie-copy "{}"'
-}
-function pie-copys {
-    for file in "$@"; do
-        pie-copy $file
-    done
-}
-export -a pie
-function pie-copy {
-    local filename="$1"
-
-    filename=${filename#"phy"}
-    filename=${filename#"/"}
-
-    # set absolute file paths
-    phy_file="$PHY/$filename"
-    pie_file="$PIE/$filename"
-
-    # make the destination directory if it doesnt exist
-    dest_dir=`dirname $filename`
-    mkdir -p $PIE/$dest_dir
-
-    # if the file isnt there, delete it
-    if [ ! -f "$phy_file" ]; then
-        echo "deleting: $filename"
-        rm -f $pie_file
-        return
-    fi
-
-    echo "copying: $filename"
-    cp $phy_file $pie_file
-
-    # should we ignore this file extension?
-    file_ext="${filename#*.}"
-    ignore_this_file=false
-    declare -a accepted_exts=("py" "sh")
-    for ext in "${accepted_exts[@]}"; do
-        ignore_this_file=true
-        if [ "$file_ext" == "$ext" ]; then
-            ignore_this_file=false
-            break
-        fi
-    done
-
-    # declare -a ignored_substrings=("pytest_cache" "__pycache__" "uploader/blocking" "uploader/probabiilties_br" "research/defensive_evaluation" "uploader/defensive_evaluation")
-    declare -a ignored_substrings=("pytest_cache" "__pycache__" "uploader/blocking" "uploader/probabiilties_br" "uploader/defensive_evaluation")
-    for substring in "${ignored_substrings[@]}"; do
-        if [[ "$filename" == *"$substring"* ]]; then
-            echo "ignoring transform on substring: $substring"
-            ignore_this_file=true
-        fi
-    done
-
-    # transform the file
-    if [ "$ignore_this_file" = false ] ; then
-        sed -i.bak 's/from phy import/from pie import/' $pie_file
-        sed -i.bak 's/from phy\./from pie\./' $pie_file
-        sed -i.bak 's/in phy./in pie./' $pie_file
-        sed -i.bak 's/import phy./import pie./' $pie_file
-        # sed -i.bak 's/python phy/python pie/' $pie_file
-        sed -i.bak 's/"phy./"pie./' $pie_file
-        sed -i.bak "s/'phy./'pie./" $pie_file
-        sed -i.bak 's/phy-compose/pie-compose/' $pie_file
-        sed -i.bak 's/python phy\//python /' $pie_file
-        sed -i.bak 's/python3 phy\//python3 /' $pie_file
-
-        # cause "phy." was already transformed into "pie." above
-        sed -i.bak 's/pie.research\//research\//' $pie_file
-        sed -i.bak 's/pie.uploader\//uploader\//' $pie_file
-        sed -i.bak 's/pie.shared\//shared\//' $pie_file
-
-        sed -i.bak 's/phy\/uploader\//uploader\//' $pie_file
-        sed -i.bak 's/PHILLIES_PATH/PIE_DIR/' $pie_file
-
-        sed -i.bak 's/.shared.slack /.shared.slack_utils /' $pie_file
-        sed -i.bak 's/ slack/ send_slack/' $pie_file
-
-        sed -i.bak 's/phillies\/phy/pie/' $pie_file
-        sed -i.bak 's/phy\/api/api/' $pie_file
-        sed -i.bak 's/phy\/shared/shared/' $pie_file
-        sed -i.bak 's/phy\/reports/reports/' $pie_file
-
-        sed -i.bak 's/Phillies_LHV/PHILLIES_LEHIGH_VALLEY/' $pie_file
-        sed -i.bak 's/Phillies_CLW/PHILLIES_BAY_CARE/' $pie_file
-        sed -i.bak 's/Phillies_REA/PHILLIES_READING/' $pie_file
-        sed -i.bak 's/Phillies_JS/PHILLIES_JERSEY_SHORE/' $pie_file
-        sed -i.bak 's/Venue\.Phillies/Venue\.PHILLIES/' $pie_file
-
-        sed -i.bak 's/import keras/import tensorflow.keras/' $pie_file
-        sed -i.bak 's/from keras/from tensorflow.keras/' $pie_file
-
-        sed -i.bak 's/from val_constants/from pie.reports.pitching_gameplan.validation.val_constants/' $pie_file
-
-        sed -i.bak 's/tf.logging/tf.compat.v1.logging/' $pie_file
-        sed -i.bak 's/tf.estimator/tf.compat.v1.estimator/' $pie_file
-        sed -i.bak 's/tf.placeholder/tf.compat.v1.placeholder/' $pie_file
-
-        sed -i.bak 's/T_PLAYER_TYPE/PlayerType/' $pie_file
-        sed -i.bak 's/PERMISSION_TYPE = /PermissionType = /' $pie_file
-        sed -i.bak 's/ PERMISSION_TYPE)/ PermissionType)/' $pie_file
-        sed -i.bak 's/(PERMISSION_TYPE)/(PermissionType)/' $pie_file
-
-        sed -i.bak 's/usr\/src\/setup.py/var\/repos\/pie\/dataflow\/setup.py/' $pie_file
-
-        # black the file
-        (cd $PIE && make format DIR=$filename)
-
-        # add missing newline to end of file: https://unix.stackexchange.com/questions/31947/how-to-add-a-newline-to-the-end-of-a-file
-        # https://stackoverflow.com/questions/10082204/add-a-newline-only-if-it-doesnt-exist
-        # sed -i '' -e '$a\' $pie_file
-        rm $pie_file.bak
-    fi
-    tail -c1 $pie_file | read -r _ || echo >> $pie_file
-
 }
 
 function healths {
