@@ -875,7 +875,7 @@ function cams {
 }
 
 function cam_status {
-    curl -s https://phil:.lyroastporque@lab-$1.phils.io/get_camstatus | jq .
+    curl -s https://${CAM_AUTH}@lab-$1.phils.io/get_camstatus | jq .
 }
 
 function cam0 {
