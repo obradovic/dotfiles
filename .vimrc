@@ -15,16 +15,23 @@ call vundle#begin()
     " let Vundle manage Vundle, required
     Plugin 'VundleVim/Vundle.vim'
 
-    Plugin 'tpope/vim-surround'
-    Plugin 'sainnhe/gruvbox-material'   " https://github.com/sainnhe/gruvbox-material
+    " Plugin 'tpope/vim-surround'
+    Plugin 'luochen1990/rainbow'
+    "Plugin 'sainnhe/gruvbox-material'   " https://github.com/sainnhe/gruvbox-material
     Plugin 'bronson/vim-trailing-whitespace'
     Plugin 'ConradIrwin/vim-bracketed-paste'
     " Plugin 'ycm-core/YouCompleteMe'
-    Plugin 'frazrepo/vim-rainbow'
+    " Plugin 'frazrepo/vim-rainbow'
+    " Plugin 'tomasiser/vim-code-dark'
+    "Plugin 'morhetz/gruvbox'
+
+    Plugin 'sheerun/vim-polyglot'
+
 
     " Plugin 'scrooloose/syntastic'
     " Plugin 'itchyny/lightline.vim'
 call vundle#end()
+
 
 filetype plugin indent on    " required
 " To ignore plugin indent changes, instead use:
@@ -41,7 +48,7 @@ filetype plugin indent on    " required
 "
 " RAINBOW PARENS: https://github.com/frazrepo/vim-rainbow
 "
-let g:rainbow_active = 1
+" let g:rainbow_active = 1
 
 
 
@@ -58,14 +65,14 @@ set background=dark
 " Set contrast.
 " This configuration option should be placed before `colorscheme gruvbox-material`.
 " Available values: 'hard', 'medium'(default), 'soft'
-let g:gruvbox_material_background = 'hard'
-let g:gruvbox_material_palette = 'original'
+""" let g:gruvbox_material_background = 'hard'
+""" let g:gruvbox_material_palette = 'original'
 
 " from: https://github.com/sainnhe/gruvbox-material/issues/5#issuecomment-729586348
-let &t_ZH="\e[3m"
-let &t_ZR="\e[23m"
+" let &t_ZH="\e[3m"
+" let &t_ZR="\e[23m"
 
-colorscheme gruvbox-material
+colorscheme darkblue
 
 
 "
@@ -116,7 +123,7 @@ set encoding=utf-8  " required by YouCompleteMe https://ycm-core.github.io/YouCo
 set cursorline
 " set lazyredraw
 let python_highlight_all=1
-syntax on
+" syntax on
 
 " let g:TerminusCursorShape=1
 " let g:TerminusMouse=0
@@ -174,6 +181,20 @@ set ruler
 " set cursorcolumn
 
 " :hi MatchParen cterm=none ctermfg=none ctermbg=green
+
+
+"set autoread
+"set confirm
+"set updatetime=1000  " Optional: checks every 1 second while idle
+
+"augroup check_file_changes
+  "autocmd!
+  "autocmd FocusGained,BufEnter,CursorHold * checktime
+"augroup END
+
+"autocmd FocusGained,BufEnter * checktime
+"set updatetime=1000  " Time in milliseconds (1 seconds)
+"autocmd CursorHold * checktime
 
 
 " KITE: https://github.com/kiteco/plugins/tree/master/vim
