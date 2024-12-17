@@ -758,7 +758,8 @@ function pireq {
 }
 
 function findpy {
-    find . -name \*.py | grep -v "\.env\|\.git" | xargs $*
+    # find . -name \*.py | grep -v "\.env\|\.git" | xargs $*
+    find . -name "*.py" | grep -v "\.env\|\.git" | grep -v "{{.*}}" | xargs $*
 }
 
 function pii {
@@ -828,7 +829,7 @@ export PATH=$RUBY_HOME/bin:$PATH
 export GOPATH=~/go
 
 function findgo {
-    find . -name \*.go | grep -v "\.env\|\.git" | xargs $*
+    find . -name \*.go | grep -v "\.env\|\.git" | xargs -I@ grep -H -i "$*" "@"
 }
 
 
@@ -1466,9 +1467,19 @@ function arps {
     echo "$output" | expand -t 16,36
 }
 
-alias arps1='arps | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n '  # -t is the separator, treat all 4 octets as numbers
-alias arps2='arps | sort -b -k2,2'  # -b meaans to ignore leading blanks
-alias arps3='arps | sort -k3,3f -k4,4f -k5,5f -k1,1n'
+# alias arps1='arps | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n '  # -t is the separator, treat all 4 octets as numbers
+# alias arps2='arps | sort -b -k2,2'  # -b meaans to ignore leading blanks
+# alias arps3='arps | sort -k3,3f -k4,4f -k5,5f -k1,1n'
+
+function arps1 {
+    arps $1 | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n  # -t is the separator, treat all 4 octets as numbers
+}
+function arps2 {
+    arps $1 | sort sort -b -k2,2  # -b meaans to ignore leading blanks
+}
+function arps3 {
+    arps $1 | sort -k3,3f -k4,4f -k5,5f -k1,1n
+}
 
 function macs {
     local file=/usr/local/share/arp-scan/mac-override.txt
@@ -1504,7 +1515,7 @@ function mac-name {
 
 function orbi {
     stuff=`curl -s \
-        '$ORBI_DEVICES' \
+        "$ORBI_DEVICES_URL" \
         -X POST \
         -H 'Accept: */*' \
         -H 'Accept-Language: en-US,en;q=0.5' \
@@ -1628,11 +1639,11 @@ function pihole-history-and-tail {
     # make an array of domains to ignore in the output. Internet detritus, just dont want to see it
     declare -a ignored_domains
     ignored_domains=()
-    ignored_domains+=("clients6.google.com" "googleusercontent.com" "googleapis.com" "gstatic.com" "pki.goog")
+    ignored_domains+=("clients6.google.com" "googleusercontent.com" "googleapis.com" "gstatic.com" "pki.goog" "ytimg.com" "ggpht.com")
     ignored_domains+=("cloudfront.net" "amazonaws.com")
     ignored_domains+=("icloud.com" "apple.com" "apple-dns.net" "icloud-content.com" "mzstatic.com" "aaplimg.com" "apple.news")
     ignored_domains+=("akamaiedge.net" "akadns.net" "sc-cdn.net")
-    ignored_domains+=("twimg.com" "firebaseio.com")
+    ignored_domains+=("twimg.com" "firebaseio.com" "digicert.com")
     ignored_domains+=("HTTPS")
 
     # get length of an array
@@ -1664,6 +1675,21 @@ function pihole-history-and-tail {
     pihole-tail | grep --line-buffered $ip
 }
 
+function pihole-tail-device {
+    local name="$1"
+
+    echo "Finding devices..."
+    local devices=`arps3 | grep -i "${name}"`
+    echo
+    echo "Found devices:"
+    echo "${devices}"
+    echo
+
+    local ip=`echo "${devices}" | head -1 | cut -d' ' -f1`
+    echo "${ip} Choosing the first device"
+    pihole-tail | grep --line-buffered $ip
+}
+
 function pihole-chromebook {
     pihole-history-and-tail 192.168.1.234  # MAC: C8:58:C0:ED:91:DA
 }
@@ -1676,13 +1702,46 @@ function pihole-ipad {
     pihole-history-and-tail 192.168.1.170  # MAC: ca:16:ad:48:20:97
 }
 
-function pihole-appletv {
+function pihole-appletv-outside {
     pihole-history-and-tail 192.168.1.109  # MAC: f0:b3:ec:48:06:10
+}
+
+function pihole-appletv-tvroom {
+    pihole-history-and-tail 192.168.1.240  # MAC: a8:51:ab:00:68:f6
+}
+
+function pihole-tv-livingroom {
+    pihole-history-and-tail 192.168.1.131  # MAC: 64:07:f6:91:c4:a4
+}
+
+function pihole-tv-tvroom {
+    pihole-history-and-tail 192.168.1.105  # MAC: 70:97:41:2c:ca:ca
+}
+
+function pihole-tv-office {
+    pihole-history-and-tail 192.168.1.216  # MAC: 34:f1:50:3c:8a:5e
+}
+
+function pihole-tv-outside {
+    pihole-history-and-tail 192.168.1.176  # d0:c2:4e:db:37:94
+}
+
+function pihole-tv-roku-bedroom {
+    pihole-history-and-tail 192.168.1.151  # 08:05:81:c9:17:4d
+}
+
+function pihole-nintendo-switch {
+    pihole-history-and-tail 192.168.1.174  # 74:84:69:89:c3:11
+}
+
+function pihole-xbox {
+    pihole-history-and-tail 192.168.1.146  # 2c:54:91:76:40:2d
 }
 
 function pihole-tonal {
     pihole-history-and-tail 192.168.1.143  # MAC: 10:59:17:03:09:a7
 }
+
 
 function pihole-domains {
     limit="$1"
@@ -2574,7 +2633,7 @@ function health {
 alias src='cd $SRC_HOME'
 alias re='cd $PIE/reports'
 alias rep='re'
-alias a='cd $PIE/api'
+alias a='cd $PIE/biomech/amti'
 alias u='cd $PIE/uploader'
 alias bio='cd $PIE/biomech'
 alias vid='cd $PIE/video'
@@ -3566,3 +3625,6 @@ if [ -f $GOOGLE_CLOUD_DIR/completion.bash.inc ]; then . $GOOGLE_CLOUD_DIR/comple
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# uv
+export PATH="/Users/zo/.local/bin:$PATH"
