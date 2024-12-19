@@ -53,7 +53,7 @@ alias copy='cp'
 alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
-alias basss='vi ~/phillies/dotfiles/.bashrc; sleep 0.1; . ~/phillies/dotfiles/.bashrc'
+alias basss='vi ~/.bashrc_phillies; sleep 0.1; . ~/.bashrc_phillies'
 alias please='sudo'
 alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
 alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f2-)"
@@ -648,7 +648,7 @@ function i {
 }
 
 # Source
-export DOTFILES_PHILLIES=~/phillies/dotfiles
+export DOTFILES_PHILLIES=${SRC_HOME}/dotfiles
 [ -f $DOTFILES_PHILLIES/.bashrc ] && . $DOTFILES_PHILLIES/.bashrc
 
 # This is included from phillies dotfiles
