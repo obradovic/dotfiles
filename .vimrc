@@ -7,6 +7,9 @@ Plug 'jnurmine/Zenburn'
 Plug 'altercation/vim-colors-solarized', { 'set': 'all' }
 Plug 'nordtheme/vim'
 Plug 'morhetz/gruvbox'
+Plug 'sainnhe/everforest'
+Plug 'sainnhe/gruvbox-material'
+Plug 'sainnhe/edge'
 
 " Editing
 Plug 'junegunn/vim-easy-align'
@@ -32,7 +35,11 @@ call plug#end()
 " colorscheme molokai
 " colorscheme nord 
 " colorscheme zenburn
-colorscheme gruvbox
+" colorscheme gruvbox
+" colorscheme gruvbox-material
+" colorscheme edge
+colorscheme everforest
+
 
 set incsearch	" incremental search
 set hlsearch 	" search highlighting
