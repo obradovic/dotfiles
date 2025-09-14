@@ -54,6 +54,7 @@ alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
 alias basss='vi ~/.bashrc_phillies; sleep 0.1; . ~/.bashrc_phillies'
+alias bassss='vi $LAB_HOME/tools/bashrc.sh; sleep 0.1; . $LAB_HOME/tools/bashrc.sh'
 alias please='sudo'
 alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
 alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f2-)"
@@ -548,8 +549,10 @@ function metadata-name {
 
 
 # RCLONE
-alias rc='rclone'
-alias rcl='rc ls'
+alias r='rclone'
+function rls {
+    rclone lsf gcs:$1
+}
 
 
 # VEGGIETRONIC
@@ -735,6 +738,7 @@ alias rmp='find . -name \*.pyc | xargs rm'
 alias py='ipython3 --no-banner --pprint --no-simple-prompt -i --'
 alias ac='. .env/bin/activate'
 alias acc='. .env.`uname -s`/bin/activate'
+alias acl='. .env.`uname -s`-lab/bin/activate'
 alias pip='python3 -m pip'
 alias pi='pip install'
 alias pw='pip wheel'
@@ -3628,3 +3632,5 @@ export NVM_DIR="$HOME/.nvm"
 
 # uv
 export PATH="/Users/zo/.local/bin:$PATH"
+export FFMPEG_CFG="$HOME/.ffmpeg/ffmpeg.conf"
+[ -f ~/.bashrc_private ] && source ~/.bashrc_private
