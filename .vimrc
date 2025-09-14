@@ -1,45 +1,35 @@
 " Specify a directory for plugins (for Neovim: ~/.local/share/nvim/plugged)
 call plug#begin('~/.vim/plugged')
 
-" Colors
-Plug 'tomasr/molokai'
-Plug 'jnurmine/Zenburn'
-Plug 'altercation/vim-colors-solarized', { 'set': 'all' }
-Plug 'nordtheme/vim'
-Plug 'morhetz/gruvbox'
-Plug 'sainnhe/everforest'
-Plug 'sainnhe/gruvbox-material'
-Plug 'sainnhe/edge'
-
 " Editing
 Plug 'junegunn/vim-easy-align'
 Plug 'tpope/vim-surround'
-" Plug 'tmhedberg/SimpylFold'
 Plug 'bronson/vim-trailing-whitespace'
 Plug 'ConradIrwin/vim-bracketed-paste'
+Plug 'frazrepo/vim-rainbow'
 
 " Lang
-Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
-Plug 'octol/vim-cpp-enhanced-highlight'
 
 " Lint
 Plug 'scrooloose/syntastic', { 'on': 'SyntasticCheck' }
-" Plug 'nvie/vim-flake8'
+
+" Colors
+Plug 'jamescherti/vim-tomorrow-night-deepblue'
+Plug 'sainnhe/gruvbox-material'
+" Plug 'rebelot/kanagawa.nvim'
+" Plug 'folke/tokyonight.nvim'
+" Plug 'rose-pine/neovim'
 
 " Close the plugin system
 call plug#end()
 
 " Colors
-" colorscheme solarized
-" colorscheme monrovia
-" colorscheme molokai
-" colorscheme nord 
-" colorscheme zenburn
-" colorscheme gruvbox
-" colorscheme gruvbox-material
-" colorscheme edge
-colorscheme everforest
+" colorscheme tomorrow-night-deepblue
+ colorscheme gruvbox-material
+" colorscheme kanagawa
+" colorscheme tokyonight-night
 
+let g:rainbow_active = 1
 
 set incsearch	" incremental search
 set hlsearch 	" search highlighting
@@ -49,6 +39,13 @@ set cursorline
 " set lazyredraw
 let python_highlight_all=1
 syntax on
+
+" set showmatch
+" set matchtime=2
+" if !exists('g:loaded_matchparen')
+" runtime plugin/matchparen.vim
+" endif
+highlight MatchParen cterm=bold ctermbg=darkblue guibg=LightYellow
 
 " Whitespace
 set expandtab
@@ -66,14 +63,6 @@ nnoremap <space> za
 " Lets us share buffers outside vim
 set clipboard=unnamed
 
-" set guioptions-=T
-" set guifont=Droid\ Sans\ Mono:h9
-
-" Lets you scroll with a mouse 
-" set mouse=a
-" map <ScrollWheelUp> <C-Y>
-" map <ScrollWheelDown> <C-E>
-
 " Annoying temporary files
 set backupdir=/tmp//,.
 set directory=/tmp//,.
@@ -82,3 +71,6 @@ set directory=/tmp//,.
 " set paste
 
 set ruler
+
+" mouse scrolling
+" set mouse=a
