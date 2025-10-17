@@ -9,8 +9,8 @@
 # aerial: https://github.com/JohnCoates/Aerial
 # Powerline Meslo font: git clone https://github.com/powerline/fonts.git && cd fonts && ./install.sh
 
-tap 'homebrew/cask'
-tap 'homebrew/core'
+# tap 'homebrew/cask'
+# tap 'homebrew/core'
 # tap 'homebrew/fonts'
 
 # FONTS
@@ -40,6 +40,7 @@ tap 'homebrew/core'
 # cask 'google-chrome' # already installed
 # cask 'google-drive'  # already installed
 cask '1password'
+cask '1password-cli'
 cask 'aerial'
 cask 'adobe-acrobat-reader'
 cask 'alfred'
@@ -48,7 +49,6 @@ cask 'brave-browser'
 cask 'caffeine'
 cask 'charles'
 # cask 'chrome-devtools'
-# cask 'chefdk'  # replace with chef-workstation ?
 cask 'coconutbattery'
 cask 'docker'
 cask 'dosbox'
@@ -57,10 +57,7 @@ cask 'fantastical'
 cask 'firefox'
 cask 'flux'
 cask 'gimp'
-# cask 'github-desktop'
 cask 'google-chrome'
-# cask 'google-earth-pro'
-# cask 'google-hangouts'
 cask 'istat-menus'
 cask 'iterm2'
 cask 'little-snitch'
@@ -70,12 +67,10 @@ cask 'micro-snitch'
 cask 'microsoft-office'
 # cask 'soundflower'
 cask 'slack'
-# cask 'sublime-text'
 cask 'switchresx'
 cask 'tor-browser'
 cask 'transmit'
 cask 'tunnelbear'
-# cask 'virtualbox'
 cask 'wireshark'
 cask 'xquartz'
 cask 'zoom'
@@ -111,10 +106,8 @@ brew 'git-extras'
 brew 'go'
 brew 'gnupg2'
 brew 'gpg'
-# brew 'gpg-agent'  # doesnt exist anymore
 brew 'graphviz'
 brew 'handbrake'
-# brew 'heroku'     # doesnt exist anymore
 brew 'htop-osx'
 brew 'httpie'
 brew 'inetutils'
@@ -154,9 +147,8 @@ brew 'p0f'
 # brew 'phantomjs'
 brew 'protobuf-c' # for kismet
 brew 'pv'
-# brew 'pyenv'
-# brew 'pyenv-virtualenv'
-# brew 'homebrew/boneyard/pyenv-pip-rehash'
+brew 'python@3.12'
+brew 'python@3.13'
 brew 'r'
 brew 'rclone'
 brew 'ruby'
@@ -178,13 +170,14 @@ brew 'uv'
 # brew 'unrar'
 brew 'vim'
 brew 'wget'
+brew 'x264'
+brew 'x265'
 brew 'youtube-dl'
 brew 'yq'
 
 # brew 'curl', args:['with-nghttp2']
 
 mas 'Microsoft-365', id: 1450038993
-# mas 'Skitch', id: 425955336
 mas 'Slack', id: 803453959
 # mas 'Xcode', id: 497799835
 mas 'Docs for Xcode', id: 688199928
