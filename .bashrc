@@ -14,13 +14,12 @@ export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export LESS="-XFR"
 export SRC_HOME="$HOME/phillies"
 export PIE=$SRC_HOME/pie
-# export TERM=xterm
-[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
 # HISTORY
 export HISTFILE=~/.history_bash
 export HISTFILESIZE=100000
-export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
+# export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
+export HISTIGNORE='&:ls:[bf]g:exit:'
 PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
 #
@@ -89,18 +88,31 @@ alias mini='ssh 192.168.1.42'
 alias hosts='sudo vi /etc/hosts'
 alias teep='pmset sleepnow'
 
+function include {
+    local file="$1"
+    if [ -f "$file" ] ; then
+        echo "    Including     ${file}"
+        source "$file"
+    else
+        echo "    Not including ${file}"
+    fi
+}
+
 function mcd {
-    mkdir "$1"
+    mkdir -p "$1"
     cd "$1"
 }
+
 function fin {
     find . -name \*$1\* ${@:2}
 }
+
 function pz {
-  ps -aef | grep -i $1 | grep -v grep
+    ps -aef | grep -i $1 | grep -v grep
 }
+
 function geo {
-    ip="$1"
+    local ip="$1"
     if [ -z "$ip" ]; then
         ip=check
     fi
@@ -109,24 +121,29 @@ function geo {
     # echo $info
     # curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN" | jq -r '. | "\(.city) \(.region_name) \(.country_code)"'
 }
+
 function who {
-    ip="$1"
+    local ip="$1"
     if [ -z "$ip" ]; then
         ip=`ip`
     fi
     whois $ip | grep OrgName | tr -s ' ' | cut -d' ' -f2-
 }
+
 function wildcard_csr {
-    domain=$1
+    local domain=$1
     openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
 }
+
 function timestamp {
     date +"%s"
 }
+
 function timestamp-diff {
-    cur=`timestamp`
+    local cur=`timestamp`
     expr $cur - $1
 }
+
 function sshquiet {
     if [ "$#" == "0" ]; then
         echo
@@ -137,9 +154,11 @@ function sshquiet {
         grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
     fi
 }
+
 function nohuptime {
     nohup bash -c 'time $* > nohup.out 2>&1'
 }
+
 function title {
   echo -e "\033];$1\007"
   echo "Title set to $1"
@@ -149,33 +168,33 @@ function title {
 #
 # PHILS
 #
-alias python-prod='ENV=prod $PIE/.env.Darwin/bin/python'
-alias medicalbot='python-prod $PIE/uploader/draft_prospect_link/medicalbot.py'
-alias allowlist='python-prod $PIE/bin/allowlist.py'
-alias adrian-db='t python3 $PIE/biomech/adrian_db.py'
-alias adrian-db-write='t python3 $PIE/biomech/adrian_db.py --write-db --adrian-filename'
-alias adrian-process='t python3 $PIE/biomech/adrian_process.py --hawkeye-filename'
-alias adrian='t python3 $PIE/biomech/adrian.py --hawkeye-filename'
-function biohealth {
-    DIR=biomech make health
-    # (pie && DIR=biomech make health)
-}
+# alias python-prod='ENV=prod $PIE/.env.Darwin/bin/python'
+# alias medicalbot='python-prod $PIE/uploader/draft_prospect_link/medicalbot.py'
+# alias allowlist='python-prod $PIE/bin/allowlist.py'
+# alias adrian-db='t python3 $PIE/biomech/adrian_db.py'
+# alias adrian-db-write='t python3 $PIE/biomech/adrian_db.py --write-db --adrian-filename'
+# alias adrian-process='t python3 $PIE/biomech/adrian_process.py --hawkeye-filename'
+# alias adrian='t python3 $PIE/biomech/adrian.py --hawkeye-filename'
+# function biohealth {
+    # DIR=biomech make health
+    # # (pie && DIR=biomech make health)
+# }
 
-export APP=db
+# export APP=db
 
 
 #
 # GITHUB
 #
 function pr {
-    title="$1"
+    local title="$1"
     # if [ -z "$title" ]; then
         # echo
         # echo "    Please set the title of the PR"
         # echo
         # return
     # fi
-    output=`gh pr create --base main --fill 2>&1`
+    local output=`gh pr create --base main --fill 2>&1`
     if [ $? -ne 0 ]; then
         echo
         echo "ERROR"
@@ -189,7 +208,8 @@ function pr {
         return
     fi
     echo $output
-    url=`echo $output | grep https`
+
+    local url=`echo $output | grep https`
     echo "$url is our URL"
     open "$url"
 }
@@ -303,6 +323,7 @@ alias kall='k get all -A --show-labels'
 alias ke='k exec'
 alias kc='k config'
 alias kl='k logs --timestamps --prefix -f'
+
 function kcs {
     local substring="$1"
 
@@ -601,6 +622,8 @@ function veg {
 alias vp='cd ~/versionping/versionping-api'
 
 # FFMPEG
+export FFMPEG_CFG="$HOME/.ffmpeg/ffmpeg.conf"
+
 function ffp {
     filename="$1"
     ffprobe -v quiet -print_format json -show_format -show_streams $filename | jq .
@@ -650,16 +673,12 @@ function i {
     touch `dirname $1`/__init__.py
 }
 
+
+
 # Source
 export DOTFILES_PHILLIES=${SRC_HOME}/dotfiles
-[ -f $DOTFILES_PHILLIES/.bashrc ] && . $DOTFILES_PHILLIES/.bashrc
-
-# This is included from phillies dotfiles
-# [ -f $HOME/.bashrc_private ] && source $HOME/.bashrc_private
-
-if [ -f $PIE/bin/gcp-shared.sh ]; then
-    source $PIE/bin/gcp-shared.sh
-fi
+include ${DOTFILES_PHILLIES}/.bashrc
+include ${PIE}/bin/gcp-shared.sh
 
 
 
@@ -729,6 +748,7 @@ mkdir -p $WHEELHOUSE
 # export PATH="$PYTHON3_HOME/bin:$PATH"
 # export LDFLAGS="-L$PYTHON3_HOME/lib"
 # export PKG_CONFIG_PATH="$PYTHON3_HOME/lib/pkgconfig"
+export PATH="$HOME/.local/bin:$PATH"
 
 alias python=python3
 
@@ -803,7 +823,9 @@ _virtualenv_auto_activate() {
 export PROMPT_COMMAND=_virtualenv_auto_activate
 
 
+#
 # R
+#
 alias R='R --no-save'
 function rp {
     Rscript -e 'ip <- as.data.frame(installed.packages()[,c(1,3:4)]); rownames(ip) <- NULL; ip <- ip[is.na(ip$Priority),1:2,drop=FALSE]; print(ip, row.names=FALSE)' | tail -n +2 | tr -s ' ' | cut -d' ' -f2- | sort -f
@@ -822,8 +844,15 @@ alias be='bundle exec'
 # alias dep='bundle exec cap prod deploy'
 # source ~/.rvm/scripts/rvm
 # echo 'export PATH="/usr/local/opt/ruby/bin:/usr/local/lib/ruby/gems/2.7.0/bin:$PATH"' >> ~/.zshrc
-export RUBY_HOME=/opt/homebrew/opt/ruby
-export PATH=$RUBY_HOME/bin:$PATH
+export RUBY_HOME=/usr/local/opt/ruby@3.3
+export PATH=${RUBY_HOME}/bin:$PATH
+export LDFLAGS="-L${RUBY_HOME}/lib"
+export CPPFLAGS="-I${RUBY_HOME}/include"
+export PKG_CONFIG_PATH="${RUBY_HOME}/lib/pkgconfig"
+# export PATH="/usr/local/opt/ruby@3.3/bin:$PATH"
+# export LDFLAGS="-L/usr/local/opt/ruby@3.3/lib"
+# export CPPFLAGS="-I/usr/local/opt/ruby@3.3/include"
+# export PKG_CONFIG_PATH="/usr/local/opt/ruby@3.3/lib/pkgconfig"
 
 
 
@@ -834,8 +863,21 @@ export GOPATH=~/go
 
 function findgo {
     find . -name \*.go | grep -v "\.env\|\.git" | xargs -I@ grep -H -i "$*" "@"
-}
+} 
 
+
+#
+# RUST
+#
+include ${HOME}/.cargo/env
+
+
+#
+# NODE
+#
+export NVM_DIR="$HOME/.nvm"
+include ${NVM_DIR}/nvm.sh
+include ${NVM_DIR}/bash_completion
 
 
 #
@@ -2405,9 +2447,14 @@ export GIT_PS1_SHOWSTASHSTATE=true
 export GIT_PS1_SHOWDIRTYSTATE=true
 export GIT_PS1_SHOWUPSTREAM="auto"
 
-. ~/.git-prompt.sh
-. ~/.git-completion.sh
-. ~/.colors_bash
+include ~/.git-prompt.sh
+include ~/.git-completion.sh
+
+
+#
+# COLORS
+#
+include ~/.colors_bash
 
 COLOR_NORMAL="\[\e[00m\]"
 COLOR_GREEN_A="\[\e[0;92m\]"
@@ -2440,16 +2487,14 @@ function curles {
 
 # DROPBOX
 export DROPBOX_HOME="/Users/zo/Dropbox"
-alias edg='cd $DROPBOX_HOME/Phillies/edger'
-alias phil='cd $DROPBOX_HOME/Phillies'
 
 # NOTES
 function notes {
     # shopt nullglob
 
-    local dir=$DROPBOX_HOME/Phillies
+    local dir=$DROPBOX_HOME/Notes
     if [ $# -eq 0 ]; then
-        ls -altr $dir/notes.* | sed -e "s/\/Users\/zo\/Dropbox\/Phillies\///"
+        ls -altr $dir/notes.* | sed -e "s/\/Users\/zo\/Dropbox\/Notes\///"
         # find $dir -maxdepth 1 -name notes\* -print0 | xargs -0 stat -f "%a"
         return
     fi
@@ -2463,10 +2508,12 @@ function notes {
         vi $dir/notes.$1.txt
     fi
 }
+
 function notesgrep {
     local arg="$1"
-    grep -i "$arg" $DROPBOX_HOME/Phillies/note*.txt
+    grep -i "$arg" $DROPBOX_HOME/Notes/note*.txt
 }
+
 alias notesg=notesgrep
 alias note=notes
 alias ntoes=notes
@@ -2531,29 +2578,6 @@ function pie-comp-dir {
     comm -1 $file1 $file2
 
     # rm $file1 $file2
-}
-
-function pie-diff {
-    local filename="$1"
-
-    # get the relative path, no matter which repo were in
-    local abs=`pwd`/$filename   # the absolute path to the file
-    local rel=${abs#"$PIE/"}    # strip the PIE prefix
-    rel=${rel#"$PHY/"}          # strip the PHY prefix
-
-    # set absolute file paths
-    phy_file="$PHY/$rel"
-    pie_file="$PIE/$rel"
-
-    # echo "< $phy_file"
-    # echo "> $pie_file"
-    # echo
-    echo "Comparing:"
-    echo $phy_file
-    echo $pie_file
-    echo
-    echo
-    diff $phy_file $pie_file
 }
 
 function lint-time-dir {
@@ -2635,28 +2659,28 @@ function health {
 
 # DIRS
 alias src='cd $SRC_HOME'
-alias re='cd $PIE/reports'
-alias rep='re'
-alias a='cd $PIE/biomech/amti'
-alias u='cd $PIE/uploader'
-alias bio='cd $PIE/biomech'
-alias vid='cd $PIE/video'
-alias pie='cd $PIE'
-alias ts='cd ~/phillies/ts'
-alias pid='cd $PIE/etc/docker/pie'
-alias pig='cd $PIE/.github/workflows'
-alias pik='cd $PIE/etc/kubernetes'
+# alias re='cd $PIE/reports'
+# alias rep='re'
+# alias a='cd $PIE/biomech/amti'
+# alias u='cd $PIE/uploader'
+# alias bio='cd $PIE/biomech'
+# alias vid='cd $PIE/video'
+# alias pie='cd $PIE'
+# alias ts='cd ~/phillies/ts'
+# alias pid='cd $PIE/etc/docker/pie'
+# alias pig='cd $PIE/.github/workflows'
+# alias pik='cd $PIE/etc/kubernetes'
 alias ku=pik
-alias pso='cd $SRC_HOME/pitch-selection-optimization'
-alias carm='cd $SRC_HOME/carmelo_update'
-alias pie-path='export PYTHONPATH=$SRC_HOME'
-alias c='cd $SRC_HOME/chef'
-alias v='cd $SRC_HOME/chef/cookbooks/phillies/recipes'
-alias e='cd $SRC_HOME/chef/environments'
-alias r='cd $SRC_HOME/chef/roles'
+# alias pso='cd $SRC_HOME/pitch-selection-optimization'
+# alias carm='cd $SRC_HOME/carmelo_update'
+# alias pie-path='export PYTHONPATH=$SRC_HOME'
+# alias c='cd $SRC_HOME/chef'
+# alias v='cd $SRC_HOME/chef/cookbooks/phillies/recipes'
+# alias e='cd $SRC_HOME/chef/environments'
+# alias r='cd $SRC_HOME/chef/roles'
 alias dot='cd ~/.dotfiles'
-alias dag='cd $PIE/cloud_composer/dags'
-alias ib='cd $SRC_HOME/ibp-dashboards'
+# alias dag='cd $PIE/cloud_composer/dags'
+# alias ib='cd $SRC_HOME/ibp-dashboards'
 
 
 # ANDROID
@@ -2680,18 +2704,18 @@ function vpurge {
 
 
 # some default locations
-export NGINX_HOME=/usr/local/Cellar/nginx/current
-export APACHE_HOME=/usr/local/apache2
-export NPM_HOME=/usr/local/share/npm/
 export ANDROID_HOME=~/adt-bundle-mac/sdk
-export HEROKU_HOME=/usr/local/heroku
-export NPM_RELATIVE="./node_modules/.bin"
+export APACHE_HOME=/usr/local/apache2
 export GROOVY_HOME=/usr/local/opt/groovy/libexec
 export GSUTIL_HOME=~/bin/gsutil
+export HEROKU_HOME=/usr/local/heroku
+export NGINX_HOME=/usr/local/Cellar/nginx/current
+export NPM_HOME=/usr/local/share/npm/
+export NPM_RELATIVE="./node_modules/.bin"
 
 
 # BREW
-function brew-update() {
+function brew-update {
     pushd .
     dot
     brew update
@@ -3378,11 +3402,11 @@ function rs-flavors {
 }
 
 
-function do-list() {
+function do-list {
     curl -s "https://api.digitalocean.com/droplets/?client_id=$DO_CLIENT_ID&api_key=$DO_API_KEY" | python -mjson.tool
 }
 
-function do-keys() {
+function do-keys {
     curl -s "https://api.digitalocean.com/ssh_keys/?client_id=$DO_CLIENT_ID&api_key=$DO_API_KEY" | python -mjson.tool
 }
 
@@ -3609,28 +3633,14 @@ function mac2unix {
     mv foo.tmp $1
 }
 
+# GOOGLE CLOUD
+# export GOOGLE_CLOUD_DIR="${HOME}/src/google-cloud-sdk"
+# include ${GOOGLE_CLOUD_DIR}/path.bash.inc
+# include ${GOOGLE_CLOUD_DIR}/completion.bash.inc
 
-[ -f $HOME/.z.sh ] && source $HOME/.z.sh
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
-# Setting PATH for Python 3.7
-# The original version is saved in .bash_profile.pysave
-# export PATH="/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
-# export PATH=/usr/local/bin:$PATH
-# export PATH="$HOME/.poetry/bin:$PATH"
+# include ${HOME}/.z.sh
+# include ${HOME}/.fzf.bash
+include ${HOME}/.bashrc_private
 
-# The next line updates PATH for the Google Cloud SDK.
-export GOOGLE_CLOUD_DIR="/Users/zo/src/google-cloud-sdk"
-if [ -f $GOOGLE_CLOUD_DIR/path.bash.inc ]; then . $GOOGLE_CLOUD_DIR/path.bash.inc; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f $GOOGLE_CLOUD_DIR/completion.bash.inc ]; then . $GOOGLE_CLOUD_DIR/completion.bash.inc; fi
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-# uv
-export PATH="/Users/zo/.local/bin:$PATH"
-export FFMPEG_CFG="$HOME/.ffmpeg/ffmpeg.conf"
-[ -f ~/.bashrc_private ] && source ~/.bashrc_private
+export PATH="${HOME}/.local/bin:$PATH"
