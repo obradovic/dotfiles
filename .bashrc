@@ -13,7 +13,7 @@ export CLICOLOR=1
 export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export LESS="-XFR"
 export SRC_HOME="$HOME/phillies"
-export PIE=$SRC_HOME/pie
+# export PIE=$SRC_HOME/pie
 
 # HISTORY
 export HISTFILE=~/.history_bash
@@ -166,6 +166,13 @@ function title {
 
 
 #
+# HOMEBREW
+#
+export HOMEBREW_HOME="/opt/homebrew"
+export HOMEBREW_BIN="${HOMEBREW_HOME}/bin"
+
+
+#
 # PHILS
 #
 # alias python-prod='ENV=prod $PIE/.env.Darwin/bin/python'
@@ -224,7 +231,7 @@ function beeper {
 #
 # GITHUB ACTIONS
 #
-alias g='cd $PIE/../.github'
+# alias g='cd $PIE/../.github'
 alias w='g && cd workflows'
 alias sc='g && cd scripts'
 
@@ -236,9 +243,9 @@ alias d='docker'
 alias dc='d container'
 alias di='d image'
 alias dps='d ps -a'
-alias doc='cd $PIE/etc/docker/pie'
-alias ama='cd $PIE/dash/ama'
-alias amad='cd $PIE/etc/docker/dash'
+# alias doc='cd $PIE/etc/docker/pie'
+# alias ama='cd $PIE/dash/ama'
+# alias amad='cd $PIE/etc/docker/dash'
 alias drun='docker container run'
 # alias pc-up="(pie && make pc-up)"
 # alias pc-down="(pie && make pc-down)"
@@ -355,11 +362,11 @@ function ky {
     kg $* -o yaml | yq .
 }
 
-function bp {
-    cd $PIE
-    make bash-pod POD=$1
-    cd -
-}
+# function bp {
+#     cd $PIE
+#     make bash-pod POD=$1
+#     cd -
+# }
 
 function pod-bash {
     local pod_pattern="$1"
@@ -762,10 +769,10 @@ alias acl='. .env.`uname -s`-lab/bin/activate'
 alias pip='python3 -m pip'
 alias pi='pip install'
 alias pw='pip wheel'
-alias pis='pi `grep slack $PIE/etc/requirements.txt`'
+# alias pis='pi `grep slack $PIE/etc/requirements.txt`'
 alias pir='pi -r requirements.txt'
 alias env_create='pyenv virtualenv $PYENV_VERSION .env'
-alias phickle='python3 $PIE/shared/phickle.py'
+# alias phickle='python3 $PIE/shared/phickle.py'
 
 function pireq {
     req=$1
@@ -842,17 +849,15 @@ function rp-del {
 alias be='bundle exec'
 # alias bcap='bundle exec cap'
 # alias dep='bundle exec cap prod deploy'
-# source ~/.rvm/scripts/rvm
-# echo 'export PATH="/usr/local/opt/ruby/bin:/usr/local/lib/ruby/gems/2.7.0/bin:$PATH"' >> ~/.zshrc
 export RUBY_HOME=/usr/local/opt/ruby@3.3
 export PATH=${RUBY_HOME}/bin:$PATH
 export LDFLAGS="-L${RUBY_HOME}/lib"
 export CPPFLAGS="-I${RUBY_HOME}/include"
 export PKG_CONFIG_PATH="${RUBY_HOME}/lib/pkgconfig"
-# export PATH="/usr/local/opt/ruby@3.3/bin:$PATH"
-# export LDFLAGS="-L/usr/local/opt/ruby@3.3/lib"
-# export CPPFLAGS="-I/usr/local/opt/ruby@3.3/include"
-# export PKG_CONFIG_PATH="/usr/local/opt/ruby@3.3/lib/pkgconfig"
+
+# source ~/.rvm/scripts/rvm
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(${HOMEBREW_BIN}/rbenv init - bash)"
 
 
 
