@@ -1,39 +1,46 @@
-# Quick Start
+# 🧰 Dotfiles by Obradovic
 
-First, paste the following into a terminal:
+A minimal yet powerful setup for macOS and Linux shells — complete with Vim, Git, Ruby, and Homebrew integration.  
+Clone once, and you’re ready to roll.
 
-```
-# Install brew (from https://brew.sh)
+---
+
+## 🚀 Quick Start
+
+Paste this into a fresh terminal:
+
+```bash
+# 1. Install Homebrew (https://brew.sh)
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-# Clone this repo
+# 2. Clone this repo
 cd ~
 git clone git@github.com:obradovic/dotfiles.git .dotfiles
 
-# Link the dotfiles
+# 3. Symlink all dotfiles
 dotfiles=( .bashrc .bash_profile .colors_bash .curl_format .dircolors .gemrc .git-completion.sh .git-prompt.sh .gitconfig .inputrc .irbrc .myclirc .vim .vimrc )
-for dotfile in "${dotfiles[@]}"; do
-    echo "Linking $dotfile"
-    ln -s .dotfiles/$dotfile $dotfile
+for f in "${dotfiles[@]}"; do
+    echo "🔗 Linking $f"
+    ln -sf .dotfiles/$f $f
 done
-. ~/.bashrc
+source ~/.bashrc
 
-# Install all the brew packages from the Brewfile
-cd .dotfiles
+# 4. Install all the Homebrew packages
+cd ~/.dotfiles
 brew tap Homebrew/bundle
 brew bundle
 
-# Install VIM Plugins
-curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+# 5. Install Vim plugins (Vim Plug)
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-# From inside vi
-:PluginInstall (for Vundle) <- preferred?
-:PlugInstall (for Vim Plug)
+# Then inside Vim:
+# :PlugInstall
 
-# Random osx stuff
-defaults write com.apple.finder AppleShowAllFiles YES
+# 6. Optional: macOS tweaks
+defaults write com.apple.finder AppleShowAllFiles YES && killall Finder
 
-# Ruby
+# 7. Ruby setup
 gem install bundler
 
 ```
