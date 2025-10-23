@@ -1503,7 +1503,7 @@ function ssh-mac {
 }
 function arps {
     if [ $# -eq 0 ]; then
-        interface="en0"
+        interface="en1"
     else
         interface="$1"
     fi
