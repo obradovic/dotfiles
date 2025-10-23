@@ -1,6 +1,6 @@
-# 🧰 Dotfiles by 
+# 🧰 Dotfiles du jour
 
-A minimal yet powerful setup for macOS and Linux shells — complete with Vim, Git, Ruby, and Homebrew integration. Clone once, and you’re ready to roll.
+A minimal yet powerful setup for macOS and Linux shells — complete with Vim, Git, Ruby, and Homebrew.
 
 ---
 
