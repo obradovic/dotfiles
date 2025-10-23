@@ -1,7 +1,6 @@
-# 🧰 Dotfiles by Obradovic
+# 🧰 Dotfiles by 
 
-A minimal yet powerful setup for macOS and Linux shells — complete with Vim, Git, Ruby, and Homebrew integration.  
-Clone once, and you’re ready to roll.
+A minimal yet powerful setup for macOS and Linux shells — complete with Vim, Git, Ruby, and Homebrew integration. Clone once, and you’re ready to roll.
 
 ---
 
@@ -38,7 +37,7 @@ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
 # :PlugInstall
 
 # 6. Optional: macOS tweaks
-defaults write com.apple.finder AppleShowAllFiles YES && killall Finder
+defaults write com.apple.finder AppleShowAllFiles YES
 
 # 7. Ruby setup
 gem install bundler
