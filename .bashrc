@@ -51,8 +51,8 @@ alias copy='cp'
 alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
-alias basss='vi ~/.bashrc_phillies; sleep 0.1; . ~/.bashrc_phillies'
-alias bassss='vi $LAB_HOME/tools/bashrc.sh; sleep 0.1; . $LAB_HOME/tools/bashrc.sh'
+# alias basss='vi ~/.bashrc_phillies; sleep 0.1; . ~/.bashrc_phillies'
+# alias bassss='vi $LAB_HOME/tools/bashrc.sh; sleep 0.1; . $LAB_HOME/tools/bashrc.sh'
 alias please='sudo'
 alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
 alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f2-)"
@@ -862,7 +862,7 @@ export GOPATH=~/go
 
 function findgo {
     find . -name \*.go | grep -v "\.env\|\.git" | xargs -I@ grep -H -i "$*" "@"
-} 
+}
 
 
 #
@@ -1358,7 +1358,7 @@ function check-cluster-ips {
     for ip in $ips; do
         echo "Checking $ip"
         local url="https://$ip/api/v1/pods"
-        local response=`curl -s -k $url | jq .code` 
+        local response=`curl -s -k $url | jq .code`
         if [ "$response" == "403" ]; then
             echo "Got a 403 response. Good!"
         else
@@ -2667,7 +2667,7 @@ alias dot='cd ~/.dotfiles'
 alias logcat='adb logcat > /tmp/logcat.txt &'
 alias logall='tail -f /tmp/logcat.txt'
 alias adb-restart='adb kill-server; adb start-server'
-# export GRADLE_OPTS="-Dorg.gradle.daemon=true" 
+# export GRADLE_OPTS="-Dorg.gradle.daemon=true"
 
 
 # LOADER
@@ -2879,7 +2879,7 @@ function photo_pull {
     remote_path="$PHOTO_REMOTE_BASE/$remote_dir"
     echo "Pulling photos from $remote_path to $local_dir"
 
-    rsync -Prtv --progress $PHOTO_USER@$PHOTO_HOST:$PHOTO_REMOTE_HOME/$remote_path/* $local_dir/. 
+    rsync -Prtv --progress $PHOTO_USER@$PHOTO_HOST:$PHOTO_REMOTE_HOME/$remote_path/* $local_dir/.
 }
 
 function photo_pull_jacq {
@@ -2931,7 +2931,7 @@ function init-cam {
   [[ $name = "dev"* ]] && env="dev"
 
   # deploy xrays
-  echo 
+  echo
   echo "DEPLOYING XRAYS to $env"
   echo
   cd $SRC_HOME/xrays
@@ -2940,7 +2940,7 @@ function init-cam {
   cap fu force=$name
 
   # deploy camstore
-  echo 
+  echo
   echo "DEPLOYING CAMSTORE to $env"
   echo
   cd $SRC_HOME/camstore
@@ -2971,7 +2971,7 @@ function init-app {
   echo
 
   # FIRST, COPY THE ID_RSA to ~/vsco/.ssh/id_rsa on the box
-  echo 
+  echo
   echo "UPLOADING SSH KEY"
   echo
   cd $SRC_HOME/vsco
@@ -2986,7 +2986,7 @@ function init-app {
   # cap chef prod=cam,mongo,mysql,gearman,star,varnish,edge
 
   # deploy assets
-  echo 
+  echo
   echo "DEPLOYING ASSETS to $env"
   echo
   cd $SRC_HOME/assets
@@ -2995,7 +2995,7 @@ function init-app {
   cap fu $env=$name
 
   # deploy app
-  echo 
+  echo
   echo "DEPLOYING APP to $env"
   echo
   cd $SRC_HOME/vsco
@@ -3062,7 +3062,7 @@ function rs-create-old {
 
   # knife rackspace image list --rackspace-version v2
   if [ "$5" = "" ]; then
-    # image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd" 
+    # image="8a3a9f96-b997-46fd-b7a8-a9e740796ffd"
     image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
   elif [ "$5" = "ubuntu" ]; then
     image="b3ed73ef-b922-4b61-bb4d-472bb52e6326"
@@ -3134,7 +3134,7 @@ function rs-create {
         echo "       <flavor>   defaults to \"2\" (512MB small)"
         echo "       <image>    defaults to \"Ubuntu 12.10\""
         echo
-    
+
         echo "Ex: rs-create green app99 'role[app-all]' hkg performance1-2"
         echo
         return
@@ -3194,7 +3194,7 @@ function rs-create {
 
     # get the IP address
     ip=`rs-ip $rs_location $rs_server_id`
- 
+
     # Chef Bootstrap
     echo "Bootstrapping $ip with $rs_pw"
     a=`timestamp`
@@ -3245,7 +3245,7 @@ function rs-auth {
         echo "RS_USERNAME: $RS_USERNAME"
         echo "RS_APIKEY:   $RS_APIKEY"
         echo
-    fi 
+    fi
 }
 
 function rs-args-two {
@@ -3484,7 +3484,7 @@ function do-delete {
         return
     fi
 
-    tb destroy $1 
+    tb destroy $1
 
     or-delete $1
     dns-delete $1           vsco.co
@@ -3500,7 +3500,7 @@ function or {
 
 function or-create {
   name=$1
-  ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
+  ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '`
   echo "OR Creating ACL $name $ip"
   curl --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$ip/32\", \"description\": \"$name\"}" $OR_API_HOST/acl/add
 }
@@ -3516,7 +3516,7 @@ function or-permit {
 function or-delete {
   name=$1
   echo "OR Deleting Name $name..."
-  ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '` 
+  ip=`knife status | grep $name | cut -f 4 -d ',' | tr -d ' '`
   echo "OR Deleting ACL $ip..."
   or-delete-ip $ip
 }
@@ -3537,7 +3537,7 @@ function dns-update-ttl {
         return
     fi
 
-    for record in `dnsimple record:list $1 | grep -v Found` 
+    for record in `dnsimple record:list $1 | grep -v Found`
     do
         if [[ $record == id* ]] ;
         then
