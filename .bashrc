@@ -2753,17 +2753,9 @@ add_to_PATH () {
 }
 
 # JAVA
-function finder {
-    find . -name '*.jar' -exec grep -Hls $1 {} \;
-}
-export MYSQL_CONNECTOR_HOME=$HOME/phillies/kafka/mysql-connector-java-5.1.44
+export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+
 add_to_CLASSPATH .
-add_to_CLASSPATH $HOME/phillies/data/activemq/target/dependency/*
-add_to_CLASSPATH $HOME/phillies/data/activemq/target/classes
-add_to_CLASSPATH $HOME/jars-kafka-serde-tools/*
-add_to_CLASSPATH $HOME/jars-schema-registry/*
-add_to_CLASSPATH $MYSQL_CONNECTOR_HOME/mysql-connector-java-5.1.44-bin.jar
-add_to_CLASSPATH $HOME/phillies/kafka/sqlline/target/sqlline-1.4.0-SNAPSHOT-jar-with-dependencies.jar
 
 # export PATH="$(brew --prefix coreutils)/libexec/gnubin:/usr/local/bin:$PATH"
 # export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
@@ -2790,7 +2782,6 @@ add_to_PATH .
   # if [ -f $LUNCHY_DIR/lunchy-completion.bash ]; then
     # . $LUNCHY_DIR/lunchy-completion.bash
 # fi
-
 
 
 
