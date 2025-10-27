@@ -2660,6 +2660,7 @@ function health {
 alias src='cd $SRC_HOME'
 alias ku=pik
 alias dot='cd ~/.dotfiles'
+alias leet='cd ${SRC_HOME}/leet'
 # alias dag='cd $PIE/cloud_composer/dags'
 
 
@@ -2727,13 +2728,9 @@ add_to_PATH () {
   done
 }
 
-# JAVA
-export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 
-add_to_CLASSPATH .
 
-# export PATH="$(brew --prefix coreutils)/libexec/gnubin:/usr/local/bin:$PATH"
-# export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+
 add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
 add_to_PATH $PYTHON3_HOME/bin/
 add_to_PATH $PYTHON3_HOME/libexec/bin/
@@ -2741,26 +2738,25 @@ add_to_PATH /usr/local/bin
 add_to_PATH /usr/local/sbin
 add_to_PATH $NPM_RELATIVE
 add_to_PATH $GOPATH/bin
-# add_to_PATH /usr/local/opt/openssl/bin
 add_to_PATH /usr/local/opt/mysql-client/bin
 add_to_PATH /opt/homebrew/bin
 add_to_PATH $GSTREAMER_HOME/bin/
 add_to_PATH ~/bin
 add_to_PATH .
-# add_to_PATH $NPM_HOME/bin
-# add_to_PATH $KAFKA_HOME/bin
-# add_to_PATH $SQLLINE_HOME/bin
-# add_to_PATH /Library/TeX/texbin
-
-# LUNCHY
-# LUNCHY_DIR=$(dirname `gem which lunchy`)/../extras
-  # if [ -f $LUNCHY_DIR/lunchy-completion.bash ]; then
-    # . $LUNCHY_DIR/lunchy-completion.bash
-# fi
 
 
 
+#
+# JAVA
+#
+export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+add_to_CLASSPATH .
+
+
+
+#
 # PHOTO
+#
 alias ph='cd ~/Photos'
 alias photo='ssh $PHOTO_USER@$PHOTO_HOST'
 alias photo_mount='sshfs $PHOTO_USER@$PHOTO_HOST: $PHOTO_DIR_LOCAL_MOUNT'
@@ -2916,101 +2912,13 @@ function photo_clear_samsung {
 }
 
 
-function init-cam {
-  if [ "$1" = "" ]; then
-    echo
-    echo " init-cam <name>"
-    echo
-    echo "Ex: init-cam prod-xray2"
-    echo
-    return
-  fi
-
-  name=$1
-  env="prod"
-  [[ $name = "dev"* ]] && env="dev"
-
-  # deploy xrays
-  echo
-  echo "DEPLOYING XRAYS to $env"
-  echo
-  cd $SRC_HOME/xrays
-  git checkout master
-  git pull
-  cap fu force=$name
-
-  # deploy camstore
-  echo
-  echo "DEPLOYING CAMSTORE to $env"
-  echo
-  cd $SRC_HOME/camstore
-  git checkout master
-  git pull
-  tag=`git tag | grep prod- | sort -n | tail -1`
-  cap fu $env=$name from_tag="$tag"
-}
-
-
-function init-app {
-  if [ "$1" = "" ]; then
-    echo
-    echo " init-app <name>"
-    echo
-    echo "Ex: init-app prod-app2"
-    echo
-    return
-  fi
-
-  name=$1
-  env="prod"
-  [[ $name = "dev"* ]] && env="dev"
-  [[ $name = "staging"* ]] && env="staging"
-
-  echo
-  echo "RUNNING CHEF"
-  echo
-
-  # FIRST, COPY THE ID_RSA to ~/vsco/.ssh/id_rsa on the box
-  echo
-  echo "UPLOADING SSH KEY"
-  echo
-  cd $SRC_HOME/vsco
-  cas upload_ssh $env=$name
-
-  # first, stop chef
-  # cap chef_stop prod=all
-  cap chef_stop  $env=$name
-
-  # now, run chef on everything but the load balancers
-  # so iptables to mongo/mysql/gearmand/etc is all whitelisted
-  # cap chef prod=cam,mongo,mysql,gearman,star,varnish,edge
-
-  # deploy assets
-  echo
-  echo "DEPLOYING ASSETS to $env"
-  echo
-  cd $SRC_HOME/assets
-  git checkout master
-  git pull
-  cap fu $env=$name
-
-  # deploy app
-  echo
-  echo "DEPLOYING APP to $env"
-  echo
-  cd $SRC_HOME/vsco
-  git checkout master
-  git pull
-  tag=`git tag | grep prod- | sort -n | tail -1`
-  cap fu force=$name from_tag="$tag"
-
-  # now run chef on the load balancers so they find the new app box
-}
 
 
 
 
-
+#
+# RACKSPACE
+#
 function rs-create-old {
   if [ "$1" = "" ]; then
     echo
@@ -3373,6 +3281,11 @@ function rs-flavors {
 }
 
 
+
+
+#
+# DIGITAL OCEAN
+#
 function do-list {
     curl -s "https://api.digitalocean.com/droplets/?client_id=$DO_CLIENT_ID&api_key=$DO_API_KEY" | python -mjson.tool
 }
@@ -3494,6 +3407,9 @@ function do-delete {
 }
 
 
+#
+# OBJECT ROCKET
+#
 function or {
     mongo -u $OR_USER -p $OR_PASS $OR_HOST/$1 $2 $3 $4
 }
@@ -3525,6 +3441,10 @@ function or-delete-ip {
   curl -s --data "api_key=$OR_KEY&doc={\"cidr_mask\": \"$1/32\"}" $OR_API_HOST/acl/delete
 }
 
+
+#
+# DNSIMPLE
+#
 function dns-update-ttl {
       if [ "$1" = "" ]; then
         echo
@@ -3558,37 +3478,20 @@ function dns-delete {
       fi
 }
 
-function rs-delete-old {
-      if [ "$1" = "" ]; then
-        echo
-        echo " rs-delete <name>"
-        echo
-        echo "Ex: rs-delete dev-xray9"
-        echo
-        return
-      fi
-
-    c
 
 
-      id=`knife rackspace server list | grep "$1 " | awk '{print $1}'`
-      time knife rackspace server delete $id -P
-
-      dns-delete $1            vsco.co
-      dns-delete $1-private    vsco.co
-    # knife client delete $1
-
-    or-delete $1
-
-      cd -
-}
-
+#
+# AWS
+#
 function aws-bootstrap {
     env="blue"
     knife bootstrap $1 -N $env-$2 -r 'role[redis]' -E $env -d vsco-amazon -V -x ubuntu -i ~/.ssh/$AWS_KEY_NAME.pem --hint '{"ec2":true}' --bootstrap-version="11.12.4"
 }
 
+
+#
 # EOL conversions
+#
 function dos2unix {
     cat $1 | tr -d '\r' > foo.tmp
     mv foo.tmp $1
@@ -3604,13 +3507,6 @@ function mac2unix {
     mv foo.tmp $1
 }
 
-# GOOGLE CLOUD
-# export GOOGLE_CLOUD_DIR="${HOME}/src/google-cloud-sdk"
-# include ${GOOGLE_CLOUD_DIR}/path.bash.inc
-# include ${GOOGLE_CLOUD_DIR}/completion.bash.inc
-
-
-# include ${HOME}/.z.sh
 # include ${HOME}/.fzf.bash
 include ${HOME}/.bashrc_private
 
