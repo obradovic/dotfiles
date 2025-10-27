@@ -12,8 +12,7 @@ export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-o
 export CLICOLOR=1
 export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export LESS="-XFR"
-export SRC_HOME="$HOME/phillies"
-# export PIE=$SRC_HOME/pie
+export SRC_HOME="${HOME}/src"
 
 # HISTORY
 export HISTFILE=~/.history_bash
@@ -243,9 +242,6 @@ alias d='docker'
 alias dc='d container'
 alias di='d image'
 alias dps='d ps -a'
-# alias doc='cd $PIE/etc/docker/pie'
-# alias ama='cd $PIE/dash/ama'
-# alias amad='cd $PIE/etc/docker/dash'
 alias drun='docker container run'
 # alias pc-up="(pie && make pc-up)"
 # alias pc-down="(pie && make pc-down)"
@@ -683,9 +679,7 @@ function i {
 
 
 # Source
-export DOTFILES_PHILLIES=${SRC_HOME}/dotfiles
-include ${DOTFILES_PHILLIES}/.bashrc
-include ${PIE}/bin/gcp-shared.sh
+include ${PIE_HOME}/bin/gcp-shared.sh
 
 
 
@@ -742,9 +736,9 @@ function wifi-me {
 #
 export FLASK_APP=main.py
 export FLASK_DEBUG=1
-export PYTHONPATH=$SRC_HOME
+# export PYTHONPATH=$SRC_HOME
 export PYTHONDONTWRITEBYTECODE=true
-export MYPYPATH=$PYTHONPATH
+# export MYPYPATH=$PYTHONPATH
 
 export WHEELHOUSE="${HOME}/.cache/pip/wheelhouse"
 export PIP_FIND_LINKS="file://${WHEELHOUSE}"
@@ -2664,28 +2658,9 @@ function health {
 
 # DIRS
 alias src='cd $SRC_HOME'
-# alias re='cd $PIE/reports'
-# alias rep='re'
-# alias a='cd $PIE/biomech/amti'
-# alias u='cd $PIE/uploader'
-# alias bio='cd $PIE/biomech'
-# alias vid='cd $PIE/video'
-# alias pie='cd $PIE'
-# alias ts='cd ~/phillies/ts'
-# alias pid='cd $PIE/etc/docker/pie'
-# alias pig='cd $PIE/.github/workflows'
-# alias pik='cd $PIE/etc/kubernetes'
 alias ku=pik
-# alias pso='cd $SRC_HOME/pitch-selection-optimization'
-# alias carm='cd $SRC_HOME/carmelo_update'
-# alias pie-path='export PYTHONPATH=$SRC_HOME'
-# alias c='cd $SRC_HOME/chef'
-# alias v='cd $SRC_HOME/chef/cookbooks/phillies/recipes'
-# alias e='cd $SRC_HOME/chef/environments'
-# alias r='cd $SRC_HOME/chef/roles'
 alias dot='cd ~/.dotfiles'
 # alias dag='cd $PIE/cloud_composer/dags'
-# alias ib='cd $SRC_HOME/ibp-dashboards'
 
 
 # ANDROID
