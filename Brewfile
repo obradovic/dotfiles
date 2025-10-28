@@ -1,14 +1,13 @@
 #
-# https://github.com/Homebrew/homebrew-bundle
-#
-
+# INSTRUCTIONS:
 # brew bundle
 # solarized: curl -o http://ethanschoonover.com/solarized/files/solarized.zip
 # aerial: https://github.com/JohnCoates/Aerial
-# Powerline Meslo font: git clone https://github.com/powerline/fonts.git && cd fonts && ./install.sh
+#
 
 # TAPS
 tap 'homebrew/bundle'
+tap 'kismetwireless/kismet'
 # https://www.nerdfonts.com/font-downloads
 # tap 'ryanoasis/nerd-fonts'
 
@@ -28,12 +27,10 @@ cask 'font-source-code-pro-for-powerline'
 cask 'font-ubuntu'
 
 # CASKS
-# cask 'google-chrome' # already installed
-# cask 'google-drive'  # already installed
 cask '1password'
 cask '1password-cli'
-# cask 'aerial'
 cask 'adobe-acrobat-reader'
+# cask 'aerial'
 # cask 'alfred'
 # cask 'amazon-drive'  # takes up a lot of disk if syncing
 # cask 'brave-browser'
@@ -48,9 +45,10 @@ cask 'discord'
 cask 'dropbox'
 cask 'fantastical'
 cask 'firefox'
-cask 'flux-app'
+# cask 'flux-app'
 # cask 'gimp'
 cask 'google-chrome'
+# cask 'google-drive'
 # cask 'istat-menus'
 cask 'iterm2'
 cask 'little-snitch'
@@ -68,7 +66,7 @@ cask 'switchresx'
 # cask 'tunnelbear'
 cask 'wireshark-app'
 cask 'xquartz'
-# cask 'zoom'
+cask 'zoom'
 
 # PACKAGES
 brew 'adwaita-icon-theme' # needed for ettercap to show icons
@@ -88,6 +86,7 @@ brew 'cmake'  # for vim youcompleteme plugin
 brew 'coreutils'
 # brew 'cowsay'
 brew 'curl'
+# brew 'curl', args:['with-nghttp2']
 brew 'dive'
 brew 'datamash'
 # brew 'elasticsearch' # brew services start elasticsearch to start now and restart at login
@@ -114,7 +113,8 @@ brew 'inetutils'
 brew 'iperf3'
 brew 'java'
 brew 'jq'
-brew 'kafkacat'
+# brew 'kafkacat'
+brew 'kismet'
 brew 'kube-ps1'
 brew 'kubectx'
 # brew 'kibana'  # brew services start kibana
@@ -177,7 +177,6 @@ brew 'x265'
 # brew 'youtube-dl'
 brew 'yq'
 
-# brew 'curl', args:['with-nghttp2']
 
 # mas 'Microsoft-365', id: 1450038993
 mas 'Slack', id: 803453959
