@@ -1,31 +1,25 @@
-# Dotfiles du jour
+# Quick Start
 
-A minimal yet powerful setup for macOS and Linux shells — complete with Vim, Git, Ruby, and Homebrew.
-
----
-
-## Quick Start
-
-Paste this into a fresh terminal:
+Setup for macOS / bash — complete with Vim, Git, Ruby, and Homebrew. Paste this:
 
 ```bash
 # 1. Install Homebrew (https://brew.sh)
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # 2. Clone this repo
-cd ~
-git clone git@github.com:obradovic/dotfiles.git .dotfiles
+export DOTFILES_HOME="${HOME}/.dotfiles"
+git clone git@github.com:obradovic/dotfiles.git ${DOTFILES_HOME}
 
 # 3. Symlink all dotfiles
 dotfiles=( .bashrc .bash_profile .colors_bash .curl_format .dircolors .gemrc .git-completion.sh .git-prompt.sh .gitconfig .inputrc .irbrc .myclirc .vim .vimrc )
 for f in "${dotfiles[@]}"; do
     echo "🔗 Linking $f"
-    ln -sf .dotfiles/$f $f
+    ln -sf ${DOTFILES_HOME}/$f ${HOME}/$f
 done
 source ~/.bashrc
 
 # 4. Install all the Homebrew packages
-cd ~/.dotfiles
+cd ${DOTFILES_HOME}
 brew bundle
 
 # 5. Install Vim plugins (Vim Plug)
