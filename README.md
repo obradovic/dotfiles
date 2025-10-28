@@ -26,7 +26,6 @@ source ~/.bashrc
 
 # 4. Install all the Homebrew packages
 cd ~/.dotfiles
-brew tap Homebrew/bundle
 brew bundle
 
 # 5. Install Vim plugins (Vim Plug)
@@ -37,7 +36,9 @@ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
 # :PlugInstall
 
 # 6. Optional: macOS tweaks
-defaults write com.apple.finder AppleShowAllFiles YES
+defaults write com.apple.finder AppleShowAllFiles YES               # Show all hidden files
+defaults write com.apple.Safari UniversalSearchEnabled -bool FALSE  # Disable send search queries to Apple
+defaults write com.apple.Dock autohide -bool TRUE                   # Automatically hide and show the Dock
 
 # 7. Ruby setup
 gem install bundler
