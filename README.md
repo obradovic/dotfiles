@@ -1,10 +1,10 @@
-# 🧰 Dotfiles du jour
+# Dotfiles du jour
 
 A minimal yet powerful setup for macOS and Linux shells — complete with Vim, Git, Ruby, and Homebrew.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 Paste this into a fresh terminal:
 
