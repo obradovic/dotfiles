@@ -1,4 +1,8 @@
 #
+# Zo's public .bashrc
+#
+
+#
 # GENERIC BASH OPTIONS
 #
 set -o vi
@@ -6,7 +10,6 @@ shopt -s extglob
 shopt -s histappend
 umask 0022
 
-# GENERIC BASH
 export EDITOR=vi
 export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
 export CLICOLOR=1
@@ -19,7 +22,7 @@ export HISTFILE=~/.history_bash
 export HISTFILESIZE=100000
 # export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
 export HISTIGNORE='&:ls:[bf]g:exit:'
-PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
+export PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
 #
 # GENERIC BASH ALIASES AND FUNCTIONS
@@ -51,8 +54,6 @@ alias copy='cp'
 alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
-# alias basss='vi ~/.bashrc_phillies; sleep 0.1; . ~/.bashrc_phillies'
-# alias bassss='vi $LAB_HOME/tools/bashrc.sh; sleep 0.1; . $LAB_HOME/tools/bashrc.sh'
 alias please='sudo'
 alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
 alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f2-)"
@@ -83,7 +84,7 @@ alias utc='date -u'
 alias ut='utc'
 alias today='note today'
 alias x=exit
-alias mini='ssh 192.168.1.42'
+alias mini='ssh ${IP_LOCAL}.42'
 alias hosts='sudo vi /etc/hosts'
 alias teep='pmset sleepnow'
 
@@ -100,10 +101,6 @@ function include {
 function mcd {
     mkdir -p "$1"
     cd "$1"
-}
-
-function fin {
-    find . -name \*$1\* ${@:2}
 }
 
 function pz {
@@ -123,7 +120,7 @@ function geo {
     local info=$(curl -s ${url})
     echo ${info} | jq .
 
-    # IPSTACK NO WORKY
+    # IPSTACK NO WORKY ANYMORE
     # if [ -z "$ip" ]; then
     #    ip=check
     #fi
@@ -183,68 +180,6 @@ export HOMEBREW_HOME="/opt/homebrew"
 export HOMEBREW_BIN="${HOMEBREW_HOME}/bin"
 
 
-#
-# PHILS
-#
-# alias python-prod='ENV=prod $PIE/.env.Darwin/bin/python'
-# alias medicalbot='python-prod $PIE/uploader/draft_prospect_link/medicalbot.py'
-# alias allowlist='python-prod $PIE/bin/allowlist.py'
-# alias adrian-db='t python3 $PIE/biomech/adrian_db.py'
-# alias adrian-db-write='t python3 $PIE/biomech/adrian_db.py --write-db --adrian-filename'
-# alias adrian-process='t python3 $PIE/biomech/adrian_process.py --hawkeye-filename'
-# alias adrian='t python3 $PIE/biomech/adrian.py --hawkeye-filename'
-# function biohealth {
-    # DIR=biomech make health
-    # # (pie && DIR=biomech make health)
-# }
-
-# export APP=db
-
-
-#
-# GITHUB
-#
-function pr {
-    local title="$1"
-    # if [ -z "$title" ]; then
-        # echo
-        # echo "    Please set the title of the PR"
-        # echo
-        # return
-    # fi
-    local output=`gh pr create --base main --fill 2>&1`
-    if [ $? -ne 0 ]; then
-        echo
-        echo "ERROR"
-        echo "ERROR"
-        echo
-        echo "$output"
-        echo
-        echo "ERROR"
-        echo "ERROR"
-        echo
-        return
-    fi
-    echo $output
-
-    local url=`echo $output | grep https`
-    echo "$url is our URL"
-    open "$url"
-}
-
-function beeper {
-    runs=`gh run list --limit 30 --repo PhilliesAnalytics/pie`
-    in_progress_ids=`echo "$runs" | grep in_progress | tr -d ' ' | cut -d$'\t' -f7`
-}
-
-
-
-#
-# GITHUB ACTIONS
-#
-# alias g='cd $PIE/../.github'
-alias w='g && cd workflows'
-alias sc='g && cd scripts'
 
 
 #
@@ -314,15 +249,12 @@ function run-in-container {
         docker container stop -t 0 $started_id > /dev/null
     fi
 }
-# etc=/Applications/Docker.app/Contents/Resources/etc
-# ln -s $etc/docker.bash-completion $(brew --prefix)/etc/bash_completion.d/docker
-# ln -s $etc/docker-compose.bash-completion $(brew --prefix)/etc/bash_completion.d/docker-compose
 
 
 #
 # AWAIR
 #
-alias aw='awair --mac 70:88:6b:14:10:a1'
+alias aw='awair --mac ${AWAIR_MAC}'
 
 
 #
@@ -667,8 +599,8 @@ function gst-download {
 # VLC
 alias vlc=/Applications/VLC.app/Contents/MacOS/VLC
 
-alias v3='ssh 192.168.68.129'
-alias v4='ssh 192.168.68.130'
+alias v3='ssh ${IP_LOCAL}.129'
+alias v4='ssh ${IP_LOCAL}.130'
 function tp {
     server=$1
     port=$2
@@ -700,7 +632,6 @@ include ${PIE_HOME}/bin/gcp-shared.sh
 #
 alias rube-net='ssh zo@`arp-scan -l | grep -i "raspberry\|legra" | head -1 | cut -f1`'
 alias rube-local='screen /dev/cu.usbserial 115200'
-alias rube-eth='ssh pi@192.168.2.2'
 
 
 # OSX
@@ -975,6 +906,7 @@ function eplay {
 
 # GCLOUD
 export CLOUDSDK_PYTHON_SITEPACKAGES=1
+export CLOUDSDK_PYTHON=/usr/local/bin/python3
 alias gl='gcloud beta logging'
 # alias glr='gcloud logging read'
 
@@ -1446,9 +1378,6 @@ function vid-transpose {
     echo
     echo "New video saved to: '$output'"
 }
-function vid-copy {
-    scp $1 zo@35.196.143.249:/mnt/videos/edgertronic-test/.
-}
 function vid-noaudio {
     filepath=$1
     filename=$(basename -- "$filepath")
@@ -1480,25 +1409,11 @@ function vid-compress-handbrake {
     filename="${filename%.*}"
     time HandBrakeCLI -O -i $filepath -o $filename-x.$extension
 }
-function tele {
-    telnet `arp-scan -l | grep "00:1b:c5:09:65:94" | cut -f1`
-}
-function bp1 {
-    ssh 192.168.1.56
-    # ssh-mac dc:a6:32:38:8b:fd
-}
-function pihole {
-    ssh-mac b8:27:eb:8f:90:0c
-}
-function veg1 {
-    ssh-mac 00:d8:61:d7:22:04
-}
-function crapsodo {
-    ssh-mac dc:a6:32:38:8b:2b
-}
-function crapsodo2 {
-    ssh-mac dc:a6:32:38:8b:2a
-}
+
+
+#
+# MAC ADDRESSES
+#
 function mac-ip {
     local mac=$1
     ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
@@ -1524,10 +1439,6 @@ function arps {
     echo "$output" | expand -t 16,36
 }
 
-# alias arps1='arps | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n '  # -t is the separator, treat all 4 octets as numbers
-# alias arps2='arps | sort -b -k2,2'  # -b meaans to ignore leading blanks
-# alias arps3='arps | sort -k3,3f -k4,4f -k5,5f -k1,1n'
-
 function arps1 {
     arps $1 | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n  # -t is the separator, treat all 4 octets as numbers
 }
@@ -1539,19 +1450,19 @@ function arps3 {
 }
 
 function macs {
-    local file=/usr/local/share/arp-scan/mac-override.txt
+    local file=${MAC_FILE}
     vi $file
     echo
     echo "  MACs: https://docs.google.com/spreadsheets/d/13ZjWn1mXnx0M_FC2YFWNiV8Aw9hC4Ewh5sLn92ePG9k/edit"
-    echo "  Orbi: http://192.168.1.1/start.htm"
+    echo "  Orbi: http://${IP_LOCAL}.1/start.htm"
     echo
     cp -f $file $file.bak
-    cp $file ~/Dropbox/arp-scan/.
+    cp $file ${DROPBOX_HOME}/arp-scan/.
 }
 
 function mac-name {
     # Returns the "name" of the computer with the passed-in MAC
-    local file=/usr/local/share/arp-scan/mac-override.txt
+    local file=${MAC_FILE}
     local mac="$1"
     mac=`echo $mac | tr -d ':'`
 
@@ -1571,7 +1482,7 @@ function mac-name {
 }
 
 function orbi {
-    stuff=`curl -s \
+    local stuff=`curl -s \
         "$ORBI_DEVICES_URL" \
         -X POST \
         -H 'Accept: */*' \
@@ -1579,18 +1490,16 @@ function orbi {
         -H 'Accept-Encoding: gzip, deflate' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         -H 'X-Requested-With: XMLHttpRequest' \
-        -H 'Origin: http://192.168.1.1' \
+        -H 'Origin: http://${IP_LOCAL}.1' \
         -H 'DNT: 1' \
         -H '$ORBI_AUTH' \
         -H 'Connection: keep-alive' \
-        -H 'Referer: http://192.168.1.1/DEV_device2.htm' \
+        -H 'Referer: http://${IP_LOCAL}.1/DEV_device2.htm' \
         -H '$ORBI_COOKIE' \
         -H 'Sec-GPC: 1' \
         --data-raw 'count=1'`
 
-    # echo "$stuff" | jq .devices
     stuff=`echo "$stuff" | sed "s/5 GHz/5GHz/g" | sed "s/2.4 GHz/2.4GHz/g"`
-    # echo "$stuff" | jq -r '.devices[] | [.ip, .mac, .connectionType, .name] | @tsv' | expand -t 16,36,44
     echo "$stuff" | jq -r '.devices[] | [.ip, .mac, .connectionType, .name] | @tsv' | tabulate --format plain
 }
 
@@ -1653,9 +1562,9 @@ function arps-all {
 
 function pihole-ip {
     # Gets the IP address of the pihole
-    local mac="b8:27:eb:8f:90:0c"
+    local mac="${MAC_PIHOLE}"
     # ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
-    local ip=192.168.1.2
+    local ip=${IP_LOCAL}.2
     echo $ip
 }
 
@@ -1690,7 +1599,6 @@ function pihole-history {
 }
 
 function pihole-history-and-tail {
-    # MAC: C8:58:C0:ED:91:DA
     local ip=$1
 
     # make an array of domains to ignore in the output. Internet detritus, just dont want to see it
@@ -1707,18 +1615,14 @@ function pihole-history-and-tail {
     length=${#ignored_domains[@]}
 
     # add each item in the array to the ignored_string
-    ignored_string=""
+    local ignored_string=""
     for (( i=0; i<length; i++ )); do
         domain="${ignored_domains[$i]}"
-        # printf "Current index %d with value %s\n" $i "$domain"
         ignored_string+="$domain"
-        # echo "xxx 1: $ignored_string"
 
         # if its not the last item, add the separator
         if [[ $i -lt $(($length-1)) ]]; then
-            # echo "adding sep"
             ignored_string+="\|"
-            # echo "xxx 2: $ignored_string"
         fi
     done
 
@@ -1745,58 +1649,6 @@ function pihole-tail-device {
     local ip=`echo "${devices}" | head -1 | cut -d' ' -f1`
     echo "${ip} Choosing the first device"
     pihole-tail | grep --line-buffered $ip
-}
-
-function pihole-chromebook {
-    pihole-history-and-tail 192.168.1.234  # MAC: C8:58:C0:ED:91:DA
-}
-
-function pihole-quicyphone {
-    pihole-history-and-tail 192.168.1.235  # MAC: 9a:5c:74:f9:9f:b7
-}
-
-function pihole-ipad {
-    pihole-history-and-tail 192.168.1.170  # MAC: ca:16:ad:48:20:97
-}
-
-function pihole-appletv-outside {
-    pihole-history-and-tail 192.168.1.109  # MAC: f0:b3:ec:48:06:10
-}
-
-function pihole-appletv-tvroom {
-    pihole-history-and-tail 192.168.1.240  # MAC: a8:51:ab:00:68:f6
-}
-
-function pihole-tv-livingroom {
-    pihole-history-and-tail 192.168.1.131  # MAC: 64:07:f6:91:c4:a4
-}
-
-function pihole-tv-tvroom {
-    pihole-history-and-tail 192.168.1.105  # MAC: 70:97:41:2c:ca:ca
-}
-
-function pihole-tv-office {
-    pihole-history-and-tail 192.168.1.216  # MAC: 34:f1:50:3c:8a:5e
-}
-
-function pihole-tv-outside {
-    pihole-history-and-tail 192.168.1.176  # d0:c2:4e:db:37:94
-}
-
-function pihole-tv-roku-bedroom {
-    pihole-history-and-tail 192.168.1.151  # 08:05:81:c9:17:4d
-}
-
-function pihole-nintendo-switch {
-    pihole-history-and-tail 192.168.1.174  # 74:84:69:89:c3:11
-}
-
-function pihole-xbox {
-    pihole-history-and-tail 192.168.1.146  # 2c:54:91:76:40:2d
-}
-
-function pihole-tonal {
-    pihole-history-and-tail 192.168.1.143  # MAC: 10:59:17:03:09:a7
 }
 
 
@@ -1914,102 +1766,6 @@ function dev {
 
 
 #
-# DATABASE
-#
-function phil-db-setadmin {
-    export PHIL_GCLOUD_DB_UP_USER=$PHIL_GCLOUD_DB_ADMIN_USER
-    export PHIL_GCLOUD_DB_UP_PW=$PHIL_GCLOUD_DB_ADMIN_PW
-}
-function phil-db-local {
-    mycli --port 3306 -h 127.0.0.1 -u$PHIL_DOCKER_DB_USER -p$PHIL_DOCKER_DB_PW "$@"
-}
-function phil-db-proxy {
-    mycli --port 3406 -h 127.0.0.1 -u$PHIL_GCLOUD_DB_UP_USER -p$PHIL_GCLOUD_DB_UP_PW $@
-}
-function phil-db {
-    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
-}
-function phil-db-admin {
-    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_ADMIN_USER -p$PHIL_GCLOUD_DB_ADMIN_PW "$@"
-}
-function phil-db-uploader {
-    mycli -h $PHIL_GCLOUD_DB_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_UP_USER -p$PHIL_GCLOUD_DB_UP_PW "$@"
-}
-function phil-db-dev {
-    mycli -h $PHIL_GCLOUD_DB_IP_DEV phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
-}
-function phil-db-staging {
-    mycli -h 104.196.190.222 phil_data -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
-}
-function phil-db-clone {
-    mycli -h $PHIL_GCLOUD_DB_CLONE_IP $PHIL_GCLOUD_DB_NAME -u $PHIL_GCLOUD_DB_USER -p$PHIL_GCLOUD_DB_PW "$@"
-}
-
-function ls-backups {
-    gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/
-}
-function ls-backups2 {
-    gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/phil_data/
-}
-function restore-latest-backup {
-    pushd .
-    cd $SRC_HOME
-    mkdir -p backups
-    cd backups
-
-    # gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/fullschema | grep daily | tail -1 | tr -s ' ' | cut -d' ' -f5` fullschema.sql.gz
-    # gzip -d fullschema.sql.gz
-
-    gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
-    rm -f backup.sql
-    echo "Decompressing..."
-    gzip -d backup.sql.gz
-
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "DROP DATABASE phil_data"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "CREATE DATABASE phil_data"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "RESET MASTER"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "UPDATE mysql.user SET Super_Priv='Y' WHERE user='root' AND host='%'"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "SET autocommit=0;"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "SET unique_checks=0;"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "SET foreign_key_checks=0;"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "FLUSH PRIVILEGES"
-
-    pv backup.sql | mysql -uroot -p$PHIL_GCLOUD_DB_PW phil_data
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -e "COMMIT;"
-    popd
-}
-
-function restore-latest-backup-dev {
-    # pushd .
-    # cd $SRC_HOME
-    # mkdir -p backups
-    # cd backups
-
-    # gsutil cp `gsutil ls -lh $PHIL_GCLOUD_BUCKET/daily/ | grep backup_ | tail -1 | tr -s ' ' | cut -d' ' -f5` backup.sql.gz
-    # rm -f backup.sql
-    # echo "Decompressing..."
-    # gzip -d backup.sql.gz
-
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "DROP DATABASE phil_data"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "CREATE DATABASE phil_data"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "RESET MASTER"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "UPDATE mysql.user SET Super_Priv='Y' WHERE user='root' AND host='%'"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "SET autocommit=0;"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "SET unique_checks=0;"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "SET foreign_key_checks=0;"
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "FLUSH PRIVILEGES"
-
-    pv backup.sql | mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV phil_data
-    mysql -uroot -p$PHIL_GCLOUD_DB_PW -h$PHIL_GCLOUD_DB_IP_DEV -e "COMMIT;"
-    popd
-}
-
-# function gdb-add-ip {
-    # alias gdb-ip-add='time gdb patch $PHIL_GCLOUD_DB_INSTANCE --authorized-networks'
-# }
-
-
-#
 # GCLOUD
 #
 alias gcluster='gcloud container clusters'
@@ -2021,19 +1777,13 @@ alias gdbs='gdb list'
 alias gpub='gcloud pubsub'
 alias gtopic='gpub topics'
 alias gsub='gpub subscriptions'
-# export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/legacy_credentials/$PHIL_GCLOUD_DB_USER_EMAIL/adc.json
-export GOOGLE_APPLICATION_CREDENTIALS=~/google-service-account.json
 
 function lsg {
     gsutil ls -l gs://$1
 }
-function lsv {
-    lsg phil-videos/$1
-}
 
 # GOOGLE GCLOUD DNS
-export CLOUDSDK_PYTHON=/usr/local/bin/python3
-alias dnsrecon='python3 ~/phillies/dnsrecon/dnsrecon.py'
+alias dnsrecon='python3 ${SRC_HOME}/dnsrecon/dnsrecon.py'
 alias dnsenum='docker run -it -v "$PWD":/tmp -w /tmp perl:5.34 perl dnsenum.sh'
 alias dns='gcloud dns'
 alias dns-transaction='dns record-sets transaction'
@@ -2350,20 +2100,25 @@ KAFKA_HOME=$HOME/phillies/kafka/confluent-3.3.1
 SQLLINE_HOME=$HOME/phillies/kafka/sqlline
 
 
-# GIT'R DONE!
+#
+# GIT/GITHUB
+#
 alias b='git co --track'  # b <branch_name>
+alias bfg='/usr/local/opt/openjdk/bin/java -jar /usr/local/Cellar/bfg/1.14.0/libexec/bfg-1.14.0.jar'
 alias bis='git bisect'
 alias bs='git branch' # list all branches
 alias bs-dates="git for-each-ref --sort=committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)'"
+alias copilot-update='( cd ~/.vim/pack/github/start/copilot.vim && gpl && cd - )'
 alias gi='git'
 alias god='git'
 alias gd='git diff'
+alias gds='gd --staged'
 alias ga='git add'
 alias gr='git restore'
 alias st='git status'
 alias co='git checkout'
 alias gpl='git pull origin `git rev-parse --abbrev-ref HEAD`'
-# alias merge-main='co phy-merge && git merge main && git push'
+alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
 alias branch='co -b'
 alias stash='git stash'
 alias stahs='stash'
@@ -2371,32 +2126,13 @@ alias sta='stash'
 alias master='co master'
 alias main='co main'
 alias dev='co dev'
-# alias devv='co phy-merge'
-alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
-# alias got='git'
+alias got='git'
 alias gut='git'
-alias bfg='/usr/local/opt/openjdk/bin/java -jar /usr/local/Cellar/bfg/1.14.0/libexec/bfg-1.14.0.jar'
 
-function gitclone {
-    #
-    # Usage: gitclone foo
-    #
-    local repo="$1"
-    local org="PhilliesAnalytics"
-    git clone "git@github.com:$org/$repo.git"
-    cd $1
-    git config pull.rebase false
-    git branch -r | grep -v '\->' | while read remote; do git branch --track "${remote#origin/}" "$remote"; done
-    git fetch --all
-    git pull --all
-    cd ..
-}
 
 function wip {
-    COMMENT="$*"
-    git status --untracked-files=no
-    sleep 2
-    git commit -a -m "WIP: $COMMENT"
+    local COMMENT="$*"
+    git commit -m "WIP: $COMMENT"
     gps
 }
 
@@ -2417,10 +2153,8 @@ function branchd {
         echo "No branch specified. Exiting."
         return
     fi
-    # cd ~/phillies/uploader
     git branch -D $1
     git push origin --delete $1
-    # cd -
 }
 function branchm {
     branch=$1
@@ -2428,7 +2162,6 @@ function branchm {
         echo "No branch specified. Exiting."
         return
     fi
-    # cd ~/phillies/uploader
     git checkout -b $1
     git push origin $1
     cd -
@@ -2454,12 +2187,55 @@ function gc {
     git commit -m '$@'
 }
 
+function pr {
+    local title="$1"
+    # if [ -z "$title" ]; then
+        # echo
+        # echo "    Please set the title of the PR"
+        # echo
+        # return
+    # fi
+    local output=`gh pr create --base main --fill 2>&1`
+    if [ $? -ne 0 ]; then
+        echo
+        echo "ERROR"
+        echo "ERROR"
+        echo
+        echo "$output"
+        echo
+        echo "ERROR"
+        echo "ERROR"
+        echo
+        return
+    fi
+    echo $output
+
+    local url=`echo $output | grep https`
+    echo "$url is our URL"
+    open "$url"
+}
+
+
+function beeper {
+    runs=`gh run list --limit 30 --repo PhilliesAnalytics/pie`
+    in_progress_ids=`echo "$runs" | grep in_progress | tr -d ' ' | cut -d$'\t' -f7`
+}
+
+
 export GIT_PS1_SHOWSTASHSTATE=true
 export GIT_PS1_SHOWDIRTYSTATE=true
 export GIT_PS1_SHOWUPSTREAM="auto"
 
 include ~/.git-prompt.sh
 include ~/.git-completion.sh
+
+
+#
+# GITHUB ACTIONS
+#
+alias w='g && cd workflows'
+alias sc='g && cd scripts'
+
 
 
 #
@@ -2485,19 +2261,11 @@ alias chrome-canary="/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Goo
 alias chromium="/Applications/Chromium.app/Contents/MacOS/Chromium"
 
 
-# MANDRILL
-function get-mandrill {
-    python $PHY/reports/bin/get_mandrill_html.py $1 > /tmp/message.html
-    cat /tmp/message.html
-}
-
 # ELASTICSEARCH
 function curles {
     curl -s "localhost:9200/$1" | python -m json.tool
 }
 
-# DROPBOX
-export DROPBOX_HOME="/Users/zo/Dropbox"
 
 # NOTES
 function notes {
@@ -2512,10 +2280,8 @@ function notes {
 
     # if [ -f "$dir/notes.$1*.txt" ]; then
     if ls $dir/notes.$1*.txt > /dev/null 2>&1; then
-        # echo "File exists"
         vi $dir/notes.$1*.txt
     else
-        # echo "File DOES NOT exists"
         vi $dir/notes.$1.txt
     fi
 }
