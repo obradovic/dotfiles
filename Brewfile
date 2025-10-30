@@ -145,6 +145,7 @@ brew 'node'
 # brew 'ntopng'
 brew 'ollama'
 brew 'p0f'
+brew 'poppler'  # for pdftotext
 # brew 'phantomjs'
 brew 'protobuf-c' # for kismet
 brew 'pv'
