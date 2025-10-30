@@ -1,33 +1,21 @@
 #
-# Zo's public .bashrc
-#
-
-#
-# GENERIC BASH OPTIONS
+# This is your terminal's brain
 #
 set -o vi
 shopt -s extglob
 shopt -s histappend
 umask 0022
 
-export EDITOR=vi
 export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
 export CLICOLOR=1
 export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
+export EDITOR=vi
 export LESS="-XFR"
 export SRC_HOME="${HOME}/src"
-
-# HISTORY
-export HISTFILE=~/.history_bash
-export HISTFILESIZE=100000
-# export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
-export HISTIGNORE='&:ls:[bf]g:exit:'
-export PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
 #
 # GENERIC BASH ALIASES AND FUNCTIONS
 #
-alias ,='. ~/.bashrc'
 alias m='make'
 alias t='TIMEFORMAT="That took %1R seconds" && time'
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
@@ -46,7 +34,6 @@ alias 3='fg %3'
 alias 4='fg %4'
 alias bi='vi'
 alias del='rm'
-alias vig='mvim'
 alias vo='vi'
 alias vu='vi'
 alias mroe='more'
@@ -54,9 +41,7 @@ alias copy='cp'
 alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
-alias please='sudo'
 alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
-alias yolo="sudo $(history | tail -2 | head -1 | tr -s ' ' | cut -d' ' -f2-)"
 alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -72,14 +57,12 @@ alias du2='du -h -d 2 | sort -h'
 alias dfk='df -h -k'
 alias tl='tail -f'
 alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
-alias js='python3 -m json.tool'
 alias less='less -X -F'
 alias grepl='grep --line-buffered'
 alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
 alias ports='netstat -tulan'
 alias .ale='make'
-# alias make=gmake
 alias utc='date -u'
 alias ut='utc'
 alias today='note today'
@@ -87,6 +70,17 @@ alias x=exit
 alias mini='ssh ${IP_LOCAL}.42'
 alias hosts='sudo vi /etc/hosts'
 alias teep='pmset sleepnow'
+
+function yolo {
+    local cmd="$(history | grep -v -E '^\s*[0-9]+\s+yolo' | tail -1 | head -1 | sed -E 's/^[ ]*[0-9]+[ ]+//')"
+    if [[ "$cmd" == "yolo" || "$cmd" == "please" ]]; then
+        echo "yolo: Refusing to run 'yolo' recursively"
+        return 1
+    fi
+    echo "yolo: ${cmd}"
+    eval "sudo $cmd"
+}
+alias please='yolo'
 
 function include {
     local file="$1"
@@ -119,18 +113,9 @@ function geo {
     # get it and output it
     local info=$(curl -s ${url})
     echo ${info} | jq .
-
-    # IPSTACK NO WORKY ANYMORE
-    # if [ -z "$ip" ]; then
-    #    ip=check
-    #fi
-    #local info=`curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN"`
-    #echo $info | jq -r '. | "\(.city) \(.region_name) \(.country_code)"'
-    # echo $info
-    # curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN" | jq -r '. | "\(.city) \(.region_name) \(.country_code)"'
 }
 
-function who {
+function internet-provider {
     local ip="$1"
     if [ -z "$ip" ]; then
         ip=`ip`
@@ -141,15 +126,6 @@ function who {
 function wildcard_csr {
     local domain=$1
     openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
-}
-
-function timestamp {
-    date +"%s"
-}
-
-function timestamp-diff {
-    local cur=`timestamp`
-    expr $cur - $1
 }
 
 function sshquiet {
@@ -168,9 +144,22 @@ function nohuptime {
 }
 
 function title {
-  echo -e "\033];$1\007"
-  echo "Title set to $1"
+    local title="$*"
+    echo -e "\033];${title}\007"
+    echo "Title set to ${title}"
 }
+
+
+
+#
+# HISTORY
+#
+export HISTFILE=~/.history_bash
+export HISTFILESIZE=100000
+# export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
+export HISTIGNORE='&:ls:[bf]g:exit:'
+export PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
+
 
 
 #
@@ -249,12 +238,6 @@ function run-in-container {
         docker container stop -t 0 $started_id > /dev/null
     fi
 }
-
-
-#
-# AWAIR
-#
-alias aw='awair --mac ${AWAIR_MAC}'
 
 
 #
@@ -1783,7 +1766,6 @@ function lsg {
 }
 
 # GOOGLE GCLOUD DNS
-alias dnsrecon='python3 ${SRC_HOME}/dnsrecon/dnsrecon.py'
 alias dnsenum='docker run -it -v "$PWD":/tmp -w /tmp perl:5.34 perl dnsenum.sh'
 alias dns='gcloud dns'
 alias dns-transaction='dns record-sets transaction'
@@ -2055,14 +2037,20 @@ function gdns-ls {
 
 
 #
+# DNS RECON
+#
+function dnsrecon {
+    # dnsrecon -d [domain]
+    (cd ${SRC_HOME}/dnsrecon && uv run dnsrecon $*)
+}
+
+
+#
 # CHEF
 #
 export OPSCODE_USER=zo
 alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
-# alias k='knife'
-# alias kg='knife google'
-# alias ke='knife ec2'
 alias kinst='knife cookbook site install'
 alias kservers='knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE'
 alias ks='knife status'
@@ -2089,7 +2077,6 @@ function kd {
 #
 # VAGRANT
 #
-#export VAGRANT_CWD=~/phillies/chef           # Lets you run vagrant from any directory
 #export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
 alias vst='vagrant status'
 
@@ -2108,6 +2095,7 @@ alias bfg='/usr/local/opt/openjdk/bin/java -jar /usr/local/Cellar/bfg/1.14.0/lib
 alias bis='git bisect'
 alias bs='git branch' # list all branches
 alias bs-dates="git for-each-ref --sort=committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)'"
+alias branch='co -b'
 alias copilot-update='( cd ~/.vim/pack/github/start/copilot.vim && gpl && cd - )'
 alias gi='git'
 alias god='git'
@@ -2119,7 +2107,6 @@ alias st='git status'
 alias co='git checkout'
 alias gpl='git pull origin `git rev-parse --abbrev-ref HEAD`'
 alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
-alias branch='co -b'
 alias stash='git stash'
 alias stahs='stash'
 alias sta='stash'
@@ -2313,6 +2300,12 @@ function l {
 
 
 #
+# AWAIR
+#
+alias aw='awair --mac ${AWAIR_MAC}'
+
+
+#
 # API
 #
 function api-local {
@@ -2321,40 +2314,8 @@ function api-local {
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
 }
-function apipost {
+function api-post {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" -X POST
-}
-function apio {
-    curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1"
-}
-function apiy {
-    curly -i -o /dev/null $2 -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1"
-}
-function apiyz {
-    curly ${@:2} -s -H "Accept-Encoding: gzip" -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1"
-}
-
-function pie-comp-dir {
-    local dir="$1"
-    if [ -z "$dir" ]; then
-        dir=.
-    fi
-
-    local dir1=$PHY/$dir
-    local dir2=$PIE/$dir
-
-    local pyfiles1=`find $dir1 -name "*.py" | sort | awk -F"phy" '{print $2}' | cut -d'/' -f2-`
-    local pyfiles2=`find $dir2 -name "*.py" | sort | awk -F"pie" '{print $2}' | cut -d'/' -f2-`
-
-    local file1="/tmp/pyfiles1"
-    local file2="/tmp/pyfiles2"
-
-    echo "$pyfiles1" > $file1
-    echo "$pyfiles2" > $file2
-
-    comm -1 $file1 $file2
-
-    # rm $file1 $file2
 }
 
 function lint-time-dir {
@@ -2406,31 +2367,8 @@ function lint-time-file {
         # echo "$output"
     fi
 
-    csvline=\"$now\",\"$hostname\",$run,$file,$timing,$sloc,$num_statements
+    local csvline=\"$now\",\"$hostname\",$run,$file,$timing,$sloc,$num_statements
     echo $csvline >> "$HOME/lint-times.csv"
-}
-
-function healths {
-    for file in "$@"; do
-        health $file
-    done
-}
-function health {
-    local filename="$1"
-    filename=${filename#"phy"}
-    filename=${filename#"/"}
-
-    cd $PIE
-
-    if [ -z "$filename" ]; then
-        echo
-        echo "$filename does not exist. Skipping."
-        echo
-        return
-    fi
-
-    make health DIR=$filename OPTIONS=-q
-    cd -
 }
 
 
