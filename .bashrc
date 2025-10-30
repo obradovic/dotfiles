@@ -1,5 +1,5 @@
 #
-# A collection of useful bash tips and tricks, from a lifelong command-line junkie
+# A collection of useful bash'isms from a command-line junkie
 #
 
 set -o vi
@@ -540,7 +540,7 @@ function veg {
         port=":8000"
     fi
 
-    url="http://phil:.lyweather@veggietronic-$camera.phils.io$port/static/mnt/sdcard/DCIM/$filename?crf=$crf&threads=$threads&preset=$preset&profile=$profile&nocompress=true"
+    url="https//veggietronic-$camera.phils.io$port/static/mnt/sdcard/DCIM/$filename?crf=$crf&threads=$threads&preset=$preset&profile=$profile&nocompress=true"
 
     echo "Camera: $camera"
     echo "Filename: $filename"
@@ -583,8 +583,7 @@ function gst-download {
 # VLC
 alias vlc=/Applications/VLC.app/Contents/MacOS/VLC
 
-alias v3='ssh ${IP_LOCAL}.129'
-alias v4='ssh ${IP_LOCAL}.130'
+# TCP
 function tp {
     server=$1
     port=$2
@@ -593,21 +592,11 @@ function tp {
 function tpl {
     tp 127.0.0.1 $1
 }
-alias my='mypy --config-file $PIE/etc/setup.cfg'
-function mypylint {
-    filename="$1"
-    pycodestyle --count --max-line-length=160 "$filename"
-    mypy --config-file $PIE/etc/setup.cfg "$filename"
-    pylint --rcfile $PIE/etc/.pylintrc "$filename"
-}
-function i {
-    touch `dirname $1`/__init__.py
-}
 
 
 
 # Source
-include ${PIE_HOME}/bin/gcp-shared.sh
+# include ${PIE_HOME}/bin/gcp-shared.sh
 
 
 
