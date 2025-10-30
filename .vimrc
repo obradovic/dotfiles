@@ -35,7 +35,7 @@ call plug#end()
 let g:rainbow_active = 1
 
 inoremap <silent><expr> <TAB> pumvisible() ? coc#pum#confirm() : "\<TAB>"
-inoremap <silent><expr> <CR> pumvisible() ? coc#pum#confirm() : "\<CR>"
+" inoremap <silent><expr> <CR> pumvisible() ? coc#pum#confirm() : "\<CR>"
 
 " Search
 set incsearch	" incremental search
