@@ -112,11 +112,23 @@ function pz {
 
 function geo {
     local ip="$1"
-    if [ -z "$ip" ]; then
-        ip=check
+
+    # if no IP specified, use current
+    local url="https://ipinfo.io"
+    if [ -n "$ip" ]; then
+        url+="/${ip}/json"
     fi
-    local info=`curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN"`
-    echo $info | jq -r '. | "\(.city) \(.region_name) \(.country_code)"'
+
+    # get it and output it
+    local info=$(curl -s ${url})
+    echo ${info} | jq .
+
+    # IPSTACK NO WORKY
+    # if [ -z "$ip" ]; then
+    #    ip=check
+    #fi
+    #local info=`curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN"`
+    #echo $info | jq -r '. | "\(.city) \(.region_name) \(.country_code)"'
     # echo $info
     # curl -s "http://api.ipstack.com/$ip?access_key=$IPSTACK_TOKEN" | jq -r '. | "\(.city) \(.region_name) \(.country_code)"'
 }
@@ -2689,7 +2701,6 @@ export ANDROID_HOME=~/adt-bundle-mac/sdk
 export APACHE_HOME=/usr/local/apache2
 export GROOVY_HOME=/usr/local/opt/groovy/libexec
 export GSUTIL_HOME=~/bin/gsutil
-export HEROKU_HOME=/usr/local/heroku
 export NGINX_HOME=/usr/local/Cellar/nginx/current
 export NPM_HOME=/usr/local/share/npm/
 export NPM_RELATIVE="./node_modules/.bin"
@@ -2913,7 +2924,26 @@ function photo_clear_samsung {
 
 
 
+#
+# HEROKU
+#
+export HEROKU_LOG="${HOME}/heroku.jsonl"
+function heroku-log {
+    heroku logs --app ${HEROKU_APP} --tail | grep --line-buffered INFO | sed -u -n 's/.*\({.*}\)/\1/p' | tee -a ${HEROKU_LOG}
+}
 
+function heroku-log-analyze {
+  # Use tail -F to follow the log file continuously
+  tail -F "${HEROKU_LOG}" | \
+  grep --line-buffered resume | \
+  while IFS= read -r line; do
+    # Extract the IP using jq from JSON part in the line
+    local ip=$(echo "${line}" | sed -n 's/.*\({.*}\)/\1/p' | jq -r .ip)
+    # Query geo info for the IP (using your geo command)
+    local geo_info=$(geo "${ip}")
+    echo "Line: $line : $geo_info"
+  done
+}
 
 
 #
