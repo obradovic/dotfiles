@@ -150,6 +150,7 @@ brew 'protobuf-c' # for kismet
 brew 'pv'
 brew 'python@3.12'
 brew 'python@3.13'
+brew 'qpdf'
 brew 'r'
 brew 'rclone'
 brew 'ruby'
