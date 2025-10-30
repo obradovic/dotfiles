@@ -1,6 +1,7 @@
 #
-# This is your terminal's brain
+# A collection of useful bash tips and tricks, from a lifelong command-line junkie
 #
+
 set -o vi
 shopt -s extglob
 shopt -s histappend
