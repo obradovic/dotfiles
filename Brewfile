@@ -153,6 +153,7 @@ brew 'python@3.13'
 brew 'r'
 brew 'rclone'
 brew 'ruby'
+brew 'rust'
 # brew install hudochenkov/sshpass/sshpass
 brew 'slackcat'
 brew 'slides'
