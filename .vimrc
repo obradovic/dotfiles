@@ -8,6 +8,9 @@ Plug 'bronson/vim-trailing-whitespace'
 Plug 'ConradIrwin/vim-bracketed-paste'
 Plug 'frazrepo/vim-rainbow'
 
+" Autocompletion
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+
 " Lang
 
 " Lint
@@ -31,11 +34,15 @@ call plug#end()
 
 let g:rainbow_active = 1
 
+inoremap <silent><expr> <TAB> pumvisible() ? coc#pum#confirm() : "\<TAB>"
+inoremap <silent><expr> <CR> pumvisible() ? coc#pum#confirm() : "\<CR>"
+
+" Search
 set incsearch	" incremental search
 set hlsearch 	" search highlighting
+
 set visualbell  " no beeping
 set encoding=utf-8
-set cursorline
 " set lazyredraw
 let python_highlight_all=1
 syntax on
@@ -53,6 +60,16 @@ set tabstop=4
 set shiftwidth=4
 set softtabstop=4
 
+" Indent
+set autoindent
+set smartindent
+
+" Numbers everywhere
+set ruler
+set number
+set relativenumber
+set cursorline
+
 " Enable folding
 set foldmethod=indent
 set foldlevel=99
@@ -67,10 +84,14 @@ set clipboard=unnamed
 set backupdir=/tmp//,.
 set directory=/tmp//,.
 
+" em-dash to regular dash, just hit "\d"
+nnoremap <leader>d :%s/—/-/g<CR>
+
+" Replace word under cursor everywhere visually
+nnoremap <leader>r :%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>
+
 " now handled by vim-bracketed-paste plugin
 " set paste
-
-set ruler
 
 " mouse scrolling
 " set mouse=a
