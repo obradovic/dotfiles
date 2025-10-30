@@ -2928,8 +2928,12 @@ function photo_clear_samsung {
 # HEROKU
 #
 export HEROKU_LOG="${HOME}/heroku.jsonl"
+
 function heroku-log {
-    heroku logs --app ${HEROKU_APP} --tail | grep --line-buffered INFO | sed -u -n 's/.*\({.*}\)/\1/p' | tee -a ${HEROKU_LOG}
+    while true; do
+        heroku logs --app ${HEROKU_APP} --tail | grep --line-buffered INFO | sed -u -n 's/.*\({.*}\)/\1/p' | tee -a ${HEROKU_LOG}
+        sleep 1
+    done
 }
 
 function heroku-log-analyze {
