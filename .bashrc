@@ -10,8 +10,8 @@
 #   - Generic aliases and typo corrections
 #   - Git/GitHub workflow helpers
 #   - Docker and Kubernetes utilities
-#   - Development environment shortcuts
-#   - Custom functions for common tasks
+#   - Network, ssh, MAC, and video utilities
+#   - Shortcuts for many programming languages
 #
 ################################################################################
 
@@ -46,10 +46,10 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 # Enable colored output for ls and other commands on macOS
 export CLICOLOR=1
 
-# Set vi as the default text editor for command-line applications
+# Set vi as the default text editor
 export EDITOR=vi
 
-# Configure less pager behavior:
+# Configure pager behavior:
 #   -X: Don't clear screen on exit
 #   -F: Quit if entire file fits on one screen
 #   -R: Allow ANSI color escape sequences
@@ -86,11 +86,12 @@ alias .ale='make'
 ################################################################################
 # SHORTCUT ALIASES
 ################################################################################
-alias m='make'
 alias t='TIMEFORMAT="That took %1R seconds" && time'
 alias curly='curl -w "@${HOME}/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
 alias loadspeed='phantomjs $HOME/.loadspeed.js'
+
+alias m='make'
 alias la='ls -la'
 alias dirw='la | grep drw'
 alias j='jobs'
@@ -101,19 +102,11 @@ alias 4='fg %4'
 alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
 alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
-alias cd..='cd ..'
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias .3='cd ../../..'
-alias .4='cd ../../../..'
-alias .5='cd ../../../../..'
 alias du1='du -h -d 1 | sort -h'
 alias du2='du -h -d 2 | sort -h'
 alias dfk='df -h -k'
 alias tl='tail -f'
 alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'  # TODO: no worky
-alias less='less -X -F'
 alias grepl='grep --line-buffered'
 alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
@@ -122,14 +115,22 @@ alias utc='date -u'
 alias ut='utc'
 alias today='note today'
 alias x=exit
-alias mini='ssh ${IP_LOCAL}.42'
 alias hosts='sudo vi /etc/hosts'
 alias teep='pmset sleepnow'
 
+# Directories
+alias cd..='cd ..'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
 alias dot='cd ${HOME}/.dotfiles'
 alias leet='cd ${SRC_HOME}/leet'
 alias src='cd $SRC_HOME'
 
+# Runs the last non-'yolo' command with sudo, preventing recursive calls
 function yolo {
     local cmd="$(history | grep -v -E '^\s*[0-9]+\s+yolo' | tail -1 | head -1 | sed -E 's/^[ ]*[0-9]+[ ]+//')"
     if [[ "$cmd" == "yolo" || "$cmd" == "please" ]]; then
@@ -141,6 +142,7 @@ function yolo {
 }
 alias please='yolo'
 
+# Sources the given file if it exists, printing status messages
 function include {
     local file="$1"
     if [ -f "$file" ] ; then
@@ -151,15 +153,18 @@ function include {
     fi
 }
 
+# OMG so handy
 function mcd {
     mkdir -p "$1"
     cd "$1"
 }
 
+# Also OMG so handy. Shows processes matching a case-insensitive search string, excluding grep itself
 function pz {
     ps -aef | grep -i $1 | grep -v grep
 }
 
+# Fetches and pretty-prints geographic and network info for a given IP or current IP using ipinfo.io
 function geo {
     local ip="$1"
 
@@ -174,11 +179,13 @@ function geo {
     echo ${info} | jq .
 }
 
+# Generates a wildcard SSL certificate signing request and private key for a given domain
 function wildcard_csr {
     local domain=$1
     openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
 }
 
+# Runs a command with nohup and times its execution, redirecting output to nohup.out
 function nohuptime {
     nohup bash -c 'time $* > nohup.out 2>&1'
 }
