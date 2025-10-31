@@ -9,13 +9,13 @@ umask 0022
 
 export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
 export CLICOLOR=1
-export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 export EDITOR=vi
 export LESS="-XFR"
 export SRC_HOME="${HOME}/src"
+# export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 
 #
-# GENERIC BASH ALIASES AND FUNCTIONS
+# GENERIC BASH ALIASES AND TYPOS
 #
 alias m='make'
 alias t='TIMEFORMAT="That took %1R seconds" && time'
@@ -71,6 +71,10 @@ alias x=exit
 alias mini='ssh ${IP_LOCAL}.42'
 alias hosts='sudo vi /etc/hosts'
 alias teep='pmset sleepnow'
+
+alias dot='cd ${HOME}/.dotfiles'
+alias leet='cd ${SRC_HOME}/leet'
+alias src='cd $SRC_HOME'
 
 function yolo {
     local cmd="$(history | grep -v -E '^\s*[0-9]+\s+yolo' | tail -1 | head -1 | sed -E 's/^[ ]*[0-9]+[ ]+//')"
@@ -129,46 +133,166 @@ function wildcard_csr {
     openssl req -nodes -newkey rsa:2048 -nodes -keyout $domain.key -out $domain.csr -subj "/C=US/ST=Pennsylvania/L=Philadelphia/O=Phillies/CN=*.$domain"
 }
 
-function sshquiet {
-    if [ "$#" == "0" ]; then
-        echo
-        echo "Sorry. I need a string to remove from ~/.ssh/known_hosts"
-        echo
-    else
-        echo "Removing $1"
-        grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
-    fi
-}
-
 function nohuptime {
     nohup bash -c 'time $* > nohup.out 2>&1'
 }
 
-function title {
-    local title="$*"
-    echo -e "\033];${title}\007"
-    echo "Title set to ${title}"
+
+#
+# IDEMPOTENT PATHS
+#
+function add_to_PATH {
+  for d; do
+    # d=$(cd -- "$d" && { pwd -P || pwd; }) 2>/dev/null  # canonicalize symbolic links
+    # if [ -z "$d" ]; then continue; fi  # skip nonexistent directory
+    case ":$PATH:" in
+      *":$d:"*) :;;
+      *) PATH=$PATH:$d;;
+    esac
+  done
+}
+
+add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
+add_to_PATH /usr/local/bin
+add_to_PATH /usr/local/sbin
+add_to_PATH ${HOME}/bin
+
+
+
+#
+# GIT/GITHUB
+#
+alias b='git co --track'  # b <branch_name>
+alias bfg='/usr/local/opt/openjdk/bin/java -jar /usr/local/Cellar/bfg/1.14.0/libexec/bfg-1.14.0.jar'
+alias bis='git bisect'
+alias bs='git branch' # list all branches
+alias bs-dates="git for-each-ref --sort=committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)'"
+alias branch='co -b'
+alias copilot-update='( cd ~/.vim/pack/github/start/copilot.vim && gpl && cd - )'
+alias gi='git'
+alias god='git'
+alias got='git'
+alias gut='git'
+alias gd='git diff'
+alias gds='gd --staged'
+alias ga='git add'
+alias gr='git restore'
+alias st='git status'
+alias co='git checkout'
+alias gpl='git pull origin `git rev-parse --abbrev-ref HEAD`'
+alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
+alias stash='git stash'
+alias stahs='stash'
+alias sta='stash'
+alias master='co master'
+alias main='co main'
+alias dev='co dev'
+
+export GIT_PS1_SHOWSTASHSTATE=true
+export GIT_PS1_SHOWDIRTYSTATE=true
+export GIT_PS1_SHOWUPSTREAM="auto"
+
+include ~/.git-prompt.sh
+include ~/.git-completion.sh
+
+function wip {
+    local COMMENT="$*"
+    git commit -m "WIP: $COMMENT"
+    gps
+}
+
+function git-show-largest-files {
+    git rev-list --objects --all \
+    | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' \
+    | awk '/^blob/ {print substr($0,6)}' \
+    | sort --numeric-sort --key=2 --reverse \
+    | head -20 \
+    | cut --complement --characters=13-40 \
+    | numfmt --field=2 --to=iec-i --suffix=B --padding=7 --round=nearest
+}
+
+function branchd {
+    branch=$1
+    if [ "$branch" = "" ]; then
+        echo "No branch specified. Exiting."
+        return
+    fi
+    git branch -D $1
+    git push origin --delete $1
+}
+
+function branchm {
+    branch=$1
+    if [ "$branch" = "" ]; then
+        echo "No branch specified. Exiting."
+        return
+    fi
+    git checkout -b $1
+    git push origin $1
+    cd -
+}
+
+function tag-del {
+    git tag --delete $1
+    git push --delete origin $1
+}
+
+function tag-list {
+    for tag in `git tag`
+    do
+        echo "`git rev-list -n 1 $tag`: $tag"
+    done
+}
+
+function tag-update-local {
+    git fetch origin --tags
+}
+
+function gc {
+    git commit -m '$@'
+}
+
+function pr {
+    local title="$1"
+    # if [ -z "$title" ]; then
+        # echo
+        # echo "    Please set the title of the PR"
+        # echo
+        # return
+    # fi
+    local output=`gh pr create --base main --fill 2>&1`
+    if [ $? -ne 0 ]; then
+        echo
+        echo "ERROR"
+        echo "ERROR"
+        echo
+        echo "$output"
+        echo
+        echo "ERROR"
+        echo "ERROR"
+        echo
+        return
+    fi
+    echo $output
+
+    local url=`echo $output | grep https`
+    echo "$url is our URL"
+    open "$url"
+}
+
+
+function beeper {
+    runs=`gh run list --limit 30 --repo PhilliesAnalytics/pie`
+    in_progress_ids=`echo "$runs" | grep in_progress | tr -d ' ' | cut -d$'\t' -f7`
 }
 
 
 
 #
-# HISTORY
+# GITHUB ACTIONS
 #
-export HISTFILE=~/.history_bash
-export HISTFILESIZE=100000
-# export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
-export HISTIGNORE='&:ls:[bf]g:exit:'
-export PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
-
-
-
-#
-# HOMEBREW
-#
-export HOMEBREW_HOME="/opt/homebrew"
-export HOMEBREW_BIN="${HOMEBREW_HOME}/bin"
-
+# alias w='g && cd workflows'
+# alias sc='g && cd scripts'
 
 
 
@@ -341,26 +465,11 @@ function pod-log {
 function pod-log-api-http {
     pod-log api api-http
 }
-function pod-log-api-http-clean {
-    pod-log api api-http | grep -v "jello\|reset\|Permission\|Token\ user\|schedule\/near\/143"
-}
-function pod-log-api-ws {
-    pod-log api api-ws
-}
-function pod-log-api-ws-clean {
-    pod-log api api-ws | grep -v "jello\|reset\|\- \-\ 0\ "
-}
 function pod-log-api-ws {
     pod-log api api-ws
 }
 function pod-log-hap {
-    pod-log hap
-}
-function pod-log-hap-clean {
     pod-log hap | grep -v "STATS\|GET / \|NOSRV\|SSL handshake failure"
-}
-function pod-log-rocky {
-    pod-log rocky
 }
 
 function pod-log-all {
@@ -466,18 +575,6 @@ if [ -f $HOME/.bashrc_kubectl ]; then
 fi
 
 
-#
-# HELM
-#
-alias hls='helm ls --all -A'
-function h {
-    if [ -z "$*" ]; then
-        cd $PIE/.helm
-        return
-    fi
-    helm $*
-}
-
 
 
 #
@@ -500,388 +597,27 @@ function metadata-name {
 }
 
 
-# RCLONE
-alias r='rclone'
-function rls {
-    rclone lsf gcs:$1
-}
-
-
-# VEGGIETRONIC
-alias veg-attachment='curl -v http://veggietronic-zo.$DOMAIN/static/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
-alias veg-attachment-no='curl -v http://veggietronic-zo.$DOMAIN/static/asattachment/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
-
-function veg {
-    #
-    # veg ashburn-cf ashburn-cf-2020-10-19-12-42-31.mov
-    #
-    camera="$1"
-    filename="$2"
-    crf="$3"
-    threads="$4"
-    preset="$5"
-    profile="$6"
-    port=""
-
-    if [ -z "$crf" ]; then
-        crf="28"
-    fi
-    if [ -z "$threads" ]; then
-        threads="16"
-    fi
-    if [ -z "$preset" ]; then
-        preset="veryfast"
-    fi
-    if [ -z "$profile" ]; then
-        profile="main"
-    fi
-
-    if [ "$camera" == "zo" ]; then
-        port=":8000"
-    fi
-
-    url="https//veggietronic-$camera.phils.io$port/static/mnt/sdcard/DCIM/$filename?crf=$crf&threads=$threads&preset=$preset&profile=$profile&nocompress=true"
-
-    echo "Camera: $camera"
-    echo "Filename: $filename"
-    echo "URL: $url"
-
-    curl -w "@$HOME/.curl_format" -s -o "$filename" "$url"
-}
-
-# VERSIONPING
-alias vp='cd ~/versionping/versionping-api'
-
-# FFMPEG
-export FFMPEG_CFG="$HOME/.ffmpeg/ffmpeg.conf"
-
-function ffp {
-    filename="$1"
-    ffprobe -v quiet -print_format json -show_format -show_streams $filename | jq .
-}
-
-# GSTREAMER
-export GSTREAMER_HOME=/Library/Frameworks/GStreamer.framework/Versions/1.0/
-export CPATH=$GSTREAMER_HOME/include
-export CPATH=$CPATH:$GSTREAMER_HOME/include/gstreamer-1.0/
-export CPATH=$CPATH:$GSTREAMER_HOME/Headers
-# export LIBRARY_PATH=$GSTREAMER_HOME/lib
-# export GST_DEBUG=2
-
-alias gst-basic='gst-launch-1.0 videotestsrc ! ximagesink'
-alias gst-basic-osx='gst-launch-1.0 videotestsrc ! autovideosink'
-alias gst-display-screen='gst-launch-1.0 avfvideosrc capture-screen=true ! autovideosink'
-alias gst-webcam='gst-launch-1.0 autovideosrc device=/dev/video0 ! autovideosink'
-alias gst-add-text='gst-launch-1.0 -v videotestsrc ! clockoverlay halignment=left valignment=bottom text="95.4 mph 2450" shaded-background=true font-desc="Sans, 23" ! videoconvert ! ximagesink'
-alias gst-rtmp1='gst-launch-1.0 -v videotestsrc ! avenc_flv ! flvmux ! rtmpsink location="rtmp://localhost/path/to/stream" live=1'
-function gst-download {
-    url="$1"
-    filename="$2"
-    time gst-launch-1.0 -v souphttpsrc location="$url" ! filesink location="$2"
-}
-
-# VLC
-alias vlc=/Applications/VLC.app/Contents/MacOS/VLC
-
-# TCP
-function tp {
-    server=$1
-    port=$2
-    nc -z -v -w 3 $server $port
-}
-function tpl {
-    tp 127.0.0.1 $1
-}
-
-
-
-# Source
-# include ${PIE_HOME}/bin/gcp-shared.sh
-
-
 
 #
-# RASPBERRY PI
-#
-alias rube-net='ssh zo@`arp-scan -l | grep -i "raspberry\|legra" | head -1 | cut -f1`'
-alias rube-local='screen /dev/cu.usbserial 115200'
-
-
-# OSX
-alias rosetta='arch -x86_64'
-alias rb='rosetta /bin/bash'
-alias notifications-enable='launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist'
-alias notifications-disable='launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist; killall NotificationCenter'
-
-
-# TMUX
-alias tnew='tmux new -s'
-alias tls='tmux ls'
-alias tdet='tmux detach'
-alias tat='tmux a -t'
-
-#
-#
-# WIFI
-#
-function wifi-init {
-    local airport_exe=/usr/local/bin/airport
-    if [ ! -L $airport_exe ]; then
-        ln -s /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport $airport_exe
-        echo "Created airport symlink"
-    fi
-}
-
-function wifi {
-    wifi-init
-    wifis=`airport -s`
-    echo "$wifis" | head -1
-    wifi_data=`echo "$wifis" | grep -v "SECURITY (auth/unicast/group)"`
-    echo "$wifi_data" | sort -b -k 3
-}
-
-function wifi-me {
-    wifi-init
-    airport -I
-}
-
-
-
-#
-# PYTHON
-#
-export FLASK_APP=main.py
-export FLASK_DEBUG=1
-# export PYTHONPATH=$SRC_HOME
-export PYTHONDONTWRITEBYTECODE=true
-# export MYPYPATH=$PYTHONPATH
-
-export WHEELHOUSE="${HOME}/.cache/pip/wheelhouse"
-export PIP_FIND_LINKS="file://${WHEELHOUSE}"
-export PIP_WHEEL_DIR="${WHEELHOUSE}"
-mkdir -p $WHEELHOUSE
-
-# export PYTHON3_HOME=/usr/local/opt/python@3.8
-# export PATH="$PYTHON3_HOME/bin:$PATH"
-# export LDFLAGS="-L$PYTHON3_HOME/lib"
-# export PKG_CONFIG_PATH="$PYTHON3_HOME/lib/pkgconfig"
-export PATH="$HOME/.local/bin:$PATH"
-
-alias python=python3
-
-alias e='source .env/bin/activate'
-alias rmp='find . -name \*.pyc | xargs rm'
-# alias py='cat .ipython.py && ipython3 --no-banner --pprint -i --'
-alias py='ipython3 --no-banner --pprint --no-simple-prompt -i --'
-alias ac='. .env/bin/activate'
-alias acc='. .env.`uname -s`/bin/activate'
-alias acl='. .env.`uname -s`-lab/bin/activate'
-alias pip='python3 -m pip'
-alias pi='pip install'
-alias pw='pip wheel'
-# alias pis='pi `grep slack $PIE/etc/requirements.txt`'
-alias pir='pi -r requirements.txt'
-alias env_create='pyenv virtualenv $PYENV_VERSION .env'
-# alias phickle='python3 $PIE/shared/phickle.py'
-
-function pireq {
-    req=$1
-    local tmp=/tmp/foo
-    cat requirements-prereq.txt requirements.txt > $tmp
-    packages=`grep $req $tmp`
-    echo
-    echo
-    echo $packages
-    echo
-    echo
-    pi $packages
-    rm -f $tmp
-}
-
-function findpy {
-    # find . -name \*.py | grep -v "\.env\|\.git" | xargs $*
-    find . -name "*.py" | grep -v "\.env\|\.git" | grep -v "{{.*}}" | xargs $*
-}
-
-function pii {
-    local package=$1
-    if [[ "$package" == *"=="* ]]; then
-        package=`echo $package | cut -d'=' -f1`
-    fi
-    pip install --use-deprecated=legacy-resolver $package==
-    # pip install $package==xxxxxx
-}
-
-function pl {
-    local package="$1"
-    local cmd="pip list"
-    if [ -z "$hostname" ]
-    then
-        $cmd | grep -i "$package"
-    else
-        $cmd
-    fi
-}
-
-_virtualenv_auto_activate() {
-    if [ -d ".env" ]; then
-        # Check to see if already activated to avoid redundant activating
-        if [ "$VIRTUAL_ENV" != "$(pwd -P)/.env" ]; then
-            _VENV_NAME=$(basename `pwd`)
-            echo Activating virtualenv \"$_VENV_NAME\"...
-            VIRTUAL_ENV_DISABLE_PROMPT=1
-            source .env/bin/activate
-            _OLD_VIRTUAL_PS1="$PS1"
-            PS1="($_VENV_NAME) $PS1"
-            export PS1
-        fi
-    fi
-}
-export PROMPT_COMMAND=_virtualenv_auto_activate
-
-
-#
-# R
-#
-alias R='R --no-save'
-function rp {
-    Rscript -e 'ip <- as.data.frame(installed.packages()[,c(1,3:4)]); rownames(ip) <- NULL; ip <- ip[is.na(ip$Priority),1:2,drop=FALSE]; print(ip, row.names=FALSE)' | tail -n +2 | tr -s ' ' | cut -d' ' -f2- | sort -f
-}
-function rp-del {
-    # https://www.r-bloggers.com/how-to-remove-all-user-installed-packages-in-r/
-    Rscript -e 'ip <- as.data.frame(installed.packages()); ip <- subset(ip, !grepl("MRO", ip$LibPath)); ip <- ip[!(ip[,"Priority"] %in% c("base", "recommended")),]; path.lib <- unique(ip$LibPath); pkgs.to.remove <- ip[,1]; sapply(pkgs.to.remove, remove.packages, lib = path.lib)'
-}
-
-
-#
-# RUBY
-#
-alias be='bundle exec'
-# alias bcap='bundle exec cap'
-# alias dep='bundle exec cap prod deploy'
-export RUBY_HOME=/usr/local/opt/ruby@3.3
-export PATH=${RUBY_HOME}/bin:$PATH
-export LDFLAGS="-L${RUBY_HOME}/lib"
-export CPPFLAGS="-I${RUBY_HOME}/include"
-export PKG_CONFIG_PATH="${RUBY_HOME}/lib/pkgconfig"
-
-# source ~/.rvm/scripts/rvm
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(${HOMEBREW_BIN}/rbenv init - bash)"
-
-
-
-#
-# GO
-#
-export GOPATH=~/go
-
-function findgo {
-    find . -name \*.go | grep -v "\.env\|\.git" | xargs -I@ grep -H -i "$*" "@"
-}
-
-
-#
-# RUST
-#
-include ${HOME}/.cargo/env
-
-
-#
-# NODE
-#
-export NVM_DIR="$HOME/.nvm"
-include ${NVM_DIR}/nvm.sh
-include ${NVM_DIR}/bash_completion
-
-
-#
-# DATADOG
-#
-function dogtest {
-    # dogtest 10.88.0.48
-    agent_location="$1"
-    value="$2"
-
-    if [ -z "$agent_location" ]; then
-        agent_location="localhost"
-    fi
-    if [ -z "$value" ]; then
-        value="1"
-    fi
-
-    statsd_line="pie.test:$value|c"
-    echo "Sending $statsd_line to $agent_location"
-    echo $statsd_line > /dev/udp/$agent_location/8125
-    echo $?
-}
-
-#
-# VMWARE
-#
-alias vmrun="/Applications/VMware\ Fusion.app/Contents/Public/vmrun"
-
-
-# EDGERTRONIC
-function edgers {
-    (cd $PIE && vi video/edgertronics.yaml && cp video/edgertronics.yaml $SRC_HOME/chef/cookbooks/phillies/files/default/. )
-    echo "yaml file copied to chef files"
-}
-function edg-status-watch {
-    # from https://wiki.edgertronic.com/index.php/SDK_-_Developer_tricks
-    s="" ; while sleep 0.5 ; do t=`curl http://e/get_status_string 2>/dev/null` ; if [ "$s" != "$t" ] ; then s=$t ; echo $s ; fi ; done
-}
-
-function cams {
-    grep SCI $SRC_HOME/chef/cookbooks/phillies/attributes/default.rb | grep lab | tr -s ' ' | tr -d "'" | tr -d ','
-}
-
-function cam_status {
-    curl -s https://${CAM_AUTH}@lab-$1.phils.io/get_camstatus | jq .
-}
-
-function cam0 {
-    cam_status 0
-}
-function cam00 {
-    cam_status 00
-}
-
-function els-all {
-    path="$1"
-    options="${@:2:10}"
-    rclone lsf $EDGER_LAB_HOME/$path --csv --format "tsp" $options | column -t -s ' ,'
-}
-function els {
-    path="$1"
-    options="${@:2:10}"
-    rclone lsf $EDGER_LAB_HOME/$path --csv --format "tsp" --include "*.mp4" $options | column -t -s ' ,'
-}
-function elsc {
-    path="$1"
-    options="${@:2:10}"
-    els compressed/$path $options
-}
-function ecat {
-    path="$1"
-    arr=(${path//-/ })
-    camera="${arr[0]}-${arr[1]}"
-    json=${path//mp4/json}
-    rclone cat $EDGER_LAB_HOME/compressed/$camera/$json | jq .
-}
-function eplay {
-    path="$1"
-    arr=(${path//-/ })
-    camera="${arr[0]}-${arr[1]}"
-    rclone copy $EDGER_LAB_HOME/compressed/$camera/$path /tmp/.
-    open /tmp/$path
-}
-
 # GCLOUD
+#
+alias gcluster='gcloud container clusters'
+alias gcl='gcluster'
+alias gql='gcloud beta sql'
+alias gdb='gcloud sql instances'
+alias gdbs='gdb list'
+alias gl='gcloud beta logging'
+alias gpub='gcloud pubsub'
+alias gtopic='gpub topics'
+alias gsub='gpub subscriptions'
+alias sshg='gcloud compute ssh'
+
 export CLOUDSDK_PYTHON_SITEPACKAGES=1
 export CLOUDSDK_PYTHON=/usr/local/bin/python3
-alias gl='gcloud beta logging'
-# alias glr='gcloud logging read'
+
+function lsg {
+    gsutil ls -l gs://$1
+}
 
 function images {
     local image="$1"
@@ -1297,513 +1033,9 @@ function datalab {
 
 
 #
-# SSH
-#
-# alias mega='ssh megacron.phils.io'
-# alias meg='mega'
-alias lb="p lb-2"
-alias lbv='ssh lbvideo.phils.io'
-function g-ssh {
-    gcompute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
-}
-function g-list {
-    # knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_1
-    gcompute instances list | grep RUNNING | sort
-}
-function g-list2 {
-    knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE_2
-}
-function s {
-    # . ~/.bashrc
-    # local ip=`knife google server list  | grep -v terminated | grep $1 | tr -s ' ' | cut -d ' ' -f5`
-    local ip=`gcloud compute instances list  | grep -v TERMINATED | grep $1 | tr -s ' ' | cut -d ' ' -f5`
-    ssh $ip
-}
-function p {
-    local ip=`gcloud compute instances list  | grep -v TERMINATED  | grep prod | tr -s ' ' | cut -d' ' -f1,5 | grep $1 | sort -n | head -1 | cut -d' ' -f2`
-    ssh $ip
-}
-
-
-# LIBICU
-export PATH="/usr/local/opt/icu4c/bin:/usr/local/opt/icu4c/sbin:$PATH"
-export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/icu4c/lib/pkgconfig"
-
-
-#
-# VIDEO
-#
-function vid-180 {
-    vid-transpose "$1" "transpose=2,transpose=2"
-}
-function vid-90-clockwise {
-    vid-transpose "$1" "transpose=1"
-}
-function vid-90-counterclockwise {
-    vid-transpose "$1" "transpose=2"
-}
-function vid-transpose {
-    source="$1"
-    output="$source-flipped.mov"
-    transpose="$2"
-    ffmpeg -hide_banner -i "$source" -vf "$transpose" "$output"
-    echo
-    echo
-    echo "New video saved to: '$output'"
-}
-function vid-noaudio {
-    filepath=$1
-    filename=$(basename -- "$filepath")
-    extension="${filename##*.}"
-    filename="${filename%.*}"
-    time ffmpeg -hide_banner -y -i $filepath -c copy -an $filename-xx.$extension
-}
-# OSX:
-# original: 112321631 bytes
-# HandBrakeCli 12446540 bytes, 17.0 seconds on osx
-# ffmpeg 17:   37824304 bytes, 19.6 seconds on osx
-# ffmpeg 23:   10222457 bytes, 13.1 seconds on osx
-# ffmpeg 30:    3968933 bytes, 11.5 seconds on osx
-# ffmpeg 17:   37793868 bytes, 289 seconds on prod-video-4
-# ffmpeg 30:    3966501 bytes, 168 seconds on prod-video-4
-function vid-compress-ffmpeg {
-    filepath=$1
-    filename=$(basename -- "$filepath")
-    extension="${filename##*.}"
-    filename="${filename%.*}"
-
-    quality=28
-    time ffmpeg -hide_banner -y -i $filepath -crf $quality $filename-y-$quality.$extension
-}
-function vid-compress-handbrake {
-    filepath=$1
-    filename=$(basename -- "$filepath")
-    extension="${filename##*.}"
-    filename="${filename%.*}"
-    time HandBrakeCLI -O -i $filepath -o $filename-x.$extension
-}
-
-
-#
-# MAC ADDRESSES
-#
-function mac-ip {
-    local mac=$1
-    ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
-    echo $ip
-}
-function ssh-mac {
-    local mac=$1
-    echo "SSHing into MAC: $mac"
-    local ip=`mac-ip $mac`
-    echo "SSHing into IP:  $ip"
-    echo ""
-    ssh `mac-ip $mac`
-}
-function arps {
-    if [ $# -eq 0 ]; then
-        interface="en1"
-    else
-        interface="$1"
-    fi
-
-    # expand sets the tab stops to be at precise locations
-    output=`arp-scan --macfile=/usr/local/share/arp-scan/mac-override.txt -l --plain --ignoredups --interface $interface | sort -b -k3,3 -k2,2`
-    echo "$output" | expand -t 16,36
-}
-
-function arps1 {
-    arps $1 | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n  # -t is the separator, treat all 4 octets as numbers
-}
-function arps2 {
-    arps $1 | sort sort -b -k2,2  # -b meaans to ignore leading blanks
-}
-function arps3 {
-    arps $1 | sort -k3,3f -k4,4f -k5,5f -k1,1n
-}
-
-function macs {
-    local file=${MAC_FILE}
-    vi $file
-    echo
-    echo "  MACs: https://docs.google.com/spreadsheets/d/13ZjWn1mXnx0M_FC2YFWNiV8Aw9hC4Ewh5sLn92ePG9k/edit"
-    echo "  Orbi: http://${IP_LOCAL}.1/start.htm"
-    echo
-    cp -f $file $file.bak
-    cp $file ${DROPBOX_HOME}/arp-scan/.
-}
-
-function mac-name {
-    # Returns the "name" of the computer with the passed-in MAC
-    local file=${MAC_FILE}
-    local mac="$1"
-    mac=`echo $mac | tr -d ':'`
-
-    # if we dont have a mac addr
-    if [ -z "$mac" ]; then
-        echo "Unknown MAC"
-        return
-    fi
-
-    name=`grep -i $mac $file | tr '\t' ' ' | tr -s ' ' | cut -d' ' -f2-`
-    if [ -z "$name" ]; then
-        echo "Unknown MAC"
-        return
-    fi
-
-    echo $name
-}
-
-function orbi {
-    local stuff=`curl -s \
-        "$ORBI_DEVICES_URL" \
-        -X POST \
-        -H 'Accept: */*' \
-        -H 'Accept-Language: en-US,en;q=0.5' \
-        -H 'Accept-Encoding: gzip, deflate' \
-        -H 'Content-Type: application/x-www-form-urlencoded' \
-        -H 'X-Requested-With: XMLHttpRequest' \
-        -H 'Origin: http://${IP_LOCAL}.1' \
-        -H 'DNT: 1' \
-        -H '$ORBI_AUTH' \
-        -H 'Connection: keep-alive' \
-        -H 'Referer: http://${IP_LOCAL}.1/DEV_device2.htm' \
-        -H '$ORBI_COOKIE' \
-        -H 'Sec-GPC: 1' \
-        --data-raw 'count=1'`
-
-    stuff=`echo "$stuff" | sed "s/5 GHz/5GHz/g" | sed "s/2.4 GHz/2.4GHz/g"`
-    echo "$stuff" | jq -r '.devices[] | [.ip, .mac, .connectionType, .name] | @tsv' | tabulate --format plain
-}
-
-alias orbi1='orbi | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n '  # -t is the separator, treat all 4 octets as numbers
-alias orbi2='orbi | sort -b -k2,2'  # -b meaans to ignore leading blanks
-alias orbi3='orbi | sort -k3,3f -k4,4f -k5,5f -k1,1n'
-alias orbi4='orbi | sort -k4,4f -k3,3f'
-
-
-function arps-all {
-    arps_output=`arps1`
-    orbi_output=`orbi1`
-
-    echo
-    echo "ARP scan:"
-    echo "$arps_output"
-    echo
-    echo "ORBI router scan:"
-    echo "$orbi_output"
-    echo
-
-    # get the MAC addresses from both lists
-    macs_arps=`echo "$arps_output" | tr -s ' ' | cut -d' ' -f2 | sort | tr '[:upper:]' '[:lower:]'`
-    macs_orbi=`echo "$orbi_output" | tr -s ' ' | cut -d' ' -f2 | sort | tr '[:upper:]' '[:lower:]'`
-
-    # see which MACS are in orbi that ARENT in arps output
-    echo "$macs_arps" > /tmp/macs_arps.txt
-    echo "$macs_orbi" > /tmp/macs_orbi.txt
-
-    echo
-    echo "Only found in arps:"
-    only_in_arps=`comm -23 /tmp/macs_arps.txt /tmp/macs_orbi.txt`
-    for mac in $only_in_arps; do
-        echo "$arps_output" | grep -i "$mac"
-    done
-    echo
-
-    echo "Only found in Orbi:"
-    only_in_orbi=`comm -13 /tmp/macs_arps.txt /tmp/macs_orbi.txt`
-    for mac in $only_in_orbi; do
-        known_name=`mac-name $mac`
-
-        orbi_line=`echo "$orbi_output" | grep -i "$mac" | tr -s ' '`
-
-        ip=`echo $orbi_line | cut -d' ' -f1`
-        conn=`echo $orbi_line | cut -d' ' -f3`
-        orbi_name=`echo $orbi_line | cut -d' ' -f4`
-
-        echo -e "$ip\t$mac\t$conn\t$known_name ($orbi_name)" | expand -t 16,36,44
-    done
-
-    echo
-}
-
-
-
-#
-# PIHOLE
-#
-
-function pihole-ip {
-    # Gets the IP address of the pihole
-    local mac="${MAC_PIHOLE}"
-    # ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
-    local ip=${IP_LOCAL}.2
-    echo $ip
-}
-
-function pihole-cmd {
-    # Runs a command on the pihole
-    # echo "Getting IP..."
-    local ip=`pihole-ip`
-    # echo "IP is: $ip"
-    local cmd="$1"
-    ssh -o LogLevel=QUIET -t $ip "sudo su -c '$cmd'"
-}
-
-function pihole-cmd-piholer {
-    # Runs the piholer.sh script on the box, which does stuff
-    local ip=`pihole-ip`
-    ssh -o LogLevel=QUIET -t $ip "./piholer.sh $*"
-}
-
-function pihole-tail {
-    # Tails the pihole log
-    local cmd="pihole tail"
-    pihole-cmd "$cmd"
-}
-
-function pihole-history {
-    # Gets the history of an IP address
-    local ip=$1
-    pihole-cmd-piholer history $ip
-    echo
-    echo "It is now: `utc`"
-    echo
-}
-
-function pihole-history-and-tail {
-    local ip=$1
-
-    # make an array of domains to ignore in the output. Internet detritus, just dont want to see it
-    declare -a ignored_domains
-    ignored_domains=()
-    ignored_domains+=("clients6.google.com" "googleusercontent.com" "googleapis.com" "gstatic.com" "pki.goog" "ytimg.com" "ggpht.com")
-    ignored_domains+=("cloudfront.net" "amazonaws.com")
-    ignored_domains+=("icloud.com" "apple.com" "apple-dns.net" "icloud-content.com" "mzstatic.com" "aaplimg.com" "apple.news")
-    ignored_domains+=("akamaiedge.net" "akadns.net" "sc-cdn.net")
-    ignored_domains+=("twimg.com" "firebaseio.com" "digicert.com")
-    ignored_domains+=("HTTPS")
-
-    # get length of an array
-    length=${#ignored_domains[@]}
-
-    # add each item in the array to the ignored_string
-    local ignored_string=""
-    for (( i=0; i<length; i++ )); do
-        domain="${ignored_domains[$i]}"
-        ignored_string+="$domain"
-
-        # if its not the last item, add the separator
-        if [[ $i -lt $(($length-1)) ]]; then
-            ignored_string+="\|"
-        fi
-    done
-
-    # escape the periods
-    escaped_ignored_string=${ignored_string/\./\\\.}
-
-    # run the command, grep out the ignored domains
-    pihole-history $ip | grep -v "$escaped_ignored_string"
-
-    echo "Tailing log"
-    pihole-tail | grep --line-buffered $ip
-}
-
-function pihole-tail-device {
-    local name="$1"
-
-    echo "Finding devices..."
-    local devices=`arps3 | grep -i "${name}"`
-    echo
-    echo "Found devices:"
-    echo "${devices}"
-    echo
-
-    local ip=`echo "${devices}" | head -1 | cut -d' ' -f1`
-    echo "${ip} Choosing the first device"
-    pihole-tail | grep --line-buffered $ip
-}
-
-
-function pihole-domains {
-    limit="$1"
-    if [ -z "$limit" ]; then
-        limit=100
-    fi
-    pihole-cmd-piholer domains $limit
-}
-
-function pihole-up {
-    pihole-cmd-piholer up
-}
-
-
-
-
-function dev {
-    #
-    # Either tails or looks in history for a device
-    #
-    if [ -z "$1" ]; then
-        arps
-        echo
-        echo "  Please choose a device!"
-        echo
-        return
-    fi
-
-    pattern="$1"
-    echo "Discovering '$pattern'"
-
-    devices=`arps | grep "$pattern"`
-    if [ -z "$devices" ]; then
-        arps
-        echo
-        echo "  No matching devices found. Bailing"
-        echo
-        return
-    fi
-
-    count=`echo "$devices" | wc -l`
-    echo "Discovered "$count" device(s):"
-    echo "$devices"
-
-    device=`echo "$devices" | head -1 | tr -s '\t' ' '`
-    name=`echo "$device" | cut -d' ' -f3-`
-    echo "Choosing first: '$name'"
-
-    mac=`echo "$device" | cut -d' ' -f2`
-    echo "'$name' MAC: $mac"
-
-    ip=`echo "$device" | cut -d' ' -f1`
-    echo "'$name' IP:  $ip"
-
-
-    # get historical info
-    # SQLITE SCHEMA: https://docs.pi-hole.net/database/ftl/
-    # SQLITE CLI: https://www.sqlite.org/cli.html
-    echo
-    echo "Querying sqlite..."
-
-    #
-    # This is the SQL in human-readable form
-    #
-    #  SELECT datetime(timestamp, 'unixepoch') AS datetime,
-    #  CASE status
-    #    WHEN '2'  THEN 'ok'
-    #    WHEN '3'  THEN 'ok'
-    #    WHEN '12' THEN 'ok'
-    #    WHEN '13' THEN 'ok'
-    #    WHEN '14' THEN 'ok'
-    #    ELSE 'blocked'
-    #    END blocked,
-    # domain,
-    # CASE type
-    #     WHEN 1  THEN 'A'
-    #     WHEN 2  THEN 'AAAA'
-    #     WHEN 3  THEN 'ANY'
-    #     WHEN 4  THEN 'SRV'
-    #     WHEN 5  THEN 'SOA'
-    #     WHEN 6  THEN 'PTR'
-    #     WHEN 7  THEN 'TXT'
-    #     WHEN 8  THEN 'NAPTR'
-    #     WHEN 9  THEN 'MX'
-    #     WHEN 10 THEN 'DS'
-    #     WHEN 11 THEN 'RRSIG'
-    #     WHEN 12 THEN 'DNSKEY'
-    #     WHEN 13 THEN 'NS'
-    #     WHEN 14 THEN 'OTHER (any query type not covered elsewhere)'
-    #     WHEN 15 THEN 'SVCB'
-    #     WHEN 16 THEN 'HTTPS'
-    #     ELSE 'Unknown'
-    #     END type_string
-    # FROM queries
-    # WHERE client = '192.168.1.151'
-    # ORDER BY datetime ASC
-    # LIMIT 10;
-
-    #
-    # This is the SQL all on one line. Took too long to get a HEREDOC working in bash, so this is what it is
-    #
-    sql="SELECT datetime(timestamp, 'unixepoch') AS datetime, CASE status WHEN '2' THEN 'ok' WHEN '3' THEN 'ok' WHEN '12' THEN 'ok' WHEN '13' THEN 'ok' WHEN '14' THEN 'ok' ELSE 'blocked' END blocked, domain, type FROM queries WHERE client = '$ip' ORDER BY datetime DESC;"
-
-    sqlite3 -header -cmd ".mode box" /etc/pihole/pihole-FTL.db "$sql"
-
-    # then tail
-    echo
-    echo "Tailing log file..."
-    # tail -10000f /var/log/pihole.log | grep "$ip"
-    pihole tail | grep --line-buffered "$ip"
-}
-
-
-
-#
 # GCLOUD
 #
-alias gcluster='gcloud container clusters'
-alias gcl='gcluster'
-alias sshg='gcloud compute ssh'
-alias gql='gcloud beta sql'
-alias gdb='gcloud sql instances'
-alias gdbs='gdb list'
-alias gpub='gcloud pubsub'
-alias gtopic='gpub topics'
-alias gsub='gpub subscriptions'
 
-function lsg {
-    gsutil ls -l gs://$1
-}
-
-# GOOGLE GCLOUD DNS
-alias dnsenum='docker run -it -v "$PWD":/tmp -w /tmp perl:5.34 perl dnsenum.sh'
-alias dns='gcloud dns'
-alias dns-transaction='dns record-sets transaction'
-alias dns-list-all='dns record-sets list --zone $DNS_ZONE'
-function dns-list {
-    dns-list-all --name $1.$DOMAIN_FQ
-}
-function dns-create {
-    local name=$1.$DOMAIN_FQ
-    local ip=$2
-
-    rm -f transaction.yaml
-    dns-transaction start --zone=$DNS_ZONE
-
-    dns-transaction add \
-        --name $name \
-        --ttl 10 \
-        --type A \
-        $ip \
-        --zone=$DNS_ZONE
-
-    # dns-transaction describe --zone=$DNS_ZONE
-    dns-transaction execute --zone=$DNS_ZONE
-}
-function dns-delete {
-    local name=$1.$DOMAIN_FQ
-
-    local record=`dns-list $1 | grep -v DATA`
-    local type=`echo $record | cut -d' ' -f2`
-    local ttl=`echo $record | cut -d' ' -f3`
-    local ip=`echo $record | cut -d' ' -f4`
-
-    rm -f transaction.yaml
-    dns-transaction start --zone=$DNS_ZONE
-
-    dns-transaction remove \
-        --name $name \
-        --ttl $ttl \
-        --type $type \
-        $ip \
-        --zone=$DNS_ZONE
-
-    # dns-transaction describe --zone=$DNS_ZONE
-    dns-transaction execute --zone=$DNS_ZONE
-}
-function dns-exists {
-    dns-list $1 > /dev/null 2>&1
-}
 
 
 #
@@ -1830,6 +1062,7 @@ function gdns {
         gdns-mv $*
     fi
 }
+
 function gdns-add-all {
     #
     # gdns-add-all a b c d foobar
@@ -1844,6 +1077,7 @@ function gdns-add-all {
         echo "ARG is $var"
     done
 }
+
 function gdns-add {
     #
     # gdns-add foo 34.73.92.181
@@ -2025,6 +1259,321 @@ function gdns-ls {
     fi
 }
 
+# Source
+# include ${PIE_HOME}/bin/gcp-shared.sh
+
+
+
+#
+# LOADER
+#
+function loader {
+    curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | jq .
+}
+
+
+#
+# VARNISH
+#
+alias vl='varnishlog -m rxURL:/rss/blog -c'
+function vpurge {
+    curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_PROD$1 2>&1 >/dev/null | grep HTTP
+}
+
+
+
+
+########################################################
+#
+# LANGUAGES
+#
+########################################################
+
+
+#
+# PYTHON
+#
+export FLASK_APP=main.py
+export FLASK_DEBUG=1
+export PATH="$HOME/.local/bin:$PATH"
+export PYTHONDONTWRITEBYTECODE=true
+# export PYTHONPATH=$SRC_HOME
+# export MYPYPATH=$PYTHONPATH
+export WHEELHOUSE="${HOME}/.cache/pip/wheelhouse"
+export PIP_FIND_LINKS="file://${WHEELHOUSE}"
+export PIP_WHEEL_DIR="${WHEELHOUSE}"
+
+alias python=python3
+alias py='ipython3 --no-banner --pprint --no-simple-prompt -i --'
+alias ac='. .env/bin/activate'
+alias acc='. .env.`uname -s`/bin/activate'
+alias acl='. .env.`uname -s`-lab/bin/activate'
+alias pip='python3 -m pip'
+alias pi='pip install'
+alias pw='pip wheel'
+alias pir='pi -r requirements.txt'
+# alias phickle='python3 $PIE/shared/phickle.py'
+
+function findpy {
+    find . -name "*.py" | grep -v "\.env\|\.git" | grep -v "{{.*}}" | xargs $*
+}
+
+function pl {
+    local package="$1"
+    local cmd="pip list"
+    if [ -z "$hostname" ]
+    then
+        $cmd | grep -i "$package"
+    else
+        $cmd
+    fi
+}
+
+function _virtualenv_auto_activate {
+    if [ -d ".env" ]; then
+        # Check to see if already activated to avoid redundant activating
+        if [ "$VIRTUAL_ENV" != "$(pwd -P)/.env" ]; then
+            _VENV_NAME=$(basename `pwd`)
+            echo Activating virtualenv \"$_VENV_NAME\"...
+            VIRTUAL_ENV_DISABLE_PROMPT=1
+            source .env/bin/activate
+            _OLD_VIRTUAL_PS1="$PS1"
+            PS1="($_VENV_NAME) $PS1"
+            export PS1
+        fi
+    fi
+}
+export PROMPT_COMMAND=_virtualenv_auto_activate
+
+
+
+#
+# R
+#
+alias R='R --no-save'
+function rp {
+    Rscript -e 'ip <- as.data.frame(installed.packages()[,c(1,3:4)]); rownames(ip) <- NULL; ip <- ip[is.na(ip$Priority),1:2,drop=FALSE]; print(ip, row.names=FALSE)' | tail -n +2 | tr -s ' ' | cut -d' ' -f2- | sort -f
+}
+function rp-del {
+    # https://www.r-bloggers.com/how-to-remove-all-user-installed-packages-in-r/
+    Rscript -e 'ip <- as.data.frame(installed.packages()); ip <- subset(ip, !grepl("MRO", ip$LibPath)); ip <- ip[!(ip[,"Priority"] %in% c("base", "recommended")),]; path.lib <- unique(ip$LibPath); pkgs.to.remove <- ip[,1]; sapply(pkgs.to.remove, remove.packages, lib = path.lib)'
+}
+
+
+
+#
+# RUBY
+#
+alias be='bundle exec'
+alias dep='bundle exec cap prod deploy'
+export RUBY_HOME=/usr/local/opt/ruby@3.3
+export PATH=${RUBY_HOME}/bin:$PATH
+export LDFLAGS="-L${RUBY_HOME}/lib"
+export CPPFLAGS="-I${RUBY_HOME}/include"
+export PKG_CONFIG_PATH="${RUBY_HOME}/lib/pkgconfig"
+
+export PATH="$HOME/.rbenv/bin:$PATH"
+# eval "$(${HOMEBREW_BIN}/rbenv init - bash)"
+# source ~/.rvm/scripts/rvm
+
+
+
+#
+# GO
+#
+export GOPATH=${HOME}/go
+add_to_PATH $GOPATH/bin
+
+function findgo {
+    find . -name \*.go | grep -v "\.env\|\.git" | xargs -I@ grep -H -i "$*" "@"
+}
+
+
+#
+# RUST
+#
+include ${HOME}/.cargo/env
+
+
+#
+# NODE
+#
+export NPM_HOME=/usr/local/share/npm/
+export NPM_RELATIVE="./node_modules/.bin"
+export NVM_DIR="$HOME/.nvm"
+include ${NVM_DIR}/nvm.sh
+include ${NVM_DIR}/bash_completion
+add_to_PATH $NPM_RELATIVE
+
+
+#
+# JAVA
+#
+export PATH="${HOMEBREW_HOME}/opt/openjdk/bin:$PATH"
+export CLASSPATH=${CLASSPATH}:.
+
+
+#
+# ANDROID
+#
+# alias logcat='adb logcat > /tmp/logcat.txt &'
+# alias logall='tail -f /tmp/logcat.txt'
+# alias adb-restart='adb kill-server; adb start-server'
+
+# export GRADLE_OPTS="-Dorg.gradle.daemon=true"
+# export ANDROID_HOME=~/adt-bundle-mac/sdk
+
+
+
+#
+# DATADOG
+#
+function dogtest {
+    # dogtest 10.88.0.48
+    local agent_location="$1"
+    local value="$2"
+
+    if [ -z "$agent_location" ]; then
+        agent_location="localhost"
+    fi
+    if [ -z "$value" ]; then
+        value="1"
+    fi
+
+    local statsd_line="zo.test:$value|c"
+    echo "Sending $statsd_line to $agent_location"
+    echo $statsd_line > /dev/udp/$agent_location/8125
+    echo $?
+}
+
+
+#
+# HISTORY
+#
+export HISTFILE=~/.history_bash
+export HISTFILESIZE=100000
+# export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
+export HISTIGNORE='&:ls:[bf]g:exit:'
+export PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
+
+
+
+#
+# HOMEBREW
+#
+export HOMEBREW_HOME="/opt/homebrew"
+export HOMEBREW_BIN="${HOMEBREW_HOME}/bin"
+add_to_PATH ${HOMEBREW_BIN}
+
+function brew-update {
+    (dot && brew update && brew bundle)
+}
+
+
+
+#
+# TMUX
+#
+alias tnew='tmux new -s'
+alias tls='tmux ls'
+alias tdet='tmux detach'
+alias tat='tmux a -t'
+
+
+# VERSIONPING
+# alias vp='cd ~/versionping/versionping-api'
+
+
+#
+# RCLONE
+#
+alias r='rclone'
+function rls {
+    rclone lsf gcs:$1
+}
+
+
+#
+# VMWARE
+#
+alias vmrun="/Applications/VMware\ Fusion.app/Contents/Public/vmrun"
+
+
+#
+# CHROME
+#
+alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
+alias chrome-canary="/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary"
+alias chromium="/Applications/Chromium.app/Contents/MacOS/Chromium"
+
+
+#
+# ELASTICSEARCH
+#
+function curles {
+    curl -s "localhost:9200/$1" | python -m json.tool
+}
+
+
+#
+# KAFKA
+#
+# export KAFKA_HOME=$HOME/phillies/kafka/confluent-3.3.1
+# export SQLLINE_HOME=$HOME/phillies/kafka/sqlline
+
+
+#
+# LIBICU
+#
+export PATH="/usr/local/opt/icu4c/bin:/usr/local/opt/icu4c/sbin:$PATH"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/icu4c/lib/pkgconfig"
+
+
+#
+# AWAIR
+#
+alias aw='awair --mac ${AWAIR_MAC}'
+
+
+#
+# PAPERTRAIL
+#
+# alias pt='papertrail'
+# function l {
+#     group=$1
+# 
+#     if [ "$group" = "" ]; then
+#         echo "No group specified. Using ALL"
+#         group=""
+#     else
+#         group="-g $group"
+#     fi
+#     pt -f $group | nojello
+# }
+
+
+
+
+
+######################
+#
+# NETWORK
+#
+######################
+
+#
+# TCP
+#
+function tp {
+    server=$1
+    port=$2
+    nc -z -v -w 3 $server $port
+}
+function tpl {
+    tp 127.0.0.1 $1
+}
+
+
 
 #
 # DNS RECON
@@ -2033,6 +1582,653 @@ function dnsrecon {
     # dnsrecon -d [domain]
     (cd ${SRC_HOME}/dnsrecon && uv run dnsrecon $*)
 }
+
+
+
+#
+# SSH
+#
+function sshquiet {
+    if [ "$#" == "0" ]; then
+        echo
+        echo "Sorry. I need a string to remove from ~/.ssh/known_hosts"
+        echo
+    else
+        echo "Removing $1"
+        grep -v $1 ~/.ssh/known_hosts > /tmp/hosts.tmp && mv /tmp/hosts.tmp ~/.ssh/known_hosts
+    fi
+}
+
+alias lb="p lb-2"
+alias lbv='ssh lbvideo.phils.io'
+
+function g-ssh {
+    gcompute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
+}
+function g-list {
+    gcompute instances list | grep RUNNING | sort
+}
+function p {
+    local ip=`gcloud compute instances list  | grep -v TERMINATED  | grep prod | tr -s ' ' | cut -d' ' -f1,5 | grep $1 | sort -n | head -1 | cut -d' ' -f2`
+    ssh $ip
+}
+
+
+
+#
+# WIFI
+#
+function wifi-init {
+    local airport_exe=/usr/local/bin/airport
+    if [ ! -L $airport_exe ]; then
+        ln -s /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport $airport_exe
+        echo "Created airport symlink"
+    fi
+}
+
+function wifi {
+    wifi-init
+    wifis=`airport -s`
+    echo "$wifis" | head -1
+    wifi_data=`echo "$wifis" | grep -v "SECURITY (auth/unicast/group)"`
+    echo "$wifi_data" | sort -b -k 3
+}
+
+function wifi-me {
+    wifi-init
+    airport -I
+}
+
+
+#
+# MAC ADDRESSES
+#
+function mac-ip {
+    local mac=$1
+    ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
+    echo $ip
+}
+function ssh-mac {
+    local mac=$1
+    echo "SSHing into MAC: $mac"
+    local ip=`mac-ip $mac`
+    echo "SSHing into IP:  $ip"
+    echo ""
+    ssh `mac-ip $mac`
+}
+function arps {
+    if [ $# -eq 0 ]; then
+        interface="en1"
+    else
+        interface="$1"
+    fi
+
+    # expand sets the tab stops to be at precise locations
+    output=`arp-scan --macfile=/usr/local/share/arp-scan/mac-override.txt -l --plain --ignoredups --interface $interface | sort -b -k3,3 -k2,2`
+    echo "$output" | expand -t 16,36
+}
+
+function arps1 {
+    arps $1 | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n  # -t is the separator, treat all 4 octets as numbers
+}
+function arps2 {
+    arps $1 | sort sort -b -k2,2  # -b meaans to ignore leading blanks
+}
+function arps3 {
+    arps $1 | sort -k3,3f -k4,4f -k5,5f -k1,1n
+}
+
+function arps-all {
+    arps_output=`arps1`
+    orbi_output=`orbi1`
+
+    echo
+    echo "ARP scan:"
+    echo "$arps_output"
+    echo
+    echo "ORBI router scan:"
+    echo "$orbi_output"
+    echo
+
+    # get the MAC addresses from both lists
+    macs_arps=`echo "$arps_output" | tr -s ' ' | cut -d' ' -f2 | sort | tr '[:upper:]' '[:lower:]'`
+    macs_orbi=`echo "$orbi_output" | tr -s ' ' | cut -d' ' -f2 | sort | tr '[:upper:]' '[:lower:]'`
+
+    # see which MACS are in orbi that ARENT in arps output
+    echo "$macs_arps" > /tmp/macs_arps.txt
+    echo "$macs_orbi" > /tmp/macs_orbi.txt
+
+    echo
+    echo "Only found in arps:"
+    only_in_arps=`comm -23 /tmp/macs_arps.txt /tmp/macs_orbi.txt`
+    for mac in $only_in_arps; do
+        echo "$arps_output" | grep -i "$mac"
+    done
+    echo
+
+    echo "Only found in Orbi:"
+    only_in_orbi=`comm -13 /tmp/macs_arps.txt /tmp/macs_orbi.txt`
+    for mac in $only_in_orbi; do
+        known_name=`mac-name $mac`
+
+        orbi_line=`echo "$orbi_output" | grep -i "$mac" | tr -s ' '`
+
+        ip=`echo $orbi_line | cut -d' ' -f1`
+        conn=`echo $orbi_line | cut -d' ' -f3`
+        orbi_name=`echo $orbi_line | cut -d' ' -f4`
+
+        echo -e "$ip\t$mac\t$conn\t$known_name ($orbi_name)" | expand -t 16,36,44
+    done
+
+    echo
+}
+
+function macs {
+    local file=${MAC_FILE}
+    vi $file
+    echo
+    echo "  MACs: https://docs.google.com/spreadsheets/d/13ZjWn1mXnx0M_FC2YFWNiV8Aw9hC4Ewh5sLn92ePG9k/edit"
+    echo "  Orbi: http://${IP_LOCAL}.1/start.htm"
+    echo
+    cp -f $file $file.bak
+    cp $file ${DROPBOX_HOME}/arp-scan/.
+}
+
+function mac-name {
+    # Returns the "name" of the computer with the passed-in MAC
+    local file=${MAC_FILE}
+    local mac="$1"
+    mac=`echo $mac | tr -d ':'`
+
+    # if we dont have a mac addr
+    if [ -z "$mac" ]; then
+        echo "Unknown MAC"
+        return
+    fi
+
+    name=`grep -i $mac $file | tr '\t' ' ' | tr -s ' ' | cut -d' ' -f2-`
+    if [ -z "$name" ]; then
+        echo "Unknown MAC"
+        return
+    fi
+
+    echo $name
+}
+
+function orbi {
+    local stuff=`curl -s \
+        "$ORBI_DEVICES_URL" \
+        -X POST \
+        -H 'Accept: */*' \
+        -H 'Accept-Language: en-US,en;q=0.5' \
+        -H 'Accept-Encoding: gzip, deflate' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H 'X-Requested-With: XMLHttpRequest' \
+        -H 'Origin: http://${IP_LOCAL}.1' \
+        -H 'DNT: 1' \
+        -H '$ORBI_AUTH' \
+        -H 'Connection: keep-alive' \
+        -H 'Referer: http://${IP_LOCAL}.1/DEV_device2.htm' \
+        -H '$ORBI_COOKIE' \
+        -H 'Sec-GPC: 1' \
+        --data-raw 'count=1'`
+
+    stuff=`echo "$stuff" | sed "s/5 GHz/5GHz/g" | sed "s/2.4 GHz/2.4GHz/g"`
+    echo "$stuff" | jq -r '.devices[] | [.ip, .mac, .connectionType, .name] | @tsv' | tabulate --format plain
+}
+
+alias orbi1='orbi | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n '  # -t is the separator, treat all 4 octets as numbers
+alias orbi2='orbi | sort -b -k2,2'  # -b meaans to ignore leading blanks
+alias orbi3='orbi | sort -k3,3f -k4,4f -k5,5f -k1,1n'
+alias orbi4='orbi | sort -k4,4f -k3,3f'
+
+
+
+
+
+#
+# PIHOLE
+#
+
+function pihole-ip {
+    # Gets the IP address of the pihole
+    local mac="${MAC_PIHOLE}"
+    # ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
+    local ip=${IP_LOCAL}.2
+    echo $ip
+}
+
+function pihole-cmd {
+    # Runs a command on the pihole
+    # echo "Getting IP..."
+    local ip=`pihole-ip`
+    # echo "IP is: $ip"
+    local cmd="$1"
+    ssh -o LogLevel=QUIET -t $ip "sudo su -c '$cmd'"
+}
+
+function pihole-cmd-piholer {
+    # Runs the piholer.sh script on the box, which does stuff
+    local ip=`pihole-ip`
+    ssh -o LogLevel=QUIET -t $ip "./piholer.sh $*"
+}
+
+function pihole-tail {
+    # Tails the pihole log
+    local cmd="pihole tail"
+    pihole-cmd "$cmd"
+}
+
+function pihole-history {
+    # Gets the history of an IP address
+    local ip=$1
+    pihole-cmd-piholer history $ip
+    echo
+    echo "It is now: `utc`"
+    echo
+}
+
+function pihole-history-and-tail {
+    local ip=$1
+
+    # make an array of domains to ignore in the output. Internet detritus, just dont want to see it
+    declare -a ignored_domains
+    ignored_domains=()
+    ignored_domains+=("clients6.google.com" "googleusercontent.com" "googleapis.com" "gstatic.com" "pki.goog" "ytimg.com" "ggpht.com")
+    ignored_domains+=("cloudfront.net" "amazonaws.com")
+    ignored_domains+=("icloud.com" "apple.com" "apple-dns.net" "icloud-content.com" "mzstatic.com" "aaplimg.com" "apple.news")
+    ignored_domains+=("akamaiedge.net" "akadns.net" "sc-cdn.net")
+    ignored_domains+=("twimg.com" "firebaseio.com" "digicert.com")
+    ignored_domains+=("HTTPS")
+
+    # get length of an array
+    length=${#ignored_domains[@]}
+
+    # add each item in the array to the ignored_string
+    local ignored_string=""
+    for (( i=0; i<length; i++ )); do
+        domain="${ignored_domains[$i]}"
+        ignored_string+="$domain"
+
+        # if its not the last item, add the separator
+        if [[ $i -lt $(($length-1)) ]]; then
+            ignored_string+="\|"
+        fi
+    done
+
+    # escape the periods
+    escaped_ignored_string=${ignored_string/\./\\\.}
+
+    # run the command, grep out the ignored domains
+    pihole-history $ip | grep -v "$escaped_ignored_string"
+
+    echo "Tailing log"
+    pihole-tail | grep --line-buffered $ip
+}
+
+function pihole-tail-device {
+    local name="$1"
+
+    echo "Finding devices..."
+    local devices=`arps3 | grep -i "${name}"`
+    echo
+    echo "Found devices:"
+    echo "${devices}"
+    echo
+
+    local ip=`echo "${devices}" | head -1 | cut -d' ' -f1`
+    echo "${ip} Choosing the first device"
+    pihole-tail | grep --line-buffered $ip
+}
+
+
+function pihole-domains {
+    limit="$1"
+    if [ -z "$limit" ]; then
+        limit=100
+    fi
+    pihole-cmd-piholer domains $limit
+}
+
+function pihole-up {
+    pihole-cmd-piholer up
+}
+
+
+function dev {
+    #
+    # Either tails or looks in history for a device
+    #
+    if [ -z "$1" ]; then
+        arps
+        echo
+        echo "  Please choose a device!"
+        echo
+        return
+    fi
+
+    pattern="$1"
+    echo "Discovering '$pattern'"
+
+    devices=`arps | grep "$pattern"`
+    if [ -z "$devices" ]; then
+        arps
+        echo
+        echo "  No matching devices found. Bailing"
+        echo
+        return
+    fi
+
+    count=`echo "$devices" | wc -l`
+    echo "Discovered "$count" device(s):"
+    echo "$devices"
+
+    device=`echo "$devices" | head -1 | tr -s '\t' ' '`
+    name=`echo "$device" | cut -d' ' -f3-`
+    echo "Choosing first: '$name'"
+
+    mac=`echo "$device" | cut -d' ' -f2`
+    echo "'$name' MAC: $mac"
+
+    ip=`echo "$device" | cut -d' ' -f1`
+    echo "'$name' IP:  $ip"
+
+
+    # get historical info
+    # SQLITE SCHEMA: https://docs.pi-hole.net/database/ftl/
+    # SQLITE CLI: https://www.sqlite.org/cli.html
+    echo
+    echo "Querying sqlite..."
+
+    #
+    # This is the SQL in human-readable form
+    #
+    #  SELECT datetime(timestamp, 'unixepoch') AS datetime,
+    #  CASE status
+    #    WHEN '2'  THEN 'ok'
+    #    WHEN '3'  THEN 'ok'
+    #    WHEN '12' THEN 'ok'
+    #    WHEN '13' THEN 'ok'
+    #    WHEN '14' THEN 'ok'
+    #    ELSE 'blocked'
+    #    END blocked,
+    # domain,
+    # CASE type
+    #     WHEN 1  THEN 'A'
+    #     WHEN 2  THEN 'AAAA'
+    #     WHEN 3  THEN 'ANY'
+    #     WHEN 4  THEN 'SRV'
+    #     WHEN 5  THEN 'SOA'
+    #     WHEN 6  THEN 'PTR'
+    #     WHEN 7  THEN 'TXT'
+    #     WHEN 8  THEN 'NAPTR'
+    #     WHEN 9  THEN 'MX'
+    #     WHEN 10 THEN 'DS'
+    #     WHEN 11 THEN 'RRSIG'
+    #     WHEN 12 THEN 'DNSKEY'
+    #     WHEN 13 THEN 'NS'
+    #     WHEN 14 THEN 'OTHER (any query type not covered elsewhere)'
+    #     WHEN 15 THEN 'SVCB'
+    #     WHEN 16 THEN 'HTTPS'
+    #     ELSE 'Unknown'
+    #     END type_string
+    # FROM queries
+    # WHERE client = '192.168.1.151'
+    # ORDER BY datetime ASC
+    # LIMIT 10;
+
+    #
+    # This is the SQL all on one line. Took too long to get a HEREDOC working in bash, so this is what it is
+    #
+    sql="SELECT datetime(timestamp, 'unixepoch') AS datetime, CASE status WHEN '2' THEN 'ok' WHEN '3' THEN 'ok' WHEN '12' THEN 'ok' WHEN '13' THEN 'ok' WHEN '14' THEN 'ok' ELSE 'blocked' END blocked, domain, type FROM queries WHERE client = '$ip' ORDER BY datetime DESC;"
+
+    sqlite3 -header -cmd ".mode box" /etc/pihole/pihole-FTL.db "$sql"
+
+    # then tail
+    echo
+    echo "Tailing log file..."
+    # tail -10000f /var/log/pihole.log | grep "$ip"
+    pihole tail | grep --line-buffered "$ip"
+}
+
+
+
+
+#
+# RASPBERRY PI
+#
+alias rube-net='ssh zo@`arp-scan -l | grep -i "raspberry\|legra" | head -1 | cut -f1`'
+alias rube-local='screen /dev/cu.usbserial 115200'
+
+
+
+#
+# OSX
+#
+alias rosetta='arch -x86_64'
+alias rb='rosetta /bin/bash'
+alias notifications-enable='launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist'
+alias notifications-disable='launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist; killall NotificationCenter'
+
+
+
+
+
+
+
+#########################################################
+#
+# VIDEO
+#
+#########################################################
+
+#
+# FFMPEG
+#
+export FFMPEG_CFG="$HOME/.ffmpeg/ffmpeg.conf"
+
+function ffp {
+    filename="$1"
+    ffprobe -v quiet -print_format json -show_format -show_streams $filename | jq .
+}
+
+function vid-180 {
+    vid-transpose "$1" "transpose=2,transpose=2"
+}
+function vid-90-clockwise {
+    vid-transpose "$1" "transpose=1"
+}
+function vid-90-counterclockwise {
+    vid-transpose "$1" "transpose=2"
+}
+function vid-transpose {
+    source="$1"
+    local output="$source-flipped.mov"
+    local transpose="$2"
+    ffmpeg -hide_banner -i "$source" -vf "$transpose" "$output"
+    echo
+    echo
+    echo "New video saved to: '$output'"
+}
+function vid-noaudio {
+    local filepath=$1
+    local filename=$(basename -- "$filepath")
+    local extension="${filename##*.}"
+    local filename="${filename%.*}"
+    time ffmpeg -hide_banner -y -i $filepath -c copy -an $filename-xx.$extension
+}
+
+
+
+#
+# GSTREAMER
+#
+export GSTREAMER_HOME=/Library/Frameworks/GStreamer.framework/Versions/1.0/
+export CPATH=$GSTREAMER_HOME/include
+export CPATH=$CPATH:$GSTREAMER_HOME/include/gstreamer-1.0/
+export CPATH=$CPATH:$GSTREAMER_HOME/Headers
+add_to_PATH $GSTREAMER_HOME/bin/
+# export LIBRARY_PATH=$GSTREAMER_HOME/lib
+# export GST_DEBUG=2
+
+alias gst-basic='gst-launch-1.0 videotestsrc ! ximagesink'
+alias gst-basic-osx='gst-launch-1.0 videotestsrc ! autovideosink'
+alias gst-display-screen='gst-launch-1.0 avfvideosrc capture-screen=true ! autovideosink'
+alias gst-webcam='gst-launch-1.0 autovideosrc device=/dev/video0 ! autovideosink'
+alias gst-add-text='gst-launch-1.0 -v videotestsrc ! clockoverlay halignment=left valignment=bottom text="95.4 mph 2450" shaded-background=true font-desc="Sans, 23" ! videoconvert ! ximagesink'
+alias gst-rtmp1='gst-launch-1.0 -v videotestsrc ! avenc_flv ! flvmux ! rtmpsink location="rtmp://localhost/path/to/stream" live=1'
+function gst-download {
+    local url="$1"
+    local filename="$2"
+    time gst-launch-1.0 -v souphttpsrc location="$url" ! filesink location="$2"
+}
+
+
+#
+# VLC
+#
+alias vlc=/Applications/VLC.app/Contents/MacOS/VLC
+
+
+#
+# VIDEO COMPRESSION TESTS
+#
+# OSX:
+# original: 112321631 bytes
+# HandBrakeCli 12446540 bytes, 17.0 seconds on osx
+# ffmpeg 17:   37824304 bytes, 19.6 seconds on osx
+# ffmpeg 23:   10222457 bytes, 13.1 seconds on osx
+# ffmpeg 30:    3968933 bytes, 11.5 seconds on osx
+# ffmpeg 17:   37793868 bytes, 289 seconds on prod-video-4
+# ffmpeg 30:    3966501 bytes, 168 seconds on prod-video-4
+function vid-compress-ffmpeg {
+    local filepath=$1
+    local filename=$(basename -- "$filepath")
+    local extension="${filename##*.}"
+    local filename="${filename%.*}"
+
+    local quality=28
+    time ffmpeg -hide_banner -y -i $filepath -crf $quality $filename-y-$quality.$extension
+}
+function vid-compress-handbrake {
+    local filepath=$1
+    local filename=$(basename -- "$filepath")
+    local extension="${filename##*.}"
+    local filename="${filename%.*}"
+    time HandBrakeCLI -O -i $filepath -o $filename-x.$extension
+}
+
+
+
+#
+# VEGGIETRONIC
+#
+alias veg-attachment='curl -v http://veggietronic-zo.$DOMAIN/static/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
+alias veg-attachment-no='curl -v http://veggietronic-zo.$DOMAIN/static/asattachment/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
+
+function veg {
+    #
+    # veg ashburn-cf ashburn-cf-2020-10-19-12-42-31.mov
+    #
+    camera="$1"
+    filename="$2"
+    crf="$3"
+    threads="$4"
+    preset="$5"
+    profile="$6"
+    port=""
+
+    if [ -z "$crf" ]; then
+        crf="28"
+    fi
+    if [ -z "$threads" ]; then
+        threads="16"
+    fi
+    if [ -z "$preset" ]; then
+        preset="veryfast"
+    fi
+    if [ -z "$profile" ]; then
+        profile="main"
+    fi
+
+    if [ "$camera" == "zo" ]; then
+        port=":8000"
+    fi
+
+    url="https//veggietronic-$camera.phils.io$port/static/mnt/sdcard/DCIM/$filename?crf=$crf&threads=$threads&preset=$preset&profile=$profile&nocompress=true"
+
+    echo "Camera: $camera"
+    echo "Filename: $filename"
+    echo "URL: $url"
+
+    curl -w "@$HOME/.curl_format" -s -o "$filename" "$url"
+}
+
+
+#
+# EDGERTRONIC
+#
+function edgers {
+    (cd $PIE && vi video/edgertronics.yaml && cp video/edgertronics.yaml $SRC_HOME/chef/cookbooks/phillies/files/default/. )
+    echo "yaml file copied to chef files"
+}
+function edg-status-watch {
+    # from https://wiki.edgertronic.com/index.php/SDK_-_Developer_tricks
+    s="" ; while sleep 0.5 ; do t=`curl http://e/get_status_string 2>/dev/null` ; if [ "$s" != "$t" ] ; then s=$t ; echo $s ; fi ; done
+}
+
+function cams {
+    grep SCI $SRC_HOME/chef/cookbooks/phillies/attributes/default.rb | grep lab | tr -s ' ' | tr -d "'" | tr -d ','
+}
+
+function cam_status {
+    curl -s https://${CAM_AUTH}@lab-$1.phils.io/get_camstatus | jq .
+}
+
+function cam0 {
+    cam_status 0
+}
+function cam00 {
+    cam_status 00
+}
+
+function els-all {
+    path="$1"
+    options="${@:2:10}"
+    rclone lsf $EDGER_LAB_HOME/$path --csv --format "tsp" $options | column -t -s ' ,'
+}
+function els {
+    path="$1"
+    options="${@:2:10}"
+    rclone lsf $EDGER_LAB_HOME/$path --csv --format "tsp" --include "*.mp4" $options | column -t -s ' ,'
+}
+function elsc {
+    path="$1"
+    options="${@:2:10}"
+    els compressed/$path $options
+}
+function ecat {
+    path="$1"
+    arr=(${path//-/ })
+    camera="${arr[0]}-${arr[1]}"
+    json=${path//mp4/json}
+    rclone cat $EDGER_LAB_HOME/compressed/$camera/$json | jq .
+}
+function eplay {
+    path="$1"
+    arr=(${path//-/ })
+    camera="${arr[0]}-${arr[1]}"
+    rclone copy $EDGER_LAB_HOME/compressed/$camera/$path /tmp/.
+    open /tmp/$path
+}
+
+
+
+
+
+
+
+
 
 
 #
@@ -2064,155 +2260,6 @@ function kd {
 }
 
 
-#
-# VAGRANT
-#
-#export VAGRANT_DEFAULT_PROVIDER="vmware_fusion"
-alias vst='vagrant status'
-
-#
-# KAFKA
-#
-KAFKA_HOME=$HOME/phillies/kafka/confluent-3.3.1
-SQLLINE_HOME=$HOME/phillies/kafka/sqlline
-
-
-#
-# GIT/GITHUB
-#
-alias b='git co --track'  # b <branch_name>
-alias bfg='/usr/local/opt/openjdk/bin/java -jar /usr/local/Cellar/bfg/1.14.0/libexec/bfg-1.14.0.jar'
-alias bis='git bisect'
-alias bs='git branch' # list all branches
-alias bs-dates="git for-each-ref --sort=committerdate refs/heads/ --format='%(committerdate:short) %(refname:short)'"
-alias branch='co -b'
-alias copilot-update='( cd ~/.vim/pack/github/start/copilot.vim && gpl && cd - )'
-alias gi='git'
-alias god='git'
-alias gd='git diff'
-alias gds='gd --staged'
-alias ga='git add'
-alias gr='git restore'
-alias st='git status'
-alias co='git checkout'
-alias gpl='git pull origin `git rev-parse --abbrev-ref HEAD`'
-alias gps='git push origin `git rev-parse --abbrev-ref HEAD`'
-alias stash='git stash'
-alias stahs='stash'
-alias sta='stash'
-alias master='co master'
-alias main='co main'
-alias dev='co dev'
-alias got='git'
-alias gut='git'
-
-
-function wip {
-    local COMMENT="$*"
-    git commit -m "WIP: $COMMENT"
-    gps
-}
-
-
-function git-show-largest-files {
-    git rev-list --objects --all \
-    | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' \
-    | awk '/^blob/ {print substr($0,6)}' \
-    | sort --numeric-sort --key=2 --reverse \
-    | head -20 \
-    | cut --complement --characters=13-40 \
-    | numfmt --field=2 --to=iec-i --suffix=B --padding=7 --round=nearest
-}
-
-function branchd {
-    branch=$1
-    if [ "$branch" = "" ]; then
-        echo "No branch specified. Exiting."
-        return
-    fi
-    git branch -D $1
-    git push origin --delete $1
-}
-function branchm {
-    branch=$1
-    if [ "$branch" = "" ]; then
-        echo "No branch specified. Exiting."
-        return
-    fi
-    git checkout -b $1
-    git push origin $1
-    cd -
-}
-
-function tag-del {
-    git tag --delete $1
-    git push --delete origin $1
-}
-
-function tag-list {
-    for tag in `git tag`
-    do
-        echo "`git rev-list -n 1 $tag`: $tag"
-    done
-}
-
-function tag-update-local {
-    git fetch origin --tags
-}
-
-function gc {
-    git commit -m '$@'
-}
-
-function pr {
-    local title="$1"
-    # if [ -z "$title" ]; then
-        # echo
-        # echo "    Please set the title of the PR"
-        # echo
-        # return
-    # fi
-    local output=`gh pr create --base main --fill 2>&1`
-    if [ $? -ne 0 ]; then
-        echo
-        echo "ERROR"
-        echo "ERROR"
-        echo
-        echo "$output"
-        echo
-        echo "ERROR"
-        echo "ERROR"
-        echo
-        return
-    fi
-    echo $output
-
-    local url=`echo $output | grep https`
-    echo "$url is our URL"
-    open "$url"
-}
-
-
-function beeper {
-    runs=`gh run list --limit 30 --repo PhilliesAnalytics/pie`
-    in_progress_ids=`echo "$runs" | grep in_progress | tr -d ' ' | cut -d$'\t' -f7`
-}
-
-
-export GIT_PS1_SHOWSTASHSTATE=true
-export GIT_PS1_SHOWDIRTYSTATE=true
-export GIT_PS1_SHOWUPSTREAM="auto"
-
-include ~/.git-prompt.sh
-include ~/.git-completion.sh
-
-
-#
-# GITHUB ACTIONS
-#
-alias w='g && cd workflows'
-alias sc='g && cd scripts'
-
 
 
 #
@@ -2232,19 +2279,10 @@ export PS1="${COLOR_GREEN_A}\T ${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${
 # export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 
 
-# CHROME
-alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
-alias chrome-canary="/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary"
-alias chromium="/Applications/Chromium.app/Contents/MacOS/Chromium"
 
-
-# ELASTICSEARCH
-function curles {
-    curl -s "localhost:9200/$1" | python -m json.tool
-}
-
-
+#
 # NOTES
+#
 function notes {
     # shopt nullglob
 
@@ -2273,26 +2311,6 @@ alias note=notes
 alias ntoes=notes
 
 
-# PAPERTRAIL
-alias pt='papertrail'
-function l {
-    group=$1
-
-    if [ "$group" = "" ]; then
-        echo "No group specified. Using ALL"
-        group=""
-    else
-        group="-g $group"
-    fi
-    pt -f $group | nojello
-}
-
-
-
-#
-# AWAIR
-#
-alias aw='awair --mac ${AWAIR_MAC}'
 
 
 #
@@ -2362,106 +2380,15 @@ function lint-time-file {
 }
 
 
-# DIRS
-alias src='cd $SRC_HOME'
-alias ku=pik
-alias dot='cd ~/.dotfiles'
-alias leet='cd ${SRC_HOME}/leet'
-# alias dag='cd $PIE/cloud_composer/dags'
-
-
-# ANDROID
-alias logcat='adb logcat > /tmp/logcat.txt &'
-alias logall='tail -f /tmp/logcat.txt'
-alias adb-restart='adb kill-server; adb start-server'
-# export GRADLE_OPTS="-Dorg.gradle.daemon=true"
-
-
-# LOADER
-function loader {
-    curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | jq .
-}
-
-
-# VARNISH
-alias vl='varnishlog -m rxURL:/rss/blog -c'
-function vpurge {
-    curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_PROD$1 2>&1 >/dev/null | grep HTTP
-}
-
-
-# some default locations
-export ANDROID_HOME=~/adt-bundle-mac/sdk
-export APACHE_HOME=/usr/local/apache2
-export GROOVY_HOME=/usr/local/opt/groovy/libexec
-export GSUTIL_HOME=~/bin/gsutil
-export NGINX_HOME=/usr/local/Cellar/nginx/current
-export NPM_HOME=/usr/local/share/npm/
-export NPM_RELATIVE="./node_modules/.bin"
-
-
-# BREW
-function brew-update {
-    pushd .
-    dot
-    brew update
-    brew bundle
-    popd
-}
-
-
-# IDEMPOTENT PATHS
-add_to_CLASSPATH () {
-  for d; do
-    # d=$(cd -- "$d" && { pwd -P || pwd; }) 2>/dev/null  # canonicalize symbolic links
-    # if [ -z "$d" ]; then continue; fi  # skip nonexistent directory
-    case ":$CLASSPATH:" in
-      *":$d:"*) :;;
-      *) CLASSPATH=$CLASSPATH:$d;;
-    esac
-  done
-}
-
-add_to_PATH () {
-  for d; do
-    # d=$(cd -- "$d" && { pwd -P || pwd; }) 2>/dev/null  # canonicalize symbolic links
-    # if [ -z "$d" ]; then continue; fi  # skip nonexistent directory
-    case ":$PATH:" in
-      *":$d:"*) :;;
-      *) PATH=$PATH:$d;;
-    esac
-  done
-}
 
 
 
 
-add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
-add_to_PATH $PYTHON3_HOME/bin/
-add_to_PATH $PYTHON3_HOME/libexec/bin/
-add_to_PATH /usr/local/bin
-add_to_PATH /usr/local/sbin
-add_to_PATH $NPM_RELATIVE
-add_to_PATH $GOPATH/bin
-add_to_PATH /usr/local/opt/mysql-client/bin
-add_to_PATH /opt/homebrew/bin
-add_to_PATH $GSTREAMER_HOME/bin/
-add_to_PATH ~/bin
-add_to_PATH .
-
-
-
-#
-# JAVA
-#
-export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-add_to_CLASSPATH .
-
-
-
+#####################################################################
 #
 # PHOTO
 #
+#####################################################################
 alias ph='cd ~/Photos'
 alias photo='ssh $PHOTO_USER@$PHOTO_HOST'
 alias photo_mount='sshfs $PHOTO_USER@$PHOTO_HOST: $PHOTO_DIR_LOCAL_MOUNT'
@@ -2617,6 +2544,12 @@ function photo_clear_samsung {
 }
 
 
+
+# ##################################################################
+#
+# OTHER CLOUDS
+#
+# ##################################################################
 
 #
 # HEROKU
@@ -3217,25 +3150,9 @@ function aws-bootstrap {
 }
 
 
-#
-# EOL conversions
-#
-function dos2unix {
-    cat $1 | tr -d '\r' > foo.tmp
-    mv foo.tmp $1
-}
-
-function unix2mac {
-    cat $1 | tr '\n' '\r' > foo.tmp
-    mv foo.tmp $1
-}
-
-function mac2unix {
-    cat $1 | tr '\r' '\n' > foo.tmp
-    mv foo.tmp $1
-}
 
 # include ${HOME}/.fzf.bash
 include ${HOME}/.bashrc_private
 
-export PATH="${HOME}/.local/bin:$PATH"
+# put this last derp
+add_to_PATH .
