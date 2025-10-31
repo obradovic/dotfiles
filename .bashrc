@@ -199,21 +199,28 @@ function nohuptime {
 # IDEMPOTENT PATHS
 ################################################################################
 
-function add_to_PATH {
-  for d; do
-    # d=$(cd -- "$d" && { pwd -P || pwd; }) 2>/dev/null  # canonicalize symbolic links
-    # if [ -z "$d" ]; then continue; fi  # skip nonexistent directory
-    case ":$PATH:" in
-      *":$d:"*) :;;
-      *) PATH=$PATH:$d;;
-    esac
-  done
+function append_to_path {
+    for d; do
+        case ":$PATH:" in
+            *":$d:"*) :;;
+            *) PATH=$PATH:$d;;
+        esac
+    done
 }
 
-add_to_PATH /usr/local/opt/coreutils/libexec/gnubin
-add_to_PATH /usr/local/bin
-add_to_PATH /usr/local/sbin
-add_to_PATH ${HOME}/bin
+function prepend_to_path {
+    for d; do
+        case ":$PATH:" in
+            *":$d:"*) :;;
+            *) PATH=$d:$PATH;;
+        esac
+    done
+}
+
+append_to_path /usr/local/opt/coreutils/libexec/gnubin
+append_to_path /usr/local/bin
+append_to_path /usr/local/sbin
+append_to_path ${HOME}/bin
 
 
 
@@ -1399,13 +1406,13 @@ function vpurge {
 ################################################################################
 export FLASK_APP=main.py
 export FLASK_DEBUG=1
-export PATH="$HOME/.local/bin:$PATH"
 export PYTHONDONTWRITEBYTECODE=true
 # export PYTHONPATH=$SRC_HOME
 # export MYPYPATH=$PYTHONPATH
 export WHEELHOUSE="${HOME}/.cache/pip/wheelhouse"
 export PIP_FIND_LINKS="file://${WHEELHOUSE}"
 export PIP_WHEEL_DIR="${WHEELHOUSE}"
+append_to_path ${HOME}/.local/bin
 
 alias python=python3
 alias py='ipython3 --no-banner --pprint --no-simple-prompt -i --'
@@ -1475,12 +1482,12 @@ function rp-del {
 alias be='bundle exec'
 alias dep='bundle exec cap prod deploy'
 export RUBY_HOME=/usr/local/opt/ruby@3.3
-export PATH=${RUBY_HOME}/bin:$PATH
 export LDFLAGS="-L${RUBY_HOME}/lib"
 export CPPFLAGS="-I${RUBY_HOME}/include"
 export PKG_CONFIG_PATH="${RUBY_HOME}/lib/pkgconfig"
 
-export PATH="$HOME/.rbenv/bin:$PATH"
+append_to_path ${RUBY_HOME}/bin
+append_to_path ${HOME}/.rbenv/bin
 # eval "$(${HOMEBREW_BIN}/rbenv init - bash)"
 # source ~/.rvm/scripts/rvm
 
@@ -1491,7 +1498,7 @@ export PATH="$HOME/.rbenv/bin:$PATH"
 ################################################################################
 
 export GOPATH=${HOME}/go
-add_to_PATH $GOPATH/bin
+append_to_path $GOPATH/bin
 
 function findgo {
     find . -name \*.go | grep -v "\.env\|\.git" | xargs -I@ grep -H -i "$*" "@"
@@ -1514,14 +1521,14 @@ export NPM_RELATIVE="./node_modules/.bin"
 export NVM_DIR="$HOME/.nvm"
 include ${NVM_DIR}/nvm.sh
 include ${NVM_DIR}/bash_completion
-add_to_PATH $NPM_RELATIVE
+append_to_path $NPM_RELATIVE
 
 
 ################################################################################
 # JAVA
 ################################################################################
 
-export PATH="${HOMEBREW_HOME}/opt/openjdk/bin:$PATH"
+append_to_path ${HOMEBREW_HOME}/opt/openjdk/bin
 export CLASSPATH=${CLASSPATH}:.
 
 
@@ -1579,7 +1586,7 @@ export PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
 export HOMEBREW_HOME="/opt/homebrew"
 export HOMEBREW_BIN="${HOMEBREW_HOME}/bin"
-add_to_PATH ${HOMEBREW_BIN}
+prepend_to_path ${HOMEBREW_BIN}
 
 function brew-update {
     (dot && brew update && brew bundle)
@@ -1649,8 +1656,10 @@ function curles {
 # LIBICU
 ################################################################################
 
-export PATH="/usr/local/opt/icu4c/bin:/usr/local/opt/icu4c/sbin:$PATH"
-export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/icu4c/lib/pkgconfig"
+export LIBICU_HOME=/usr/local/opt/icu4c
+append_to_path ${LIBICU_HOME}/bin
+append_to_path ${LIBICU_HOME}/sbin
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:${LIBICU_HOME}/lib/pkgconfig"
 
 
 ################################################################################
@@ -1667,7 +1676,7 @@ alias aw='awair --mac ${AWAIR_MAC}'
 # alias pt='papertrail'
 # function l {
 #     group=$1
-# 
+#
 #     if [ "$group" = "" ]; then
 #         echo "No group specified. Using ALL"
 #         group=""
@@ -2219,7 +2228,7 @@ export GSTREAMER_HOME=/Library/Frameworks/GStreamer.framework/Versions/1.0/
 export CPATH=$GSTREAMER_HOME/include
 export CPATH=$CPATH:$GSTREAMER_HOME/include/gstreamer-1.0/
 export CPATH=$CPATH:$GSTREAMER_HOME/Headers
-add_to_PATH $GSTREAMER_HOME/bin/
+append_to_path $GSTREAMER_HOME/bin/
 # export LIBRARY_PATH=$GSTREAMER_HOME/lib
 # export GST_DEBUG=2
 
@@ -3294,4 +3303,4 @@ function aws-bootstrap {
 include ${HOME}/.bashrc_private
 
 # put this last derp
-add_to_PATH .
+append_to_path .
