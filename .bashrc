@@ -63,7 +63,7 @@ export SRC_HOME="${HOME}/src"
 
 
 ################################################################################
-# UNFORTUNATELY COMMON TYPOS
+# UNFORTUNATELY COMMON TYPOS. UGH.
 ################################################################################
 alias bi='vi'
 alias del='rm'
@@ -84,13 +84,17 @@ alias .ale='make'
 
 
 ################################################################################
-# SHORTCUT ALIASES
+# PERFORMANCE TESTING
 ################################################################################
 alias t='TIMEFORMAT="That took %1R seconds" && time'
 alias curly='curl -w "@${HOME}/.curl_format" -o /dev/null -s -v'
 alias ip='curl -s http://ipecho.net/plain; echo'
 alias loadspeed='phantomjs $HOME/.loadspeed.js'
 
+
+################################################################################
+# SHORTCUT ALIASES
+################################################################################
 alias m='make'
 alias la='ls -la'
 alias dirw='la | grep drw'
@@ -421,7 +425,7 @@ function run-in-container {
 
 
 ################################################################################
-# KUBE
+# KUBERNETES
 ################################################################################
 
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
