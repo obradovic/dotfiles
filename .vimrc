@@ -65,10 +65,10 @@ set autoindent
 set smartindent
 
 " Numbers everywhere
-set ruler
-set number
-set relativenumber
 set cursorline
+set ruler
+" set number
+" set relativenumber
 
 " Enable folding
 set foldmethod=indent
