@@ -61,32 +61,43 @@ export SRC_HOME="${HOME}/src"
 # MySQL client library path
 # export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 
+
 ################################################################################
-# GENERIC BASH ALIASES AND TYPOS
+# UNFORTUNATELY COMMON TYPOS
 ################################################################################
-alias m='make'
-alias t='TIMEFORMAT="That took %1R seconds" && time'
-alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
-alias ip='curl -s http://ipecho.net/plain; echo'
-alias loadspeed='phantomjs $HOME/.loadspeed.js'
-alias la='ls -la'
+alias bi='vi'
+alias del='rm'
+alias vo='vi'
+alias vu='vi'
 alias dir='la'
 alias dor='la'
 alias dri='la'
 alias dur='la'
+alias mroe='more'
+alias copy='cp'
+alias move='mv'
+alias ,,='..'
+alias ,,,='...'
+alias ,,,,='....'
+alias .ale='make'
+
+
+
+################################################################################
+# SHORTCUT ALIASES
+################################################################################
+alias m='make'
+alias t='TIMEFORMAT="That took %1R seconds" && time'
+alias curly='curl -w "@${HOME}/.curl_format" -o /dev/null -s -v'
+alias ip='curl -s http://ipecho.net/plain; echo'
+alias loadspeed='phantomjs $HOME/.loadspeed.js'
+alias la='ls -la'
 alias dirw='la | grep drw'
 alias j='jobs'
 alias 1='fg %1'
 alias 2='fg %2'
 alias 3='fg %3'
 alias 4='fg %4'
-alias bi='vi'
-alias del='rm'
-alias vo='vi'
-alias vu='vi'
-alias mroe='more'
-alias copy='cp'
-alias move='mv'
 alias bas='vi ~/.bashrc; sleep 0.1; . ~/.bashrc'
 alias bass='vi ~/.bashrc_private; sleep 0.1; . ~/.bashrc'
 alias sudo='sudo '  # from http://www.shellperson.net/using-sudo-with-an-alias/
@@ -94,9 +105,6 @@ alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
-alias ,,='..'
-alias ,,,='...'
-alias ,,,,='....'
 alias .3='cd ../../..'
 alias .4='cd ../../../..'
 alias .5='cd ../../../../..'
@@ -104,13 +112,12 @@ alias du1='du -h -d 1 | sort -h'
 alias du2='du -h -d 2 | sort -h'
 alias dfk='df -h -k'
 alias tl='tail -f'
-alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'
+alias beep='for i in {1..3} ; do tput bel; sleep 0.5; done'  # TODO: no worky
 alias less='less -X -F'
 alias grepl='grep --line-buffered'
 alias noempty='egrep --line-buffered -v "^[[:space:]]*$"'
 alias nojello='grep --line-buffered -v jello'
 alias ports='netstat -tulan'
-alias .ale='make'
 alias utc='date -u'
 alias ut='utc'
 alias today='note today'
@@ -165,14 +172,6 @@ function geo {
     # get it and output it
     local info=$(curl -s ${url})
     echo ${info} | jq .
-}
-
-function internet-provider {
-    local ip="$1"
-    if [ -z "$ip" ]; then
-        ip=`ip`
-    fi
-    whois $ip | grep OrgName | tr -s ' ' | cut -d' ' -f2-
 }
 
 function wildcard_csr {
@@ -636,7 +635,7 @@ fi
 
 
 ################################################################################
-# GOOGLE GCLOUD CONTAINER METADATA
+# GOOGLE CLOUD CONTAINER METADATA
 ################################################################################
 
 function metadata-query {
@@ -662,7 +661,7 @@ function metadata-name {
 
 
 ################################################################################
-# GCLOUD
+# GOOGLE CLOUD
 ################################################################################
 
 alias gcluster='gcloud container clusters'
@@ -1098,11 +1097,7 @@ function datalab {
 
 
 ################################################################################
-# GCLOUD
-################################################################################
-
-################################################################################
-# GOOGLE GCLOUD DNS
+# GOOGLE CLOUD DNS
 ################################################################################
 
 function gdns {
@@ -1326,6 +1321,39 @@ function gdns-ls {
 
 # Source
 # include ${PIE_HOME}/bin/gcp-shared.sh
+
+
+
+################################################################################
+# CHEF
+################################################################################
+
+export OPSCODE_USER=zo
+alias cc='chef-client -l info'
+alias ccd='chef-client -l debug'
+alias kinst='knife cookbook site install'
+alias kservers='knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE'
+alias ks='knife status'
+alias ck='knife cookbook'
+alias up='knife cookbook upload'
+alias upp='up phillies'
+alias upr='knife upload'
+alias upe='knife environment from file'
+alias upu='knife data bag from file users $1'
+alias kshow='knife node show'
+alias kedit='knife node edit'
+alias urp='upr'
+alias chef-all='pie && ROLES=all bundle exec cap prod chef && cd -'
+alias chef-api='pie && ROLES=api bundle exec cap prod chef && cd -'
+
+function ksearch {
+    knife search node "roles:$1"
+}
+
+function kd {
+    knife node delete -y $1
+    knife client delete -y $1
+}
 
 
 
@@ -1643,8 +1671,19 @@ alias aw='awair --mac ${AWAIR_MAC}'
 
 
 ################################################################################
+#
 # NETWORK
+#
 ################################################################################
+
+function internet-provider {
+    local ip="$1"
+    if [ -z "$ip" ]; then
+        ip=`ip`
+    fi
+    whois $ip | grep OrgName | tr -s ' ' | cut -d' ' -f2-
+}
+
 
 ################################################################################
 # TCP
@@ -2339,43 +2378,6 @@ function eplay {
 
 
 
-
-
-
-
-
-
-
-################################################################################
-# CHEF
-################################################################################
-
-export OPSCODE_USER=zo
-alias cc='chef-client -l info'
-alias ccd='chef-client -l debug'
-alias kinst='knife cookbook site install'
-alias kservers='knife google server list --gce-project $PHIL_GCLOUD_PROJECT --gce-zone $PHIL_GCLOUD_ZONE'
-alias ks='knife status'
-alias ck='knife cookbook'
-alias up='knife cookbook upload'
-alias upp='up phillies'
-alias upr='knife upload'
-alias upe='knife environment from file'
-alias upu='knife data bag from file users $1'
-alias kshow='knife node show'
-alias kedit='knife node edit'
-alias urp='upr'
-alias chef-all='pie && ROLES=all bundle exec cap prod chef && cd -'
-alias chef-api='pie && ROLES=api bundle exec cap prod chef && cd -'
-
-function ksearch {
-    knife search node "roles:$1"
-}
-
-function kd {
-    knife node delete -y $1
-    knife client delete -y $1
-}
 
 
 
