@@ -1,22 +1,69 @@
+################################################################################
+# BASHRC CONFIGURATION
+################################################################################
 #
-# A collection of useful bash'isms from a command-line junkie
+# A comprehensive collection of bash configurations, aliases, functions, and
+# utilities for command-line productivity. This file includes:
 #
+#   - Shell options and behavior configuration
+#   - Environment variables and PATH management
+#   - Generic aliases and typo corrections
+#   - Git/GitHub workflow helpers
+#   - Docker and Kubernetes utilities
+#   - Development environment shortcuts
+#   - Custom functions for common tasks
+#
+################################################################################
 
+################################################################################
+# SHELL OPTIONS
+################################################################################
+
+#   Enable vi-mode for command line editing. Allows using vi/vim keybindings
+#   for navigating and editing commands (press ESC to enter command mode).
 set -o vi
+
+#   Enable extended pattern matching features (like !(pattern), ?(pattern), etc.)
+#   Useful for advanced glob patterns in pathname expansion.
 shopt -s extglob
+
+#   Append to history file rather than overwriting it. Prevents loss of history
+#   when running multiple terminal sessions simultaneously.
 shopt -s histappend
+
+#   Set default file creation permissions. Files created will have permissions
+#   644 (rw-r--r--) and directories 755 (rwxr-xr-x).
 umask 0022
 
-export BASH_SILENCE_DEPRECATION_WARNING=1  # https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
+################################################################################
+# ENVIRONMENT VARIABLES
+################################################################################
+
+# Suppress macOS deprecation warning about bash (macOS prefers zsh)
+# Reference: https://www.addictivetips.com/mac-os/hide-default-interactive-shell-is-now-zsh-in-terminal-on-macos/
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
+# Enable colored output for ls and other commands on macOS
 export CLICOLOR=1
+
+# Set vi as the default text editor for command-line applications
 export EDITOR=vi
+
+# Configure less pager behavior:
+#   -X: Don't clear screen on exit
+#   -F: Quit if entire file fits on one screen
+#   -R: Allow ANSI color escape sequences
 export LESS="-XFR"
+
+# Define standard location for source code repositories
 export SRC_HOME="${HOME}/src"
+
+# MySQL client library path
 # export DYLD_LIBRARY_PATH=/usr/local/opt/mysql-client/lib/
 
-#
+################################################################################
 # GENERIC BASH ALIASES AND TYPOS
-#
+################################################################################
 alias m='make'
 alias t='TIMEFORMAT="That took %1R seconds" && time'
 alias curly='curl -w "@$HOME/.curl_format" -o /dev/null -s -v'
@@ -138,9 +185,10 @@ function nohuptime {
 }
 
 
-#
+################################################################################
 # IDEMPOTENT PATHS
-#
+################################################################################
+
 function add_to_PATH {
   for d; do
     # d=$(cd -- "$d" && { pwd -P || pwd; }) 2>/dev/null  # canonicalize symbolic links
@@ -159,9 +207,10 @@ add_to_PATH ${HOME}/bin
 
 
 
-#
+################################################################################
 # GIT/GITHUB
-#
+################################################################################
+
 alias b='git co --track'  # b <branch_name>
 alias bfg='/usr/local/opt/openjdk/bin/java -jar /usr/local/Cellar/bfg/1.14.0/libexec/bfg-1.14.0.jar'
 alias bis='git bisect'
@@ -288,17 +337,17 @@ function beeper {
 
 
 
-#
+################################################################################
 # GITHUB ACTIONS
-#
+################################################################################
 # alias w='g && cd workflows'
 # alias sc='g && cd scripts'
 
 
 
-#
+################################################################################
 # DOCKER
-#
+################################################################################
 alias d='docker'
 alias dc='d container'
 alias di='d image'
@@ -365,9 +414,10 @@ function run-in-container {
 }
 
 
-#
+################################################################################
 # KUBE
-#
+################################################################################
+
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 alias k=kubectl
 alias desc='k describe'
@@ -403,9 +453,11 @@ function kcs {
 function kg {
     kubectl get $*
 }
+
 function kj {
     kg $* -o json | jq .
 }
+
 function ky {
     kg $* -o yaml | yq .
 }
@@ -465,9 +517,11 @@ function pod-log {
 function pod-log-api-http {
     pod-log api api-http
 }
+
 function pod-log-api-ws {
     pod-log api api-ws
 }
+
 function pod-log-hap {
     pod-log hap | grep -v "STATS\|GET / \|NOSRV\|SSL handshake failure"
 }
@@ -479,6 +533,7 @@ function pod-log-all {
 function clients {
     curl -s https://ws.phils.io/clients | jq .
 }
+
 function clients-local {
     curl -s http://localhost:81/clients | jq .
 }
@@ -507,6 +562,7 @@ function ingress-annotations {
     ret=`kubectl get ingress $ingress_name -o json | jq .metadata.annotations`
     echo "$ret" | jq -s .
 }
+
 function forwarding-rules {
     annotations=`ingress-annotations | grep forwarding-rule`
     echo "$annotations" | tr -s ' ' | cut -d' ' -f3 | tr -d '"' | tr -d ','
@@ -536,6 +592,7 @@ alias replicasetsa='replicasets -A'
 alias cluster-dump='kubectl cluster-info dump'
 alias clusters='gcloud container clusters list'
 alias gcompute='gcloud compute'
+
 function cluster {
     gcloud container clusters describe --format json $1 | jq .
 }
@@ -543,6 +600,7 @@ function cluster {
 function kall-default {
     kall-iterate default
 }
+
 function kall-iterate {
     local namespace="$1"
     for i in $(kubectl api-resources --verbs=list --namespaced -o name | grep -v "events" | sort | uniq)
@@ -577,30 +635,36 @@ fi
 
 
 
-#
+################################################################################
 # GOOGLE GCLOUD CONTAINER METADATA
-#
+################################################################################
+
 function metadata-query {
     curl -s "http://metadata.google.internal/computeMetadata/v1/instance/$1" -H "Metadata-Flavor: Google"
 }
+
 function metadata-tags {
     metadata-query tags
 }
+
 function metadata-disks {
     metadata-query "disks/?recursive=true"
 }
+
 function metadata-env {
     metadata-query attributes/kube-env
 }
+
 function metadata-name {
     metadata-query name
 }
 
 
 
-#
+################################################################################
 # GCLOUD
-#
+################################################################################
+
 alias gcluster='gcloud container clusters'
 alias gcl='gcluster'
 alias gql='gcloud beta sql'
@@ -635,6 +699,7 @@ function images {
 }
 
 # Queries the loadbalancer logs
+
 function glog {
 
     # BACKEND SERVICES
@@ -1032,15 +1097,14 @@ function datalab {
 }
 
 
-#
+################################################################################
 # GCLOUD
-#
+################################################################################
 
-
-
-#
+################################################################################
 # GOOGLE GCLOUD DNS
-#
+################################################################################
+
 function gdns {
     arg="$1"
     if [ -z "$arg" ]; then
@@ -1247,6 +1311,7 @@ function gdns-del {
     $tx execute $zone
     rm -f transaction.yaml
 }
+
 function gdns-ls {
     hostname="$1"
     local zone="--zone=$DNS_ZONE"
@@ -1264,18 +1329,21 @@ function gdns-ls {
 
 
 
-#
+################################################################################
 # LOADER
-#
+################################################################################
+
 function loader {
     curl -s -H "loaderio-auth: $LOADERIO_KEY" https://api.loader.io/v2/servers | jq .
 }
 
 
-#
+################################################################################
 # VARNISH
-#
+################################################################################
+
 alias vl='varnishlog -m rxURL:/rss/blog -c'
+
 function vpurge {
     curl -s -v -o /dev/null -X $VARNISH_VERB https://$VARNISH_USER:$VARNISH_PASS@$VSCO_PROD$1 2>&1 >/dev/null | grep HTTP
 }
@@ -1283,16 +1351,13 @@ function vpurge {
 
 
 
-########################################################
-#
+################################################################################
 # LANGUAGES
-#
-########################################################
+################################################################################
 
-
-#
+################################################################################
 # PYTHON
-#
+################################################################################
 export FLASK_APP=main.py
 export FLASK_DEBUG=1
 export PATH="$HOME/.local/bin:$PATH"
@@ -1347,13 +1412,16 @@ export PROMPT_COMMAND=_virtualenv_auto_activate
 
 
 
-#
+################################################################################
 # R
-#
+################################################################################
+
 alias R='R --no-save'
+
 function rp {
     Rscript -e 'ip <- as.data.frame(installed.packages()[,c(1,3:4)]); rownames(ip) <- NULL; ip <- ip[is.na(ip$Priority),1:2,drop=FALSE]; print(ip, row.names=FALSE)' | tail -n +2 | tr -s ' ' | cut -d' ' -f2- | sort -f
 }
+
 function rp-del {
     # https://www.r-bloggers.com/how-to-remove-all-user-installed-packages-in-r/
     Rscript -e 'ip <- as.data.frame(installed.packages()); ip <- subset(ip, !grepl("MRO", ip$LibPath)); ip <- ip[!(ip[,"Priority"] %in% c("base", "recommended")),]; path.lib <- unique(ip$LibPath); pkgs.to.remove <- ip[,1]; sapply(pkgs.to.remove, remove.packages, lib = path.lib)'
@@ -1361,9 +1429,10 @@ function rp-del {
 
 
 
-#
+################################################################################
 # RUBY
-#
+################################################################################
+
 alias be='bundle exec'
 alias dep='bundle exec cap prod deploy'
 export RUBY_HOME=/usr/local/opt/ruby@3.3
@@ -1378,9 +1447,10 @@ export PATH="$HOME/.rbenv/bin:$PATH"
 
 
 
-#
+################################################################################
 # GO
-#
+################################################################################
+
 export GOPATH=${HOME}/go
 add_to_PATH $GOPATH/bin
 
@@ -1389,15 +1459,17 @@ function findgo {
 }
 
 
-#
+################################################################################
 # RUST
-#
+################################################################################
+
 include ${HOME}/.cargo/env
 
 
-#
+################################################################################
 # NODE
-#
+################################################################################
+
 export NPM_HOME=/usr/local/share/npm/
 export NPM_RELATIVE="./node_modules/.bin"
 export NVM_DIR="$HOME/.nvm"
@@ -1406,16 +1478,18 @@ include ${NVM_DIR}/bash_completion
 add_to_PATH $NPM_RELATIVE
 
 
-#
+################################################################################
 # JAVA
-#
+################################################################################
+
 export PATH="${HOMEBREW_HOME}/opt/openjdk/bin:$PATH"
 export CLASSPATH=${CLASSPATH}:.
 
 
-#
+################################################################################
 # ANDROID
-#
+################################################################################
+
 # alias logcat='adb logcat > /tmp/logcat.txt &'
 # alias logall='tail -f /tmp/logcat.txt'
 # alias adb-restart='adb kill-server; adb start-server'
@@ -1425,9 +1499,10 @@ export CLASSPATH=${CLASSPATH}:.
 
 
 
-#
+################################################################################
 # DATADOG
-#
+################################################################################
+
 function dogtest {
     # dogtest 10.88.0.48
     local agent_location="$1"
@@ -1447,9 +1522,10 @@ function dogtest {
 }
 
 
-#
+################################################################################
 # HISTORY
-#
+################################################################################
+
 export HISTFILE=~/.history_bash
 export HISTFILESIZE=100000
 # export HISTIGNORE="&:ls:[bf]g:exit:[ \t]*"
@@ -1458,9 +1534,10 @@ export PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
 
 
-#
+################################################################################
 # HOMEBREW
-#
+################################################################################
+
 export HOMEBREW_HOME="/opt/homebrew"
 export HOMEBREW_BIN="${HOMEBREW_HOME}/bin"
 add_to_PATH ${HOMEBREW_BIN}
@@ -1471,9 +1548,10 @@ function brew-update {
 
 
 
-#
+################################################################################
 # TMUX
-#
+################################################################################
+
 alias tnew='tmux new -s'
 alias tls='tmux ls'
 alias tdet='tmux detach'
@@ -1484,60 +1562,69 @@ alias tat='tmux a -t'
 # alias vp='cd ~/versionping/versionping-api'
 
 
-#
+################################################################################
 # RCLONE
-#
+################################################################################
+
 alias r='rclone'
+
 function rls {
     rclone lsf gcs:$1
 }
 
 
-#
+################################################################################
 # VMWARE
-#
+################################################################################
+
 alias vmrun="/Applications/VMware\ Fusion.app/Contents/Public/vmrun"
 
 
-#
+################################################################################
 # CHROME
-#
+################################################################################
+
 alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
 alias chrome-canary="/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary"
 alias chromium="/Applications/Chromium.app/Contents/MacOS/Chromium"
 
 
-#
+################################################################################
 # ELASTICSEARCH
-#
+################################################################################
+
 function curles {
     curl -s "localhost:9200/$1" | python -m json.tool
 }
 
 
-#
+################################################################################
 # KAFKA
-#
+################################################################################
+
 # export KAFKA_HOME=$HOME/phillies/kafka/confluent-3.3.1
 # export SQLLINE_HOME=$HOME/phillies/kafka/sqlline
 
 
-#
+################################################################################
 # LIBICU
-#
+################################################################################
+
 export PATH="/usr/local/opt/icu4c/bin:/usr/local/opt/icu4c/sbin:$PATH"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/icu4c/lib/pkgconfig"
 
 
-#
+################################################################################
 # AWAIR
-#
+################################################################################
+
 alias aw='awair --mac ${AWAIR_MAC}'
 
 
-#
+################################################################################
 # PAPERTRAIL
-#
+################################################################################
+
 # alias pt='papertrail'
 # function l {
 #     group=$1
@@ -1555,29 +1642,30 @@ alias aw='awair --mac ${AWAIR_MAC}'
 
 
 
-######################
-#
+################################################################################
 # NETWORK
-#
-######################
+################################################################################
 
-#
+################################################################################
 # TCP
-#
+################################################################################
+
 function tp {
     server=$1
     port=$2
     nc -z -v -w 3 $server $port
 }
+
 function tpl {
     tp 127.0.0.1 $1
 }
 
 
 
-#
+################################################################################
 # DNS RECON
-#
+################################################################################
+
 function dnsrecon {
     # dnsrecon -d [domain]
     (cd ${SRC_HOME}/dnsrecon && uv run dnsrecon $*)
@@ -1585,9 +1673,10 @@ function dnsrecon {
 
 
 
-#
+################################################################################
 # SSH
-#
+################################################################################
+
 function sshquiet {
     if [ "$#" == "0" ]; then
         echo
@@ -1605,9 +1694,11 @@ alias lbv='ssh lbvideo.phils.io'
 function g-ssh {
     gcompute ssh --project $PHIL_GCLOUD_PROJECT --zone $PHIL_GCLOUD_ZONE $1
 }
+
 function g-list {
     gcompute instances list | grep RUNNING | sort
 }
+
 function p {
     local ip=`gcloud compute instances list  | grep -v TERMINATED  | grep prod | tr -s ' ' | cut -d' ' -f1,5 | grep $1 | sort -n | head -1 | cut -d' ' -f2`
     ssh $ip
@@ -1615,9 +1706,10 @@ function p {
 
 
 
-#
+################################################################################
 # WIFI
-#
+################################################################################
+
 function wifi-init {
     local airport_exe=/usr/local/bin/airport
     if [ ! -L $airport_exe ]; then
@@ -1640,14 +1732,16 @@ function wifi-me {
 }
 
 
-#
+################################################################################
 # MAC ADDRESSES
-#
+################################################################################
+
 function mac-ip {
     local mac=$1
     ip=`arps | grep "$mac" | head -1 | tr -s '\t' ' ' | cut -d' ' -f1`
     echo $ip
 }
+
 function ssh-mac {
     local mac=$1
     echo "SSHing into MAC: $mac"
@@ -1656,6 +1750,7 @@ function ssh-mac {
     echo ""
     ssh `mac-ip $mac`
 }
+
 function arps {
     if [ $# -eq 0 ]; then
         interface="en1"
@@ -1671,9 +1766,11 @@ function arps {
 function arps1 {
     arps $1 | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n  # -t is the separator, treat all 4 octets as numbers
 }
+
 function arps2 {
     arps $1 | sort sort -b -k2,2  # -b meaans to ignore leading blanks
 }
+
 function arps3 {
     arps $1 | sort -k3,3f -k4,4f -k5,5f -k1,1n
 }
@@ -1786,9 +1883,9 @@ alias orbi4='orbi | sort -k4,4f -k3,3f'
 
 
 
-#
+################################################################################
 # PIHOLE
-#
+################################################################################
 
 function pihole-ip {
     # Gets the IP address of the pihole
@@ -1994,17 +2091,19 @@ function dev {
 
 
 
-#
+################################################################################
 # RASPBERRY PI
-#
+################################################################################
+
 alias rube-net='ssh zo@`arp-scan -l | grep -i "raspberry\|legra" | head -1 | cut -f1`'
 alias rube-local='screen /dev/cu.usbserial 115200'
 
 
 
-#
+################################################################################
 # OSX
-#
+################################################################################
+
 alias rosetta='arch -x86_64'
 alias rb='rosetta /bin/bash'
 alias notifications-enable='launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist'
@@ -2016,15 +2115,13 @@ alias notifications-disable='launchctl unload -w /System/Library/LaunchAgents/co
 
 
 
-#########################################################
-#
+################################################################################
 # VIDEO
-#
-#########################################################
+################################################################################
 
-#
+################################################################################
 # FFMPEG
-#
+################################################################################
 export FFMPEG_CFG="$HOME/.ffmpeg/ffmpeg.conf"
 
 function ffp {
@@ -2035,12 +2132,15 @@ function ffp {
 function vid-180 {
     vid-transpose "$1" "transpose=2,transpose=2"
 }
+
 function vid-90-clockwise {
     vid-transpose "$1" "transpose=1"
 }
+
 function vid-90-counterclockwise {
     vid-transpose "$1" "transpose=2"
 }
+
 function vid-transpose {
     source="$1"
     local output="$source-flipped.mov"
@@ -2050,6 +2150,7 @@ function vid-transpose {
     echo
     echo "New video saved to: '$output'"
 }
+
 function vid-noaudio {
     local filepath=$1
     local filename=$(basename -- "$filepath")
@@ -2060,9 +2161,10 @@ function vid-noaudio {
 
 
 
-#
+################################################################################
 # GSTREAMER
-#
+################################################################################
+
 export GSTREAMER_HOME=/Library/Frameworks/GStreamer.framework/Versions/1.0/
 export CPATH=$GSTREAMER_HOME/include
 export CPATH=$CPATH:$GSTREAMER_HOME/include/gstreamer-1.0/
@@ -2077,6 +2179,7 @@ alias gst-display-screen='gst-launch-1.0 avfvideosrc capture-screen=true ! autov
 alias gst-webcam='gst-launch-1.0 autovideosrc device=/dev/video0 ! autovideosink'
 alias gst-add-text='gst-launch-1.0 -v videotestsrc ! clockoverlay halignment=left valignment=bottom text="95.4 mph 2450" shaded-background=true font-desc="Sans, 23" ! videoconvert ! ximagesink'
 alias gst-rtmp1='gst-launch-1.0 -v videotestsrc ! avenc_flv ! flvmux ! rtmpsink location="rtmp://localhost/path/to/stream" live=1'
+
 function gst-download {
     local url="$1"
     local filename="$2"
@@ -2084,15 +2187,17 @@ function gst-download {
 }
 
 
-#
+################################################################################
 # VLC
-#
+################################################################################
+
 alias vlc=/Applications/VLC.app/Contents/MacOS/VLC
 
 
-#
+################################################################################
 # VIDEO COMPRESSION TESTS
-#
+################################################################################
+
 # OSX:
 # original: 112321631 bytes
 # HandBrakeCli 12446540 bytes, 17.0 seconds on osx
@@ -2101,6 +2206,7 @@ alias vlc=/Applications/VLC.app/Contents/MacOS/VLC
 # ffmpeg 30:    3968933 bytes, 11.5 seconds on osx
 # ffmpeg 17:   37793868 bytes, 289 seconds on prod-video-4
 # ffmpeg 30:    3966501 bytes, 168 seconds on prod-video-4
+
 function vid-compress-ffmpeg {
     local filepath=$1
     local filename=$(basename -- "$filepath")
@@ -2110,6 +2216,7 @@ function vid-compress-ffmpeg {
     local quality=28
     time ffmpeg -hide_banner -y -i $filepath -crf $quality $filename-y-$quality.$extension
 }
+
 function vid-compress-handbrake {
     local filepath=$1
     local filename=$(basename -- "$filepath")
@@ -2120,9 +2227,10 @@ function vid-compress-handbrake {
 
 
 
-#
+################################################################################
 # VEGGIETRONIC
-#
+################################################################################
+
 alias veg-attachment='curl -v http://veggietronic-zo.$DOMAIN/static/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
 alias veg-attachment-no='curl -v http://veggietronic-zo.$DOMAIN/static/asattachment/mnt/sdcard/DCIM/slomo_1582467987_2.mov > /dev/null'
 
@@ -2165,13 +2273,15 @@ function veg {
 }
 
 
-#
+################################################################################
 # EDGERTRONIC
-#
+################################################################################
+
 function edgers {
     (cd $PIE && vi video/edgertronics.yaml && cp video/edgertronics.yaml $SRC_HOME/chef/cookbooks/phillies/files/default/. )
     echo "yaml file copied to chef files"
 }
+
 function edg-status-watch {
     # from https://wiki.edgertronic.com/index.php/SDK_-_Developer_tricks
     s="" ; while sleep 0.5 ; do t=`curl http://e/get_status_string 2>/dev/null` ; if [ "$s" != "$t" ] ; then s=$t ; echo $s ; fi ; done
@@ -2188,6 +2298,7 @@ function cam_status {
 function cam0 {
     cam_status 0
 }
+
 function cam00 {
     cam_status 00
 }
@@ -2197,16 +2308,19 @@ function els-all {
     options="${@:2:10}"
     rclone lsf $EDGER_LAB_HOME/$path --csv --format "tsp" $options | column -t -s ' ,'
 }
+
 function els {
     path="$1"
     options="${@:2:10}"
     rclone lsf $EDGER_LAB_HOME/$path --csv --format "tsp" --include "*.mp4" $options | column -t -s ' ,'
 }
+
 function elsc {
     path="$1"
     options="${@:2:10}"
     els compressed/$path $options
 }
+
 function ecat {
     path="$1"
     arr=(${path//-/ })
@@ -2214,6 +2328,7 @@ function ecat {
     json=${path//mp4/json}
     rclone cat $EDGER_LAB_HOME/compressed/$camera/$json | jq .
 }
+
 function eplay {
     path="$1"
     arr=(${path//-/ })
@@ -2231,9 +2346,10 @@ function eplay {
 
 
 
-#
+################################################################################
 # CHEF
-#
+################################################################################
+
 export OPSCODE_USER=zo
 alias cc='chef-client -l info'
 alias ccd='chef-client -l debug'
@@ -2251,9 +2367,11 @@ alias kedit='knife node edit'
 alias urp='upr'
 alias chef-all='pie && ROLES=all bundle exec cap prod chef && cd -'
 alias chef-api='pie && ROLES=api bundle exec cap prod chef && cd -'
+
 function ksearch {
     knife search node "roles:$1"
 }
+
 function kd {
     knife node delete -y $1
     knife client delete -y $1
@@ -2262,9 +2380,10 @@ function kd {
 
 
 
-#
+################################################################################
 # COLORS
-#
+################################################################################
+
 include ~/.colors_bash
 
 COLOR_NORMAL="\[\e[00m\]"
@@ -2280,9 +2399,10 @@ export PS1="${COLOR_GREEN_A}\T ${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${
 
 
 
-#
+################################################################################
 # NOTES
-#
+################################################################################
+
 function notes {
     # shopt nullglob
 
@@ -2313,15 +2433,18 @@ alias ntoes=notes
 
 
 
-#
+################################################################################
 # API
-#
+################################################################################
+
 function api-local {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "http://localhost:5001/$1"
 }
+
 function api {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" | jq .
 }
+
 function api-post {
     curl ${@:2} -s -H "Authorization: Bearer $TOKEN" "https://$PHIL_API_SERVER/$1" -X POST
 }
@@ -2384,11 +2507,10 @@ function lint-time-file {
 
 
 
-#####################################################################
-#
+################################################################################
 # PHOTO
-#
-#####################################################################
+################################################################################
+
 alias ph='cd ~/Photos'
 alias photo='ssh $PHOTO_USER@$PHOTO_HOST'
 alias photo_mount='sshfs $PHOTO_USER@$PHOTO_HOST: $PHOTO_DIR_LOCAL_MOUNT'
@@ -2545,15 +2667,14 @@ function photo_clear_samsung {
 
 
 
-# ##################################################################
-#
+################################################################################
 # OTHER CLOUDS
-#
-# ##################################################################
+################################################################################
 
-#
+################################################################################
 # HEROKU
-#
+################################################################################
+
 export HEROKU_LOG="${HOME}/heroku.jsonl"
 
 function heroku-log {
@@ -2577,9 +2698,10 @@ function heroku-log-analyze {
 }
 
 
-#
+################################################################################
 # RACKSPACE
-#
+################################################################################
+
 function rs-create-old {
   if [ "$1" = "" ]; then
     echo
@@ -2944,9 +3066,10 @@ function rs-flavors {
 
 
 
-#
+################################################################################
 # DIGITAL OCEAN
-#
+################################################################################
+
 function do-list {
     curl -s "https://api.digitalocean.com/droplets/?client_id=$DO_CLIENT_ID&api_key=$DO_API_KEY" | python -mjson.tool
 }
@@ -3068,9 +3191,10 @@ function do-delete {
 }
 
 
-#
+################################################################################
 # OBJECT ROCKET
-#
+################################################################################
+
 function or {
     mongo -u $OR_USER -p $OR_PASS $OR_HOST/$1 $2 $3 $4
 }
@@ -3103,9 +3227,10 @@ function or-delete-ip {
 }
 
 
-#
+################################################################################
 # DNSIMPLE
-#
+################################################################################
+
 function dns-update-ttl {
       if [ "$1" = "" ]; then
         echo
@@ -3141,9 +3266,10 @@ function dns-delete {
 
 
 
-#
+################################################################################
 # AWS
-#
+################################################################################
+
 function aws-bootstrap {
     env="blue"
     knife bootstrap $1 -N $env-$2 -r 'role[redis]' -E $env -d vsco-amazon -V -x ubuntu -i ~/.ssh/$AWS_KEY_NAME.pem --hint '{"ec2":true}' --bootstrap-version="11.12.4"
