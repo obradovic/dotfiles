@@ -370,9 +370,6 @@ alias dc='d container'
 alias di='d image'
 alias dps='d ps -a'
 alias drun='docker container run'
-# alias pc-up="(pie && make pc-up)"
-# alias pc-down="(pie && make pc-down)"
-alias enter="(pie && make enter)"
 
 function ubuntu-R {
     run-in-container flex "/usr/bin/R --no-save -q"
@@ -478,12 +475,6 @@ function kj {
 function ky {
     kg $* -o yaml | yq .
 }
-
-# function bp {
-#     cd $PIE
-#     make bash-pod POD=$1
-#     cd -
-# }
 
 function pod-bash {
     local pod_pattern="$1"
@@ -629,7 +620,7 @@ function kall-iterate {
 function kswitch {
     local new_context=$1
 
-    cd $PIE/etc/docker/dash
+    cd ${SRC_HOME}/etc/docker
     make needs-credentials APP=$new_context
     cd -
 }
@@ -909,7 +900,7 @@ function glog-net {
         # dest_gke_details:
             # cluster:
             # cluster_location: us-east1-b
-            # cluster_name: us-east1-pie-d40432e2-gke
+            # cluster_name: us-east1-cluster-d40432e2-gke
             # pod:
             # pod_name: kube-dns-7f4d6f474d-xzfnt
             # pod_namespace: kube-system
@@ -919,7 +910,7 @@ function glog-net {
         # dest_instance:
             # project_id: gcloud-project-name
             # region: us-east1
-            # vm_name: gke-us-east1-pie-d40-nodepool-airflow-15e689e0-00sg
+            # vm_name: gke-us-east1-cluster-d40-nodepool-airflow-15e689e0-00sg
             # zone: us-east1-b
         # dest_vpc:
             # project_id: gcloud-project-name
@@ -931,14 +922,14 @@ function glog-net {
         # src_gke_details:
             # cluster:
             # cluster_location: us-east1-b
-            # cluster_name: us-east1-pie-d40432e2-gke
+            # cluster_name: us-east1-cluster-d40432e2-gke
             # pod:
             # pod_name: airflow-scheduler-6d9f76664f-gppx2
             # pod_namespace: composer-1-16-15-airflow-1-10-15-d40432e2
         # src_instance:
             # project_id: gcloud-project-name
             # region: us-east1
-            # vm_name: gke-us-east1-pie-d40432e-default-pool-8e49d417-yx6c
+            # vm_name: gke-us-east1-cluster-d40432e-default-pool-8e49d417-yx6c
             # zone: us-east1-b
         # src_vpc:
             # project_id: gcloud-project-name
@@ -1337,9 +1328,6 @@ function gdns-ls {
     fi
 }
 
-# Source
-# include ${PIE_HOME}/bin/gcp-shared.sh
-
 
 
 ################################################################################
@@ -1361,8 +1349,8 @@ alias upu='knife data bag from file users $1'
 alias kshow='knife node show'
 alias kedit='knife node edit'
 alias urp='upr'
-alias chef-all='pie && ROLES=all bundle exec cap prod chef && cd -'
-alias chef-api='pie && ROLES=api bundle exec cap prod chef && cd -'
+alias chef-all='ROLES=all bundle exec cap prod chef && cd -'
+alias chef-api='ROLES=api bundle exec cap prod chef && cd -'
 
 function ksearch {
     knife search node "roles:$1"
@@ -1423,7 +1411,6 @@ alias pip='python3 -m pip'
 alias pi='pip install'
 alias pw='pip wheel'
 alias pir='pi -r requirements.txt'
-# alias phickle='python3 $PIE/shared/phickle.py'
 
 function findpy {
     find . -name "*.py" | grep -v "\.env\|\.git" | grep -v "{{.*}}" | xargs $*
