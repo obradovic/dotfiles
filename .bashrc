@@ -117,7 +117,7 @@ alias nojello='grep --line-buffered -v jello'
 alias ports='netstat -tulan'
 alias utc='date -u'
 alias ut='utc'
-alias today='note today'
+alias today='note-exact today'
 alias x=exit
 alias hosts='sudo vi /etc/hosts'
 alias teep='pmset sleepnow'
@@ -2306,18 +2306,14 @@ export PS1="${COLOR_GREEN_A}\T ${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${
 ################################################################################
 # NOTES
 ################################################################################
-
 function notes {
-    # shopt nullglob
+    local dir=${DROPBOX_HOME}/Notes
 
-    local dir=$DROPBOX_HOME/Notes
     if [ $# -eq 0 ]; then
-        ls -altr $dir/notes.* | sed -e "s/\/Users\/zo\/Dropbox\/Notes\///"
-        # find $dir -maxdepth 1 -name notes\* -print0 | xargs -0 stat -f "%a"
+        (cd "$dir" && ls -altr notes*)
         return
     fi
 
-    # if [ -f "$dir/notes.$1*.txt" ]; then
     if ls $dir/notes.$1*.txt > /dev/null 2>&1; then
         vi $dir/notes.$1*.txt
     else
@@ -2327,7 +2323,20 @@ function notes {
 
 function notesgrep {
     local arg="$1"
-    grep -i "$arg" $DROPBOX_HOME/Notes/note*.txt
+    local dir=${DROPBOX_HOME}/Notes
+
+    grep -i "$arg" ${dir}/note*.txt
+}
+
+function note-exact {
+    local dir=${DROPBOX_HOME}/Notes
+
+    if [ -z "$1" ]; then
+        echo "Please enter a name for the note"
+        return
+    fi
+
+    vi $dir/notes.$1.txt
 }
 
 alias notesg=notesgrep
