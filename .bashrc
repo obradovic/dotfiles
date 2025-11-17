@@ -259,7 +259,7 @@ export GIT_PS1_SHOWDIRTYSTATE=true
 export GIT_PS1_SHOWUPSTREAM="auto"
 
 include ~/.git-prompt.sh
-include ~/.git-completion.sh
+include ~/.git-completion.bash
 
 function wip {
     local COMMENT="$*"
