@@ -1867,7 +1867,7 @@ function sshquiet {
 }
 
 function dell {
-    ssh @192.168.1.160
+    ssh 192.168.1.160
 }
 
 alias lbv='ssh lbvideo.${DNS_SUFFIX}'
