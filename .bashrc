@@ -1572,6 +1572,132 @@ export HISTIGNORE='&:ls:[bf]g:exit:'
 export PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
 
+#
+################################################################################
+# LINUX
+################################################################################
+export OS_NAME=$( uname )
+if [ ${OS_NAME} == "Linux" ]; then
+    export DISPLAY=:0
+    export TIMEFORMAT=%3R
+
+    alias add='paste -sd+ - | bc'
+    alias cpus="echo `cat /proc/cpuinfo | grep processor | wc -l`"
+    alias s='sudo su -'
+
+    alias ai='apt install -y'
+    alias aupa='apt update && NEEDRESTART_MODE=a apt upgrade -y && apt autoremove -y'
+    alias aupl='apt update && NEEDRESTART_MODE=l apt upgrade -y && apt autoremove -y'
+    alias aup='aupa'
+
+    alias bin='cd /usr/local/bin'
+    alias cro='cd /etc/cron.d'
+    alias etc='cd /usr/local/etc'
+    alias log='cd /var/log'
+    alias sys='cd /etc/systemd/system'
+
+    alias curle='curl --interface eth0'
+    alias curlw='curl --interface wlan0'
+    alias pinge='ping -I eth0'
+    alias pingw='ping -I wlan0'
+    alias wpa0='wpa_cli -i wlan0'
+    alias wpa1='wpa_cli -i wlan1'
+    alias wpa2='wpa_cli -i wlan2'
+
+    alias jou='journalctl -f -u'
+    alias jou3='journalctl --since "3 days ago" -f -u'
+    alias jou2='journalctl --since "2 days ago" -f -u'
+    alias jou1='journalctl --since "yesterday" -f -u'
+    alias jou0='journalctl --since "today" -f -u'
+    alias jouy=jou1
+    alias jout=jou0
+
+    alias hd-readtest='hdparm -Tt /dev/xvda1'
+    alias hd-writetest='dd if=/dev/zero of=/tmp/foo.img bs=8k count=256k conv=fdatasync; rm -rf /tmp/foo.img'
+
+    alias sstart='systemctl start'
+    alias sstop='systemctl stop'
+    alias sstatus='systemctl status'
+    alias srestart='systemctl restart'
+    alias sstatus='systemctl status'
+    alias sreload='systemctl daemon-reload'
+    alias sls='systemctl list-units --all'
+    alias scat='systemctl cat'
+fi
+
+
+################################################################################
+# HAPROXY
+################################################################################
+
+alias hatop='hatop -s /var/run/haproxy.sock'
+alias ha-err='echo "show errors" | socat stdio /var/run/haproxy.sock'
+alias ha-info='echo "show info" | socat stdio /var/run/haproxy.sock'
+function perf {
+    cat $1 | cut -d ' ' -f 11 | cut -d/ -f 3 | /usr/local/bin/average.rb;
+}
+
+alias hap2='tail -f /var/log/syslog'
+
+function hap {
+    local days_ago=$1
+    if [ "$1" = "" ]; then
+        days_ago=0
+    fi
+    gethadir $days_ago
+    cd $hadir
+    pwd
+}
+
+# USAGE: ha-counter "GET /some-endpoint" 10
+# outputs the counts of the last 10 days
+function ha-counter {
+    local days_ago=$2
+    if [ "$2" = "" ]; then
+      days_ago=13
+    fi
+
+    local total="0"
+    for i in $(seq 0 $days_ago)
+    do
+        hap $i
+        a=`grep "$1" messages* | wc -l`
+        total=`expr $total + $a`
+        echo "$a, total: $total"
+    done
+}
+
+function ha-popular {
+    gethafile $1
+    cat $hafile | halog -u -H -q  | awk 'NR==1; NR > 1 { print $0 | "sort -n -r -k 1" }' | head -100 | column -t
+}
+
+function ha-popular-errors {
+    local ha_error=$1
+    if [ "$1" = "" ]; then
+        ha_error=404
+    fi
+    gethafile $2
+    cat $hafile | halog -u -H -q -hs $ha_error | head -200 | sort -nr | column -t
+}
+
+function gethadir {
+    local days_ago=$1
+    if [ "$1" = "" ]; then
+        days_ago=0
+    fi
+    hadir=/var/log/rsyslog/`date +%Y/%m/%d --date="$days_ago days ago"`/localhost/
+
+    if [ ! -d $hadir ]; then
+        hadir=/mnt/rsyslog/`date +%Y/%m/%d --date="$days_ago days ago"`/localhost/
+    fi
+}
+
+function gethafile {
+    gethadir $1
+    hafile=$hadir/messages
+}
+
 
 ################################################################################
 # HOMEBREW
@@ -3188,7 +3314,13 @@ function aws-bootstrap {
     knife bootstrap $1 -N $env-$2 -r 'role[redis]' -E $env -d vsco-amazon -V -x ubuntu -i ~/.ssh/$AWS_KEY_NAME.pem --hint '{"ec2":true}' --bootstrap-version="11.12.4"
 }
 
-
+if [ "$UID" -eq 0 ]; then
+    echo "  Take Heed - you are ROOT!"
+    export PS1='\[\e[0;92m\]\t\[\e[0m\] \[\e[1;92m\]`hostname`\[\e[0m\] \[\e[0;31m\]\W > \[\e[0m\]'
+else
+    echo "  Lets gooooooo!"
+fi
+echo
 
 # include ${HOME}/.fzf.bash
 include ${HOME}/.bashrc_private
