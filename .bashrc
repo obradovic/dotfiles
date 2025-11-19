@@ -1572,13 +1572,25 @@ export HISTIGNORE='&:ls:[bf]g:exit:'
 export PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 
 
-#
+
+
+################################################################################
+# QEMU
+################################################################################
+export QUICKGET_DIR=/usr/local/qemu
+alias qemu-mac-get='(mcd ${QUICKGET_DIR} && quickget macos sonoma)'
+alias qemu-mac='(mcd ${QUICKGET_DIR} && quickemu --vm macos-sonoma.conf)'
+
+
+
+
 ################################################################################
 # LINUX
 ################################################################################
 export OS_NAME=$( uname )
 if [ ${OS_NAME} == "Linux" ]; then
     export DISPLAY=:0
+    export SRC_HOME=/var/repos
     export TIMEFORMAT=%3R
 
     alias add='paste -sd+ - | bc'
@@ -3329,6 +3341,7 @@ include ${HOME}/.bashrc_private
 append_to_path .
 
 if [ "$UID" -eq 0 ]; then
+    echo
     echo "    Take Heed - you are ROOT!"
     export PS1='\[\e[0;92m\]\t\[\e[0m\] \[\e[1;92m\]`hostname`\[\e[0m\] \[\e[0;31m\]\W > \[\e[0m\]'
 else
