@@ -1403,7 +1403,7 @@ export PIP_WHEEL_DIR="${WHEELHOUSE}"
 append_to_path ${HOME}/.local/bin
 
 alias python=python3
-alias py='ipython3 --no-banner --pprint --no-simple-prompt -i --'
+alias py='echo "%load_ext autoreload" ; echo "%autoreload 2" ; ipython3 --no-banner --pprint --no-simple-prompt -i --'
 alias ac='. .env/bin/activate'
 alias acc='. .env.`uname -s`/bin/activate'
 alias acl='. .env.`uname -s`-lab/bin/activate'
