@@ -2288,7 +2288,7 @@ function vid-compress-handbrake {
 # COLORS
 ################################################################################
 
-include ~/.colors_bash
+include ~/.colors.bash
 
 COLOR_NORMAL="\[\e[00m\]"
 COLOR_GREEN_A="\[\e[0;92m\]"
