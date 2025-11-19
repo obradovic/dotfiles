@@ -1866,7 +1866,7 @@ function sshquiet {
     fi
 }
 
-function dell {
+function led {
     ssh 192.168.1.160
 }
 
@@ -2429,6 +2429,11 @@ export PS1="${COLOR_GREEN_A}\T ${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${
 # export PS1="${COLOR_GREEN_A}\T \$(__kube_ps1)${COLOR_END}$(__git_ps1 " (%s)") ${COLOR_GREEN_B}\W > ${COLOR_END}"
 # export PS1='\[\e[0;92m\]\T\[\e[0m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
 # export PS1='\[\e[0;92m\]\T\[\e[0m\] \[\e[0;92m\]`hostname`\[\e[0m\]\[\e[0;92m\]$(__git_ps1 " (%s)")\[\e[0m\] \[\e[0;32m\]\W > \[\e[0m\]'
+
+if [ ${OS_NAME} == "Linux" ]; then
+    # Add the hostname
+    export PS1="${COLOR_GREEN_A}\T \h ${COLOR_END}\$(__git_ps1) ${COLOR_GREEN_B}\W > ${COLOR_END}"
+fi
 
 
 
