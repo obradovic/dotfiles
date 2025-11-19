@@ -27,8 +27,8 @@ Plug 'sainnhe/gruvbox-material'
 call plug#end()
 
 " Colors
-" colorscheme tomorrow-night-deepblue
- colorscheme gruvbox-material
+colorscheme tomorrow-night-deepblue
+" colorscheme gruvbox-material
 " colorscheme kanagawa
 " colorscheme tokyonight-night
 
