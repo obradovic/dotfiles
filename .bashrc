@@ -3321,10 +3321,10 @@ include ${HOME}/.bashrc_private
 append_to_path .
 
 if [ "$UID" -eq 0 ]; then
-    echo "  Take Heed - you are ROOT!"
+    echo "    Take Heed - you are ROOT!"
     export PS1='\[\e[0;92m\]\t\[\e[0m\] \[\e[1;92m\]`hostname`\[\e[0m\] \[\e[0;31m\]\W > \[\e[0m\]'
 else
-    echo "  Lets gooooooo!"
+    echo "    Lets gooooooo!"
 fi
 echo
 
