@@ -1589,7 +1589,7 @@ alias qemu-mac='(mcd ${QUICKGET_DIR} && quickemu --vm macos-sonoma.conf)'
 ################################################################################
 export OS_NAME=$( uname )
 if [ ${OS_NAME} == "Linux" ]; then
-    export DISPLAY=:0
+    # export DISPLAY=:0
     export SRC_HOME=/var/repos
     export TIMEFORMAT=%3R
 
