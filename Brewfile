@@ -158,6 +158,7 @@ brew 'qpdf'
 brew 'r'
 brew 'rclone'
 brew 'ripgrep'
+brew 'rmlint'
 brew 'ruby'
 brew 'rust'
 # brew install hudochenkov/sshpass/sshpass
