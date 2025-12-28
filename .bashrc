@@ -1716,14 +1716,15 @@ function gethafile {
 # HOMEBREW
 ################################################################################
 
-export HOMEBREW_HOME="/opt/homebrew"
-export HOMEBREW_BIN="${HOMEBREW_HOME}/bin"
-prepend_to_path ${HOMEBREW_BIN}
+if [ ${OS_NAME} == "Darwin" ]; then
+    export HOMEBREW_HOME="/opt/homebrew"
+    export HOMEBREW_BIN="${HOMEBREW_HOME}/bin"
+    prepend_to_path ${HOMEBREW_BIN}
 
-function brew-update {
-    (dot && brew update && brew bundle)
-}
-
+    function brew-update {
+        (dot && brew update && brew bundle)
+    }
+fi
 
 
 ################################################################################
